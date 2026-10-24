@@ -1,0 +1,188 @@
+- name: anon_reads_pages
+  covers: [R1]
+  as: {role: anon}
+  sql: select count(*) from pages
+  expect:
+    rows:
+    - [3]
+
+- name: anon_reads_revisions
+  covers: [R1]
+  as: {role: anon}
+  sql: select count(*) from page_revisions
+  expect:
+    rows:
+    - [2]
+
+- name: user_sees_editors
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select user_id from editors order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+
+- name: user_edits_unprotected_page
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: pages
+    values: {title: FAQ v2, body: Updated text, is_protected: false, updated_by: 00000000-0000-0000-0000-000000000002}
+    match: {slug: faq}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_creates_page
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: pages
+    values: {slug: howto, title: How to, body: '', is_protected: false, updated_by: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_protected_page
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: pages
+    values: {slug: rules, title: Rules, body: '', is_protected: true, updated_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_record_someone_else_as_editor_of_change
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: pages
+    values: {title: Title, body: Updated text, is_protected: false, updated_by: 00000000-0000-0000-0000-000000000003}
+    match: {slug: faq}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_edit_protected_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: pages
+    values: {title: Title, body: Updated text, is_protected: true, updated_by: 00000000-0000-0000-0000-000000000002}
+    match: {slug: home}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_edits_protected_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: pages
+    values: {title: Welcome!, body: Updated text, is_protected: true, updated_by: 00000000-0000-0000-0000-000000000001}
+    match: {slug: home}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_protect_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: pages
+    values: {title: Title, body: Updated text, is_protected: true, updated_by: 00000000-0000-0000-0000-000000000002}
+    match: {slug: faq}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_unprotect_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: pages
+    values: {title: Title, body: Updated text, is_protected: false, updated_by: 00000000-0000-0000-0000-000000000002}
+    match: {slug: home}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_protects_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: pages
+    values: {title: Title, body: Updated text, is_protected: true, updated_by: 00000000-0000-0000-0000-000000000001}
+    match: {slug: faq}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_adds_revision_for_unprotected_page
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: page_revisions
+    values: {slug: faq, body: Updated text, author_id: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_add_revision_for_protected_page
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: page_revisions
+    values: {slug: home, body: Defaced, author_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_add_revision_as_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: page_revisions
+    values: {slug: faq, body: x, author_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_edit_revision
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: page_revisions
+    values: {body: rewritten history}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_delete_page
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: pages
+    match: {slug: drafts}
+  expect: {denied: true}
+
+- name: user_cannot_become_editor
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: editors
+    values: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_revisions
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from page_revisions
+  expect:
+    rows:
+    - [2]

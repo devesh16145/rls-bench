@@ -1,0 +1,20 @@
+id: T025
+title: Newsletter subscriptions managed by verified email
+tier: 1
+tags:
+- anon-insert
+- jwt-claims
+- email-match
+traps:
+- anon-write-spoof
+- case-sensitivity
+- claim-trust
+extra_tables: []
+fixture_notes:
+- ana's subscriptions stored as 'Ana@Example.com' and 'ana@example.com' (mixed case)
+- ben's (…02) user_metadata claims ana's email
+- confirmed and unconfirmed rows
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,20 @@
+id: T049
+title: Purchase orders with approval limits and no self-approval
+tier: 2
+tags:
+- segregation-of-duties
+- approval-limit
+- append-only
+- client-returning
+traps:
+- self-approval
+- approval-limit
+- negative-condition
+extra_tables: []
+fixture_notes:
+- 'approvers: abe (…02) limit 1,000; bea (…03) limit 50,000 — bea also requested PO 4'
+- 'rita (…01): PO 1 (500), 2 (800), 3 (20,000), 5 (900, already approved by abe)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

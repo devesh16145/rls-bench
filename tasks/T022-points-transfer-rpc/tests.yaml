@@ -1,0 +1,127 @@
+- name: user_reads_own_wallet
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select user_id, balance from wallets order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001, 100]
+
+- name: user_cannot_read_other_wallet
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select balance from wallets where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {count: 0}
+
+- name: sender_and_recipient_see_transfer
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from transfers order by id
+  expect:
+    rows:
+    - [1]
+
+- name: uninvolved_user_sees_no_transfers
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from transfers
+  expect: {count: 0}
+
+- name: user_cannot_set_own_balance
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: wallets
+    values: {balance: 1000}
+    match: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_insert_transfer
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: transfers
+    values: {from_user: 00000000-0000-0000-0000-000000000002, to_user: 00000000-0000-0000-0000-000000000001, amount: 20}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_transfer
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: transfers
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: sender_balance_drops
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000003', 25); select balance from wallets
+  expect:
+    rows:
+    - [75]
+
+- name: transfer_is_recorded
+  covers: [R2, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000003', 25); select from_user, to_user, amount from transfers order by id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000002, 30]
+    - [00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000003, 25]
+
+- name: recipient_is_credited
+  covers: [R4]
+  as: {role: service_role}
+  sql: 'select set_config(''request.jwt.claims'', ''{"role": "authenticated", "sub": "00000000-0000-0000-0000-000000000001"}'', true); select public.send_points(''00000000-0000-0000-0000-000000000003'', 25); select balance from wallets where
+    user_id = ''00000000-0000-0000-0000-000000000003'''
+  expect:
+    rows:
+    - [25]
+
+- name: cannot_overdraw
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000001', 21)
+  expect: {denied: true}
+
+- name: cannot_send_negative_amount
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000002', -50)
+  expect: {denied: true}
+
+- name: cannot_send_zero
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000002', 0)
+  expect: {denied: true}
+
+- name: cannot_send_to_self
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000001', 10)
+  expect: {denied: true}
+
+- name: cannot_send_to_user_without_wallet
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000004', 10)
+  expect: {denied: true}
+
+- name: anon_cannot_send
+  covers: [R4]
+  as: {role: anon}
+  sql: select public.send_points('00000000-0000-0000-0000-000000000002', 10)
+  expect: {denied: true}
+
+- name: service_role_sees_all_wallets
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from wallets
+  expect:
+    rows:
+    - [3]

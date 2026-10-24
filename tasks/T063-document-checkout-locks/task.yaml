@@ -1,0 +1,22 @@
+id: T063
+title: Document checkout locks enforced through RPCs
+tier: 3
+tags:
+- rpc
+- security-definer
+- locking
+- state-transition
+- read-only-tables
+traps:
+- state-transition
+- rpc-missing-auth-check
+- lock-bypass
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- doc 2 checked out by ana (…01); doc 4 checked out by ben (…02)
+- ana can edit docs 1, 2 and 4; ben can edit 1, 3 and 4; cy (…03) can only read doc 1
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

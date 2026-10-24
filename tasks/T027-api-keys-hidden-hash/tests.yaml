@@ -1,0 +1,109 @@
+- name: user_lists_own_keys
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client: {op: select, table: api_keys, columns: 'id, name, last4', order: id}
+  expect:
+    rows:
+    - [1, CI, a1b2]
+    - [2, Laptop, c3d4]
+    - [3, Old server, e5f6]
+
+- name: user_cannot_read_own_key_hash
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select key_hash from api_keys
+  expect: {denied: true}
+
+- name: user_cannot_list_other_users_keys
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from api_keys where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {count: 0}
+
+- name: user_revokes_own_key
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: api_keys
+    values: {revoked_at: '2020-06-01'}
+    match: {id: 1}
+    returning: false
+  expect: {affected: 1}
+
+- name: user_cannot_unrevoke_key
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: api_keys
+    values: {revoked_at: null}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_redate_revoked_key
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: api_keys
+    values: {revoked_at: '2021-01-01'}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_rename_key
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: api_keys
+    values: {name: renamed}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_revoke_someone_elses_key
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: api_keys
+    values: {revoked_at: '2020-06-01'}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_create_key
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: api_keys
+    values: {user_id: 00000000-0000-0000-0000-000000000001, name: x, key_hash: h, last4: zzzz}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_key
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: api_keys
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: anon_cannot_list_keys
+  covers: [R4]
+  as: {role: anon}
+  sql: select id from api_keys
+  expect: {denied: true}
+
+- name: service_role_reads_hashes
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(key_hash) from api_keys
+  expect:
+    rows:
+    - [4]

@@ -1,0 +1,110 @@
+- name: user_sees_own_tokens
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select token from push_tokens order by token
+  expect:
+    rows:
+    - [tok-ana-phone]
+
+- name: user_without_tokens_sees_none
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select token from push_tokens
+  expect: {count: 0}
+
+- name: user_registers_new_token
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: push_tokens
+    values: {token: tok-ana-tablet, user_id: 00000000-0000-0000-0000-000000000001, platform: android}
+    on_conflict: [token]
+    returning: true
+  expect: {affected: 1}
+
+- name: user_refreshes_own_token
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: push_tokens
+    values: {token: tok-ana-phone, user_id: 00000000-0000-0000-0000-000000000001, platform: ios}
+    on_conflict: [token]
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_take_over_someone_elses_token
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: push_tokens
+    values: {token: tok-ana-phone, user_id: 00000000-0000-0000-0000-000000000002, platform: web}
+    on_conflict: [token]
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_register_token_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: push_tokens
+    values: {token: tok-new, user_id: 00000000-0000-0000-0000-000000000001, platform: ios}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_reassign_someone_elses_token
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: push_tokens
+    values: {user_id: 00000000-0000-0000-0000-000000000002}
+    match: {token: tok-ana-phone}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_token
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: push_tokens
+    match: {token: tok-ana-phone}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_someone_elses_token
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: push_tokens
+    match: {token: tok-ana-phone}
+  expect: {denied: true}
+
+- name: anon_cannot_register_token
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: upsert
+    table: push_tokens
+    values: {token: tok-anon, user_id: 00000000-0000-0000-0000-000000000001, platform: ios}
+    on_conflict: [token]
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_tokens
+  covers: [R4]
+  as: {role: anon}
+  sql: select * from push_tokens
+  expect: {denied: true}
+
+- name: service_role_sees_all_tokens
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from push_tokens
+  expect:
+    rows:
+    - [2]

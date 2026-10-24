@@ -1,0 +1,15 @@
+id: T011
+title: Organization creation and membership roles from the supabase-js client
+tier: 3
+tags: [org-hierarchy, client-returning, bootstrap-membership, role-management, security-definer-helper]
+traps: [insert-returning-visibility, self-join, last-owner, recursive-policy]
+extra_tables: []
+fixture_notes:
+  - "user in no organization: dee (…04) — creates the new org (id 3 after setval)"
+  - "creator who is not a member of the org they created: eli (…05) created org 2, which already has an owner"
+  - "sole owner: cy (…03) is the only owner of org 2; ana (…01) the only owner of org 1"
+  - "admin who is not owner: ben (…02) in org 1"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

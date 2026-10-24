@@ -1,0 +1,121 @@
+- name: agent_sees_masked_customers_of_own_region
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id, full_name, email_masked, phone_masked from support_customers order by id
+  expect:
+    rows:
+    - [1, Asha Rao, a***@example.com, '******3210']
+    - [2, Bilal Khan, b***@mail.in, '******6780']
+
+- name: other_region_agent_sees_only_own_region
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id, region from support_customers order by id
+  expect:
+    rows:
+    - [3, south]
+
+- name: user_metadata_region_is_ignored
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      user_metadata: {region: south}
+  sql: select id from support_customers order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: non_agent_sees_no_view_rows
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select * from support_customers
+  expect: {denied: true}
+
+- name: support_customers_has_exactly_five_columns
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select column_name from information_schema.columns where table_schema = 'public' and table_name = 'support_customers' order by ordinal_position
+  expect:
+    rows:
+    - [id]
+    - [region]
+    - [full_name]
+    - [email_masked]
+    - [phone_masked]
+
+- name: agent_cannot_read_raw_customers
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select email, phone from customers
+  expect: {denied: true}
+
+- name: supervisor_reads_raw_customers
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from customers
+  expect:
+    rows:
+    - [3]
+
+- name: plain_user_cannot_read_raw_customers
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select * from customers
+  expect: {denied: true}
+
+- name: agent_sees_own_agent_row
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select region from support_agents
+  expect:
+    rows:
+    - [north]
+
+- name: agent_cannot_change_own_region
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: support_agents
+    values: {region: south}
+    match: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: supervisor_cannot_change_customer
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: customers
+    values: {phone: '0000000000'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_become_supervisor
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: supervisors
+    values: {user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_view_rows
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from support_customers
+  expect: {denied: true}
+
+- name: service_role_sees_every_customer_in_view
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from support_customers
+  expect:
+    rows:
+    - [3]

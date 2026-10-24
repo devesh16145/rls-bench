@@ -1,0 +1,177 @@
+- name: customer_sees_own_jobs
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from jobs order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: mechanic_sees_garage_jobs
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from jobs order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: other_mechanic_sees_only_own_garage
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from jobs order by id
+  expect:
+    rows:
+    - [3]
+
+- name: mechanic_opens_job
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: jobs
+    values: {garage_id: 1, customer_id: 00000000-0000-0000-0000-000000000004, vehicle: Swift 2018, quote_amount: 2500}
+    returning: true
+  expect: {affected: 1}
+
+- name: mechanic_cannot_open_job_for_other_garage
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: jobs
+    values: {garage_id: 2, customer_id: 00000000-0000-0000-0000-000000000004, vehicle: Swift 2018, quote_amount: 2500}
+    returning: false
+  expect: {denied: true}
+
+- name: mechanic_cannot_open_approved_job
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: jobs
+    values: {garage_id: 1, customer_id: 00000000-0000-0000-0000-000000000004, vehicle: Swift 2018, quote_amount: 2500, status: approved}
+    returning: false
+  expect: {denied: true}
+
+- name: mechanic_revises_quote
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: jobs
+    values: {quote_amount: 4200}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: customer_approves_quote
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: jobs
+    values: {status: approved, quote_amount: 4500}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: customer_cannot_lower_amount_while_approving
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: jobs
+    values: {status: approved, quote_amount: 100}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: other_customer_cannot_approve
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: jobs
+    values: {status: approved, quote_amount: 4500}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: mechanic_cannot_approve_for_customer
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: jobs
+    values: {status: approved}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: mechanic_starts_approved_job
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: jobs
+    values: {status: in_progress}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: mechanic_cannot_change_quote_after_approval
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: jobs
+    values: {quote_amount: 9000}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: mechanic_cannot_finish_unapproved_job
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: jobs
+    values: {status: done}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: other_garage_mechanic_cannot_update
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: jobs
+    values: {quote_amount: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: customer_cannot_delete_job
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: jobs
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_jobs
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from jobs
+  expect: {denied: true}
+
+- name: service_role_sees_all_jobs
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from jobs
+  expect:
+    rows:
+    - [3]

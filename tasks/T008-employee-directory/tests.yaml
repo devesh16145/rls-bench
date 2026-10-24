@@ -1,0 +1,105 @@
+- name: employee_sees_full_directory
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id, full_name, department from employee_directory order by id
+  expect: {rows: [[1, Ana Alves, HR], [2, Ben Brooks, Engineering], [3, Cy Chen, Engineering], [4, Dee Diaz, Sales]]}
+
+- name: directory_has_exactly_three_columns
+  covers: [R1, R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select column_name from information_schema.columns where table_schema = 'public' and table_name = 'employee_directory' order by ordinal_position
+  expect: {rows: [[id], [full_name], [department]]}
+
+- name: non_employee_sees_empty_directory
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select full_name from employee_directory
+  expect: {denied: true}
+
+- name: employee_reads_own_salary
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id, salary from employees order by id
+  expect: {rows: [[2, 85000]]}
+
+- name: employee_cannot_read_colleague_salary
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select salary from employees where id = 3
+  expect: {count: 0}
+
+- name: hr_reads_every_salary
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id, salary from employees order by id
+  expect: {rows: [[1, 95000], [2, 85000], [3, 80000], [4, 70000]]}
+
+- name: hr_updates_salary
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update employees set salary = 90000 where id = 2
+  expect: {affected: 1}
+
+- name: employee_cannot_raise_own_salary
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update employees set salary = 999999 where id = 2
+  expect: {denied: true}
+
+- name: employee_cannot_move_self_into_hr
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update employees set department = 'HR' where id = 2
+  expect: {denied: true}
+
+- name: employee_cannot_edit_colleague
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update employees set full_name = 'x' where id = 3
+  expect: {denied: true}
+
+- name: anon_cannot_see_directory
+  covers: [R6]
+  as: {role: anon}
+  sql: select full_name from employee_directory
+  expect: {denied: true}
+
+- name: anon_sees_no_employees
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from employees
+  expect: {denied: true}
+
+- name: service_role_reads_directory
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from employee_directory
+  expect: {rows: [[4]]}
+
+- name: service_role_reads_all_salaries
+  covers: [R7]
+  as: {role: service_role}
+  sql: select sum(salary) from employees
+  expect: {rows: [[330000]]}
+
+- name: client_hr_updates_salary_and_reads_it_back
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: employees
+    values: {salary: 90000}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_employee_cannot_update_own_row
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: employees
+    values: {full_name: Benjamin Brooks}
+    match: {id: 2}
+    returning: true
+  expect: {denied: true}

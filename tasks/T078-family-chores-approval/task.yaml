@@ -1,0 +1,20 @@
+id: T078
+title: Family chores that children mark done and parents approve
+tier: 2
+tags:
+- roles-by-table
+- self-approval
+- old-vs-new
+- client-returning
+traps:
+- self-approval
+- privilege-escalation
+- negative-condition
+extra_tables: []
+fixture_notes:
+- 'household 1: parents pa (…01) and ma (…02), children kid1 (…03) and kid2 (…04); household 2: parent pz (…05), child kz (…06)'
+- chore 1 todo (kid1), chore 2 done (kid2), chore 3 approved (kid1)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

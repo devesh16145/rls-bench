@@ -1,0 +1,23 @@
+id: T061
+title: Pharmacy dispensing RPC with refill, expiry and self-dispense checks
+tier: 3
+tags:
+- rpc
+- security-definer
+- time-window
+- counter
+- read-only-tables
+traps:
+- rpc-missing-auth-check
+- overdraft
+- time-window
+- self-approval
+extra_tables: []
+fixture_notes:
+- pharmacists ph1 (…01) and ph2 (…02); ph2 is also the patient on prescription 4
+- 'pam (…03): rx 1 (2 refills), rx 2 (0 refills), rx 3 (expired 2020); pete (…04): rx 5'
+- one past dispense of rx 1 by ph1
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

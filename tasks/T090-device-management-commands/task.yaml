@@ -1,0 +1,20 @@
+id: T090
+title: Device management where employees can locate or lock but never wipe
+tier: 2
+tags:
+- role-by-table
+- command-allowlist
+- append-only
+- client-returning
+traps:
+- privilege-escalation
+- reference-check
+- weak-with-check
+extra_tables: []
+fixture_notes:
+- org 1 IT admin it1 (…01) with devices 1 (emp1 …03) and 2 (emp2 …04); org 2 IT admin it2 (…02) with device 3 (emp3 …05)
+- 'existing command: locate on device 1 by emp1'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

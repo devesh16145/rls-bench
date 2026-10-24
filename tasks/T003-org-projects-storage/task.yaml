@@ -1,0 +1,16 @@
+id: T003
+title: Organization projects with files in Supabase Storage
+tier: 3
+tags: [org-hierarchy, security-definer-helper, storage-paths, public-bucket, claim-trust]
+traps: [recursive-policy, claim-trust, storage-path]
+extra_tables: [storage.objects]
+fixture_notes:
+  - "user in two orgs: dee (…04) member of org 1 and org 2"
+  - "admin of a different org: cy (…03) admin of org 2 only"
+  - "user in no org: eli (…05)"
+  - "project file with no project folder: storage.objects name='readme.txt' (bucket project-files, owner null)"
+  - "avatars owned by other users: '<…01>/me.png', '<…03>/me.png'"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

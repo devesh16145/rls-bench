@@ -1,0 +1,19 @@
+id: T095
+title: Profiles visible to everyone, to members only, or only to their owner
+tier: 1
+tags:
+- single-owner
+- anon-vs-authenticated
+- visibility-levels
+- client-returning
+traps:
+- anon-vs-authenticated
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- ana (…01) public, ben (…02) members-only, cy (…03) private
+- dee (…04) and eli (…05) have no profile yet
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

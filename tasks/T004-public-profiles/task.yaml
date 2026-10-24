@@ -1,0 +1,12 @@
+id: T004
+title: Public user profiles
+tier: 1
+tags: [single-owner, public-read, anon-read, no-delete]
+traps: [ownership-change, over-broad-for-all]
+extra_tables: []
+fixture_notes:
+  - "users with no profile yet: cy (…03) and dee (…04) — moving a profile onto cy has no primary-key conflict"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

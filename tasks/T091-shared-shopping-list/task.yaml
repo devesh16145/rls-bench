@@ -1,0 +1,20 @@
+id: T091
+title: Household shopping list where members claim and buy items
+tier: 2
+tags:
+- membership
+- claim-a-row
+- column-restriction
+- client-returning
+traps:
+- state-transition
+- weak-with-check
+- reference-check
+extra_tables: []
+fixture_notes:
+- 'household 1: ana (…01), ben (…02); household 2: cy (…03)'
+- 'items: 1 Milk (added by ana, unclaimed), 2 Eggs (claimed by ben), 3 Rice (claimed and bought by ana), 4 Tea (household 2)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

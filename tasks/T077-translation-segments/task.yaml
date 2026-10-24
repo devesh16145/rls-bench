@@ -1,0 +1,20 @@
+id: T077
+title: Translation segments with per-language translators and reviewers
+tier: 2
+tags:
+- role-by-language
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- state-transition
+- negative-condition
+- weak-with-check
+extra_tables: []
+fixture_notes:
+- 'Hindi: translator tia (…01), reviewer rev (…02); Tamil: translator tam (…03)'
+- segment 2 (Hindi) is already reviewed
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

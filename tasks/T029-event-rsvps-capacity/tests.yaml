@@ -1,0 +1,200 @@
+- name: invited_user_sees_private_event
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: uninvited_user_sees_only_public_events
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: host_sees_own_events
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: host_creates_event
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: events
+    values: {id: 4, host_id: 00000000-0000-0000-0000-000000000004, title: Book club, is_private: false, capacity: 10}
+    returning: true
+  expect: {affected: 1}
+
+- name: guest_cannot_edit_hosts_event
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: host_cannot_hand_event_to_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: events
+    values: {host_id: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: host_invites_guest
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: invites
+    values: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: guest_cannot_invite
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: invites
+    values: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_sees_own_invitation
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select event_id, user_id from invites order by event_id, user_id
+  expect:
+    rows:
+    - [2, 00000000-0000-0000-0000-000000000003]
+
+- name: host_sees_event_invitations
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select user_id from invites
+  expect: {count: 2}
+
+- name: guest_rsvps_while_seats_left
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: rsvps
+    values: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: invited_guest_rsvps_to_private_event
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: rsvps
+    values: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_rsvp_to_full_event
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: rsvps
+    values: {event_id: 3, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_rsvp_to_private_event_without_invite
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: rsvps
+    values: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_rsvp_for_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: rsvps
+    values: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000005}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cancels_own_rsvp
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: rsvps
+    match: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: guest_cannot_cancel_someone_elses_rsvp
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: delete
+    table: rsvps
+    match: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {denied: true}
+
+- name: host_sees_event_rsvps
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select event_id, user_id from rsvps order by event_id, user_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002]
+    - [2, 00000000-0000-0000-0000-000000000002]
+    - [3, 00000000-0000-0000-0000-000000000003]
+
+- name: attendee_sees_who_else_is_coming
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select user_id from rsvps where event_id = 3 order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003]
+
+- name: non_attendee_cannot_see_rsvps
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select user_id from rsvps
+  expect: {count: 0}
+
+- name: anon_sees_no_events
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from events
+  expect: {denied: true}
+
+- name: service_role_sees_all_rsvps
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from rsvps
+  expect:
+    rows:
+    - [3]

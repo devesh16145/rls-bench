@@ -1,0 +1,137 @@
+- name: ana_reads_own_and_public
+  covers: [R1, R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from notes order by id
+  expect: {rows: [[1], [2], [4]]}
+
+- name: ben_reads_own_and_public
+  covers: [R1, R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from notes order by id
+  expect: {rows: [[2], [3], [4]]}
+
+- name: cy_reads_only_public
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from notes order by id
+  expect: {rows: [[2], [4]]}
+
+- name: ana_cannot_read_bens_private_note
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from notes where id = 3
+  expect: {count: 0}
+
+- name: anon_reads_nothing
+  covers: [R2, R5]
+  as: {role: anon}
+  sql: select * from notes
+  expect: {denied: true}
+
+- name: ana_creates_own_note
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into notes (user_id, body) values ('00000000-0000-0000-0000-000000000001', 'new')
+  expect: {affected: 1}
+
+- name: ana_cannot_create_note_for_ben
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into notes (user_id, body) values ('00000000-0000-0000-0000-000000000002', 'spoof')
+  expect: {denied: true}
+
+- name: anon_cannot_create_note
+  covers: [R5]
+  as: {role: anon}
+  sql: insert into notes (user_id, body) values ('00000000-0000-0000-0000-000000000001', 'anon')
+  expect: {denied: true}
+
+- name: ana_edits_own_note
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update notes set body = 'edited' where id = 1
+  expect: {affected: 1}
+
+- name: ana_cannot_edit_bens_public_note
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update notes set body = 'hacked' where id = 4
+  expect: {affected: 0}
+
+- name: ana_cannot_hand_note_to_ben
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update notes set user_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  expect: {denied: true}
+
+- name: ana_cannot_hand_public_note_to_ben
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update notes set user_id = '00000000-0000-0000-0000-000000000002' where id = 2
+  expect: {denied: true}
+
+- name: ana_deletes_own_note
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from notes where id = 2
+  expect: {affected: 1}
+
+- name: ana_cannot_delete_bens_public_note
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from notes where id = 4
+  expect: {affected: 0}
+
+- name: anon_cannot_edit_notes
+  covers: [R5]
+  as: {role: anon}
+  sql: update notes set body = 'anon'
+  expect: {denied: true}
+
+- name: service_role_sees_all_notes
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from notes
+  expect: {rows: [[4]]}
+
+- name: client_inserts_note_and_reads_it_back
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: notes
+    values: {user_id: 00000000-0000-0000-0000-000000000001, body: hi}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_inserts_public_note_and_reads_it_back
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: notes
+    values: {user_id: 00000000-0000-0000-0000-000000000001, body: hello all, is_public: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_updates_own_note_and_reads_it_back
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: notes
+    values: {body: edited}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_cannot_update_others_public_note
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: notes
+    values: {body: hacked}
+    match: {id: 4}
+    returning: true
+  expect: {denied: true}

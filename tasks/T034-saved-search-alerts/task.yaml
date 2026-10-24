@@ -1,0 +1,19 @@
+id: T034
+title: Saved searches whose alerts only go to the user's own email
+tier: 1
+tags:
+- single-owner
+- jwt-claims
+- insert-check
+- client-returning
+traps:
+- foreign-email
+- claim-trust
+extra_tables: []
+fixture_notes:
+- ana's (…01) JWT email ana@example.com; ben's ben@example.com
+- one test gives ana a user_metadata email of victim@example.org
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

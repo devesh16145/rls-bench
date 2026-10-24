@@ -1,0 +1,99 @@
+- name: anon_submits_message
+  covers: [R1]
+  as: {role: anon}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Visitor, email: v@example.org, body: Hello}
+    returning: false
+  expect: {affected: 1}
+
+- name: signed_in_user_submits_message
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Ben, email: v@example.org, body: Hello}
+    returning: false
+  expect: {affected: 1}
+
+- name: anon_cannot_submit_as_handled
+  covers: [R2]
+  as: {role: anon}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Visitor, email: v@example.org, body: Hello, status: handled}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_set_handled_by
+  covers: [R2]
+  as: {role: anon}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Visitor, email: v@example.org, body: Hello, handled_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: signed_in_user_cannot_mark_spam
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Visitor, email: v@example.org, body: Hello, status: spam}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_read_messages
+  covers: [R3]
+  as: {role: anon}
+  sql: select * from contact_messages
+  expect: {denied: true}
+
+- name: signed_in_user_cannot_read_messages
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select * from contact_messages
+  expect: {denied: true}
+
+- name: sender_cannot_read_back_own_message
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: contact_messages
+    values: {name: Visitor, email: v@example.org, body: Hello}
+    returning: true
+  expect: {denied: true}
+
+- name: anon_cannot_change_messages
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: update
+    table: contact_messages
+    values: {status: spam}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: signed_in_user_cannot_delete_messages
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: contact_messages
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: service_role_reads_all_messages
+  covers: [R4]
+  as: {role: service_role}
+  sql: select count(*) from contact_messages
+  expect:
+    rows:
+    - [2]

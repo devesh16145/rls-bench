@@ -1,0 +1,22 @@
+id: T053
+title: Production access granted only after two different ops approvals
+tier: 3
+tags:
+- rpc
+- security-definer
+- four-eyes
+- state-transition
+- client-returning
+traps:
+- self-approval
+- duplicate-approval
+- state-transition
+extra_tables: []
+fixture_notes:
+- 'ops team: oli (…01), opa (…02), ozz (…03); requesters rhea (…04), sam (…05)'
+- request 1 (rhea) has one approval (oli); request 3 is oli's own with one approval (opa); request 4 already granted
+- access_approvals has no unique constraint, so the function must refuse repeat approvals itself
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

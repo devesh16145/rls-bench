@@ -1,0 +1,17 @@
+id: T064
+title: Workout log whose sets belong to the workout's owner
+tier: 1
+tags:
+- single-owner
+- parent-child
+- client-returning
+traps:
+- forgot-enable
+- child-leak
+extra_tables: []
+fixture_notes:
+- ana's (…01) workout 1 with sets 1 and 2; ben's (…02) workout 2 with set 3
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

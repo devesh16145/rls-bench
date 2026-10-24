@@ -1,0 +1,183 @@
+- name: resident_sees_own_unit_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from requests order by id
+  expect:
+    rows:
+    - [1]
+
+- name: staff_sees_building_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from requests order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: other_building_staff_sees_only_own_building
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from requests order by id
+  expect:
+    rows:
+    - [3]
+
+- name: resident_sees_own_unit_photos
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from request_photos order by id
+  expect:
+    rows:
+    - [1]
+
+- name: other_building_staff_sees_no_photos
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from request_photos
+  expect: {count: 0}
+
+- name: resident_files_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: requests
+    values: {unit_id: 101, created_by: 00000000-0000-0000-0000-000000000001, description: Fan not working}
+    returning: true
+  expect: {affected: 1}
+
+- name: resident_cannot_file_for_other_unit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: requests
+    values: {unit_id: 102, created_by: 00000000-0000-0000-0000-000000000001, description: Fan not working}
+    returning: false
+  expect: {denied: true}
+
+- name: resident_cannot_file_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: requests
+    values: {unit_id: 101, created_by: 00000000-0000-0000-0000-000000000002, description: Fan not working}
+    returning: false
+  expect: {denied: true}
+
+- name: resident_cannot_file_done_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: requests
+    values: {unit_id: 101, created_by: 00000000-0000-0000-0000-000000000001, description: Fan not working, status: done}
+    returning: false
+  expect: {denied: true}
+
+- name: resident_adds_photo
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: request_photos
+    values: {request_id: 1, path: req1/close-up.jpg}
+    returning: true
+  expect: {affected: 1}
+
+- name: resident_cannot_add_photo_to_neighbours_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: request_photos
+    values: {request_id: 2, path: x.jpg}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_marks_request_done
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: requests
+    values: {status: done}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: other_building_staff_cannot_update
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: requests
+    values: {status: done}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: resident_cannot_close_own_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: requests
+    values: {status: done}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_rewrite_description
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: requests
+    values: {description: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: resident_cannot_delete_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: requests
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: resident_sees_own_residence
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select unit_id from residents order by unit_id
+  expect:
+    rows:
+    - [101]
+
+- name: resident_cannot_move_in_elsewhere
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: residents
+    values: {unit_id: 102, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_requests
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from requests
+  expect: {denied: true}
+
+- name: service_role_sees_all_photos
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from request_photos
+  expect:
+    rows:
+    - [2]

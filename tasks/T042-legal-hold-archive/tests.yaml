@@ -1,0 +1,202 @@
+- name: owner_sees_own_files
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from files order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: admin_sees_every_file
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from files order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: user_sees_only_own_files
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from files order by id
+  expect:
+    rows:
+    - [3]
+
+- name: user_uploads_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: files
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, name: notes.md}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_upload_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: files
+    values: {owner_id: 00000000-0000-0000-0000-000000000002, name: x}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_renames_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: files
+    values: {name: q3-forecast-final.xlsx}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: owner_deletes_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: files
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: admin_renames_any_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: files
+    values: {name: offsite-2020.zip}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_deletes_any_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: files
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: user_cannot_rename_someone_elses_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: files
+    values: {name: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_rename_held_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: files
+    values: {name: x.pdf}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_delete_held_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: files
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: admin_cannot_rename_held_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: files
+    values: {name: x.pdf}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_delete_held_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: files
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: user_cannot_upload_held_file
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: files
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, name: x, legal_hold: true}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_lift_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: files
+    values: {legal_hold: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_lift_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: files
+    values: {legal_hold: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_place_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: files
+    values: {legal_hold: true}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_become_admin
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: org_admins
+    values: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_files
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from files
+  expect: {denied: true}
+
+- name: service_role_lifts_hold
+  covers: [R7]
+  as: {role: service_role}
+  sql: update files set legal_hold = false where id = 2
+  expect: {affected: 1}

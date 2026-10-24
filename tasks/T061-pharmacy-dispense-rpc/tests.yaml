@@ -1,0 +1,151 @@
+- name: user_sees_pharmacists
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from pharmacists
+  expect:
+    rows:
+    - [2]
+
+- name: patient_sees_own_prescriptions
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from prescriptions order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_patient_sees_only_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from prescriptions order by id
+  expect:
+    rows:
+    - [5]
+
+- name: pharmacist_sees_every_prescription
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from prescriptions
+  expect:
+    rows:
+    - [5]
+
+- name: patient_sees_dispenses_of_own_prescriptions
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select prescription_id from dispenses order by prescription_id
+  expect:
+    rows:
+    - [1]
+
+- name: other_patient_sees_no_dispenses
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from dispenses
+  expect: {count: 0}
+
+- name: patient_cannot_add_refills
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: prescriptions
+    values: {refills_left: 99}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: pharmacist_cannot_record_dispense_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: dispenses
+    values: {prescription_id: 5, pharmacist_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: pharmacist_cannot_delete_dispense
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: dispenses
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: pharmacist_dispenses_and_gets_refills_left
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(1)
+  expect:
+    rows:
+    - [1]
+
+- name: dispense_is_recorded
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(1); select count(*) from dispenses where prescription_id = 1
+  expect:
+    rows:
+    - [2]
+
+- name: last_refill_can_be_dispensed
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(4)
+  expect:
+    rows:
+    - [0]
+
+- name: cannot_dispense_without_refills
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(2)
+  expect: {denied: true}
+
+- name: cannot_dispense_expired_prescription
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(3)
+  expect: {denied: true}
+
+- name: pharmacist_cannot_dispense_own_prescription
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.dispense(4)
+  expect: {denied: true}
+
+- name: patient_cannot_dispense
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.dispense(5)
+  expect: {denied: true}
+
+- name: cannot_dispense_unknown_prescription
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.dispense(99)
+  expect: {denied: true}
+
+- name: anon_cannot_dispense
+  covers: [R4, R5]
+  as: {role: anon}
+  sql: select public.dispense(5)
+  expect: {denied: true}
+
+- name: anon_sees_no_prescriptions
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from prescriptions
+  expect: {denied: true}
+
+- name: service_role_sees_all_dispenses
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from dispenses
+  expect:
+    rows:
+    - [1]

@@ -1,0 +1,14 @@
+id: T008
+title: Employee directory view that hides salaries
+tier: 2
+tags: [column-restriction, view, hr-role, privilege-escalation]
+traps: [view-bypass, privilege-escalation]
+extra_tables: []
+fixture_notes:
+  - "HR employee: ana (…01), department 'HR'"
+  - "signed-in user with no employee record: eli (…05)"
+  - "salaries differ per employee so a leak is visible"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

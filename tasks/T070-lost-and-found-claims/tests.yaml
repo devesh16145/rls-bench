@@ -1,0 +1,186 @@
+- name: user_sees_all_items
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select count(*) from items
+  expect:
+    rows:
+    - [2]
+
+- name: user_posts_found_item
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: items
+    values: {found_by: 00000000-0000-0000-0000-000000000005, description: Keys with a red tag}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_change_someone_elses_item
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: items
+    values: {status: claimed}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: claimant_sees_own_claims
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from claims order by id
+  expect:
+    rows:
+    - [2]
+    - [4]
+
+- name: finder_sees_claims_on_own_items
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from claims order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: claimant_cannot_see_rival_claims
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from claims order by id
+  expect:
+    rows:
+    - [1]
+
+- name: user_claims_open_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: claims
+    values: {item_id: 1, claimant_id: 00000000-0000-0000-0000-000000000005, message: It's mine - blue cover}
+    returning: true
+  expect: {affected: 1}
+
+- name: finder_cannot_claim_own_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: claims
+    values: {item_id: 1, claimant_id: 00000000-0000-0000-0000-000000000001, message: It's mine - blue cover}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_claim_item_already_claimed
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: claims
+    values: {item_id: 2, claimant_id: 00000000-0000-0000-0000-000000000005, message: It's mine - blue cover}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_claim_for_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: claims
+    values: {item_id: 1, claimant_id: 00000000-0000-0000-0000-000000000004, message: It's mine - blue cover}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_file_approved_claim
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: claims
+    values: {item_id: 1, claimant_id: 00000000-0000-0000-0000-000000000005, message: It's mine - blue cover, status: approved}
+    returning: false
+  expect: {denied: true}
+
+- name: finder_approves_claim
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: claims
+    values: {status: approved}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: finder_rejects_claim
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: claims
+    values: {status: rejected}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: finder_cannot_approve_second_claim
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: claims
+    values: {status: approved}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: claimant_cannot_approve_own_claim
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: claims
+    values: {status: approved}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: finder_cannot_change_decided_claim
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: claims
+    values: {status: rejected}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: finder_cannot_rewrite_claim_message
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: claims
+    values: {message: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_claims
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from claims
+  expect: {denied: true}
+
+- name: service_role_sees_all_claims
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from claims
+  expect:
+    rows:
+    - [4]

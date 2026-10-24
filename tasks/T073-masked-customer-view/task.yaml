@@ -1,0 +1,22 @@
+id: T073
+title: Support agents see masked customers of their own region only
+tier: 3
+tags:
+- view
+- column-masking
+- region-scoping
+- security-definer-view
+- claim-trust
+traps:
+- view-bypass
+- column-leak
+- claim-trust
+extra_tables: []
+fixture_notes:
+- 'agents: ag_n (…01) region north, ag_s (…02) region south; supervisor sup (…03); plain user usr (…04)'
+- customers 1 and 2 in north, 3 in south
+- one test gives ag_n a user_metadata region of south
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

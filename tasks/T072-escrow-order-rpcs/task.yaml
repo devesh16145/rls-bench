@@ -1,0 +1,21 @@
+id: T072
+title: Escrow marketplace orders whose states change only through RPCs
+tier: 3
+tags:
+- rpc
+- security-definer
+- state-machine
+- reference-check
+- client-returning
+traps:
+- rpc-missing-auth-check
+- state-transition
+- reference-check
+extra_tables: []
+fixture_notes:
+- seller sel (…01) lists 1 (₹500) and 2 (₹1200); buyer buy (…02); outsider oth (…03)
+- 'orders: 1 paid, 2 shipped, 3 pending_payment, 4 released'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

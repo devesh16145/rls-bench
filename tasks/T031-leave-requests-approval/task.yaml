@@ -1,0 +1,22 @@
+id: T031
+title: Leave requests approved only by the direct manager
+tier: 3
+tags:
+- hierarchy
+- old-vs-new
+- trigger
+- state-transition
+- client-full-row-update
+traps:
+- old-vs-new
+- state-transition
+- skip-level-access
+extra_tables: []
+fixture_notes:
+- maya (…01) manages raj (…02) and lee (…03) and reports to ceo (…05) — ceo is raj's skip-level manager
+- 'raj: pending request 1, approved request 2; lee: pending 3; maya: pending 4 (her manager is ceo)'
+- tom (…04) reports to ceo and has no requests
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

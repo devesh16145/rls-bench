@@ -1,0 +1,98 @@
+- name: anon_reads_roadmap
+  covers: [R1]
+  as: {role: anon}
+  sql: select count(*) from roadmap_items
+  expect:
+    rows:
+    - [3]
+
+- name: user_sees_all_votes
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from item_votes
+  expect:
+    rows:
+    - [3]
+
+- name: anon_cannot_see_votes
+  covers: [R2]
+  as: {role: anon}
+  sql: select * from item_votes
+  expect: {denied: true}
+
+- name: user_votes_for_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: item_votes
+    values: {user_id: 00000000-0000-0000-0000-000000000001, item_id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_vote_for_shipped_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: item_votes
+    values: {user_id: 00000000-0000-0000-0000-000000000001, item_id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_vote_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: item_votes
+    values: {user_id: 00000000-0000-0000-0000-000000000002, item_id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_removes_own_vote
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: item_votes
+    match: {user_id: 00000000-0000-0000-0000-000000000001, item_id: 1}
+  expect: {affected: 1}
+
+- name: user_cannot_remove_someone_elses_vote
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: item_votes
+    match: {user_id: 00000000-0000-0000-0000-000000000002, item_id: 1}
+  expect: {denied: true}
+
+- name: user_cannot_change_item_status
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: roadmap_items
+    values: {status: shipped}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_vote
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: item_votes
+    values: {user_id: 00000000-0000-0000-0000-000000000001, item_id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_votes
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from item_votes
+  expect:
+    rows:
+    - [3]

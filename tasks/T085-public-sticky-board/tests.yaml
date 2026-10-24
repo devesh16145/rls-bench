@@ -1,0 +1,118 @@
+- name: anon_reads_all_notes
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from board_notes order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_posts_note
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: board_notes
+    values: {author_id: 00000000-0000-0000-0000-000000000002, body: Retro at 4pm, color: yellow}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_post_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: board_notes
+    values: {author_id: 00000000-0000-0000-0000-000000000001, body: Retro at 4pm, color: yellow}
+    returning: false
+  expect: {denied: true}
+
+- name: author_edits_pinned_note
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: board_notes
+    values: {body: Office closed on Friday and Monday, color: red}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: author_deletes_own_note
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: board_notes
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_note
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: board_notes
+    values: {body: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_someone_elses_note
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: board_notes
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: user_cannot_post_pinned_note
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: board_notes
+    values: {author_id: 00000000-0000-0000-0000-000000000002, body: Retro at 4pm, color: yellow, is_pinned: true}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_pin_own_note
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: board_notes
+    values: {is_pinned: true}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_unpin_own_note
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: board_notes
+    values: {is_pinned: false}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_post
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: board_notes
+    values: {author_id: 00000000-0000-0000-0000-000000000001, body: Retro at 4pm, color: yellow}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_notes
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from board_notes
+  expect:
+    rows:
+    - [2]

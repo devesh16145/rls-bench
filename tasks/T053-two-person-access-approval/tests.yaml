@@ -1,0 +1,190 @@
+- name: requester_sees_own_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from access_requests order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: ops_sees_every_request
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from access_requests
+  expect:
+    rows:
+    - [4]
+
+- name: requester_sees_approvals_on_own_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from access_approvals
+  expect:
+    rows:
+    - [3]
+
+- name: other_requester_sees_no_approvals
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from access_approvals
+  expect: {count: 0}
+
+- name: user_sees_ops_team
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select count(*) from ops_team
+  expect:
+    rows:
+    - [3]
+
+- name: user_creates_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: access_requests
+    values: {resource: prod-db, reason: Data fix}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_create_granted_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: access_requests
+    values: {resource: prod-db, reason: x, status: granted}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_create_request_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: access_requests
+    values: {requester_id: 00000000-0000-0000-0000-000000000004, resource: x, reason: x}
+    returning: false
+  expect: {denied: true}
+
+- name: requester_withdraws_pending_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: delete
+    table: access_requests
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: requester_cannot_withdraw_granted_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: delete
+    table: access_requests
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: requester_cannot_grant_own_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: access_requests
+    values: {status: granted}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: ops_cannot_insert_approval_directly
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: access_approvals
+    values: {request_id: 2, approver_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: ops_cannot_delete_approval
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: access_approvals
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: second_approval_grants_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.approve_access(1)
+  expect:
+    rows:
+    - [granted]
+
+- name: first_approval_keeps_request_pending
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.approve_access(2)
+  expect:
+    rows:
+    - [pending]
+
+- name: granted_status_is_stored
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.approve_access(1); select status from access_requests where id = 1
+  expect:
+    rows:
+    - [granted]
+
+- name: ops_member_cannot_approve_twice
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.approve_access(1)
+  expect: {denied: true}
+
+- name: ops_member_cannot_approve_own_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.approve_access(3)
+  expect: {denied: true}
+
+- name: non_ops_user_cannot_approve
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select public.approve_access(1)
+  expect: {denied: true}
+
+- name: cannot_approve_granted_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.approve_access(4)
+  expect: {denied: true}
+
+- name: cannot_approve_unknown_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.approve_access(99)
+  expect: {denied: true}
+
+- name: anon_cannot_approve
+  covers: [R4, R5]
+  as: {role: anon}
+  sql: select public.approve_access(2)
+  expect: {denied: true}
+
+- name: anon_sees_no_requests
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from access_requests
+  expect: {denied: true}
+
+- name: service_role_sees_all_approvals
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from access_approvals
+  expect:
+    rows:
+    - [4]

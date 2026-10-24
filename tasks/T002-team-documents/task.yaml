@@ -1,0 +1,15 @@
+id: T002
+title: Team documents with viewer and editor roles
+tier: 2
+tags: [team-membership, role-column, soft-delete, update-check]
+traps: [weak-with-check, forgot-enable, soft-delete-leak]
+extra_tables: []
+fixture_notes:
+  - "user who is editor in one team and viewer in another: ana (…01) editor team 1, viewer team 2"
+  - "soft-deleted document: documents.id=4 (team 1, deleted_at 2020-01-01)"
+  - "user in no team: eli (…05)"
+  - "document in another team: documents.id=3 and 5 (team 2)"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

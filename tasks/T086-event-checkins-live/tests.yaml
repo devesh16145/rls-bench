@@ -1,0 +1,105 @@
+- name: user_sees_events
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from events
+  expect:
+    rows:
+    - [3]
+
+- name: user_sees_own_checkins
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select event_id from checkins order by event_id
+  expect:
+    rows:
+    - [2]
+
+- name: other_user_sees_no_checkins
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select event_id from checkins
+  expect: {count: 0}
+
+- name: user_checks_in_to_live_event
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: checkins
+    values: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_check_in_after_event
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: checkins
+    values: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_check_in_before_event
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: checkins
+    values: {event_id: 3, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_check_in_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: checkins
+    values: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_backdate_checkin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: checkins
+    values: {event_id: 1, user_id: 00000000-0000-0000-0000-000000000002, checked_in_at: '2020-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_checkin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: checkins
+    match: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000001}
+  expect: {denied: true}
+
+- name: user_cannot_change_checkin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: checkins
+    values: {event_id: 1}
+    match: {event_id: 2, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_checkins
+  covers: [R4]
+  as: {role: anon}
+  sql: select * from checkins
+  expect: {denied: true}
+
+- name: service_role_sees_all_checkins
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from checkins
+  expect:
+    rows:
+    - [1]

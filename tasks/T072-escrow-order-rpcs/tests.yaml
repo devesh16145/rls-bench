@@ -1,0 +1,195 @@
+- name: buyer_sees_own_orders
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from orders
+  expect:
+    rows:
+    - [4]
+
+- name: seller_sees_orders_on_own_listings
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from orders
+  expect:
+    rows:
+    - [4]
+
+- name: outsider_sees_no_orders
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from orders
+  expect: {count: 0}
+
+- name: buyer_places_order
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: orders
+    values: {listing_id: 1, buyer_id: 00000000-0000-0000-0000-000000000002, seller_id: 00000000-0000-0000-0000-000000000001, amount: 500}
+    returning: true
+  expect: {affected: 1}
+
+- name: buyer_cannot_underpay
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: orders
+    values: {listing_id: 1, buyer_id: 00000000-0000-0000-0000-000000000002, seller_id: 00000000-0000-0000-0000-000000000001, amount: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: buyer_cannot_name_wrong_seller
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: orders
+    values: {listing_id: 1, buyer_id: 00000000-0000-0000-0000-000000000002, seller_id: 00000000-0000-0000-0000-000000000003, amount: 500}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_cannot_buy_own_listing
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: orders
+    values: {listing_id: 1, buyer_id: 00000000-0000-0000-0000-000000000001, seller_id: 00000000-0000-0000-0000-000000000001, amount: 500}
+    returning: false
+  expect: {denied: true}
+
+- name: buyer_cannot_create_paid_order
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: orders
+    values: {listing_id: 1, buyer_id: 00000000-0000-0000-0000-000000000002, seller_id: 00000000-0000-0000-0000-000000000001, amount: 500, status: paid}
+    returning: false
+  expect: {denied: true}
+
+- name: buyer_cannot_mark_order_paid_directly
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: orders
+    values: {status: paid}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_cannot_release_directly
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: orders
+    values: {status: released}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_ships_paid_order
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.mark_shipped(1)
+  expect:
+    rows:
+    - [shipped]
+
+- name: buyer_releases_shipped_order
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.release_funds(2)
+  expect:
+    rows:
+    - [released]
+
+- name: seller_refunds_paid_order
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.refund_order(1)
+  expect:
+    rows:
+    - [refunded]
+
+- name: seller_refunds_shipped_order
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.refund_order(2)
+  expect:
+    rows:
+    - [refunded]
+
+- name: release_is_stored
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.release_funds(2); select status from orders where id = 2
+  expect:
+    rows:
+    - [released]
+
+- name: buyer_cannot_ship
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.mark_shipped(1)
+  expect: {denied: true}
+
+- name: seller_cannot_ship_unpaid_order
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.mark_shipped(3)
+  expect: {denied: true}
+
+- name: seller_cannot_release_funds
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.release_funds(2)
+  expect: {denied: true}
+
+- name: buyer_cannot_release_before_shipping
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.release_funds(1)
+  expect: {denied: true}
+
+- name: seller_cannot_refund_released_order
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.refund_order(4)
+  expect: {denied: true}
+
+- name: buyer_cannot_refund
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.refund_order(1)
+  expect: {denied: true}
+
+- name: outsider_cannot_ship
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.mark_shipped(1)
+  expect: {denied: true}
+
+- name: unknown_order_is_refused
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.mark_shipped(99)
+  expect: {denied: true}
+
+- name: anon_cannot_release
+  covers: [R5, R6]
+  as: {role: anon}
+  sql: select public.release_funds(2)
+  expect: {denied: true}
+
+- name: service_role_sees_all_orders
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from orders
+  expect:
+    rows:
+    - [4]

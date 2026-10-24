@@ -1,0 +1,234 @@
+- name: member_sees_catalogue
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from books
+  expect:
+    rows:
+    - [5]
+
+- name: anon_cannot_see_catalogue
+  covers: [R1, R7]
+  as: {role: anon}
+  sql: select * from books
+  expect: {denied: true}
+
+- name: member_sees_own_loans
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from loans order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: librarian_sees_every_loan
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from loans
+  expect:
+    rows:
+    - [6]
+
+- name: member_borrows_free_book
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 4, borrower_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_borrows_book_with_copies_left
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 3, borrower_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_with_two_loans_borrows_third
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 2, borrower_id: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_borrow_book_without_free_copy
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 1, borrower_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: member_at_cap_cannot_borrow
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 4, borrower_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_borrow_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 4, borrower_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_create_returned_loan
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: loans
+    values: {book_id: 4, borrower_id: 00000000-0000-0000-0000-000000000003, returned_on: '2020-01-05'}
+    returning: false
+  expect: {denied: true}
+
+- name: member_returns_own_loan
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: loans
+    values: {returned_on: '2020-02-01'}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_return_someone_elses_loan
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: loans
+    values: {returned_on: '2020-02-01'}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_swap_book_while_returning
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: loans
+    values: {book_id: 4, returned_on: '2020-02-01'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_change_returned_loan
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: loans
+    values: {returned_on: '2020-03-01'}
+    match: {id: 6}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_reopen_returned_loan
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: loans
+    values: {returned_on: null}
+    match: {id: 6}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_delete_loan
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: loans
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: librarian_changes_catalogue
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: books
+    values: {copies: 2}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_change_catalogue
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: books
+    values: {copies: 9}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_add_book
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: books
+    values: {id: 9, title: x, copies: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: librarian_sees_own_librarian_row
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select user_id from librarians order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000004]
+
+- name: member_sees_no_librarian_rows
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select user_id from librarians
+  expect: {count: 0}
+
+- name: member_cannot_become_librarian
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: librarians
+    values: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_loans
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from loans
+  expect: {denied: true}
+
+- name: service_role_sees_all_loans
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from loans
+  expect:
+    rows:
+    - [6]

@@ -1,0 +1,175 @@
+- name: customer_reads_own_profile_only
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from profiles order by id
+  expect: {rows: [["00000000-0000-0000-0000-000000000001"]]}
+
+- name: agent_reads_every_profile
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select count(*) from profiles
+  expect: {rows: [[3]]}
+
+- name: customer_renames_self
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update profiles set display_name = 'Ana B.' where id = '00000000-0000-0000-0000-000000000001'
+  expect: {affected: 1}
+
+- name: customer_cannot_make_self_agent
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update profiles set is_agent = true where id = '00000000-0000-0000-0000-000000000001'
+  expect: {denied: true}
+
+- name: customer_cannot_rename_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update profiles set display_name = 'x' where id = '00000000-0000-0000-0000-000000000002'
+  expect: {denied: true}
+
+- name: agent_cannot_change_own_agent_status
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update profiles set is_agent = false where id = '00000000-0000-0000-0000-000000000003'
+  expect: {denied: true}
+
+- name: customer_reads_own_tickets
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from tickets order by id
+  expect: {rows: [[1], [2]]}
+
+- name: other_customer_reads_only_own_ticket
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from tickets order by id
+  expect: {rows: [[3]]}
+
+- name: agent_reads_every_ticket
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from tickets order by id
+  expect: {rows: [[1], [2], [3]]}
+
+- name: customer_opens_ticket
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000001', 'Help')
+  expect: {affected: 1}
+
+- name: customer_cannot_open_ticket_for_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000002', 'Spoof')
+  expect: {denied: true}
+
+- name: customer_cannot_open_preassigned_ticket
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into tickets (requester_id, subject, assigned_agent) values ('00000000-0000-0000-0000-000000000001', 'VIP', '00000000-0000-0000-0000-000000000003')
+  expect: {denied: true}
+
+- name: customer_cannot_open_closed_ticket
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into tickets (requester_id, subject, status) values ('00000000-0000-0000-0000-000000000001', 'Done', 'closed')
+  expect: {denied: true}
+
+- name: agent_closes_ticket
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update tickets set status = 'closed' where id = 3
+  expect: {affected: 1}
+
+- name: customer_cannot_update_own_ticket
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update tickets set status = 'closed' where id = 1
+  expect: {denied: true}
+
+- name: agent_cannot_delete_ticket
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: delete from tickets where id = 2
+  expect: {denied: true}
+
+- name: customer_cannot_delete_own_ticket
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from tickets where id = 1
+  expect: {denied: true}
+
+- name: agent_claim_in_user_metadata_grants_nothing
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001", claims: {user_metadata: {is_agent: true}}}
+  sql: select id from tickets order by id
+  expect: {rows: [[1], [2]]}
+
+- name: agent_claim_cannot_update_tickets
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001", claims: {user_metadata: {is_agent: true}}}
+  sql: update tickets set status = 'closed' where id = 3
+  expect: {denied: true}
+
+- name: anon_sees_no_tickets
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from tickets
+  expect: {denied: true}
+
+- name: anon_sees_no_profiles
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from profiles
+  expect: {denied: true}
+
+- name: anon_cannot_open_ticket
+  covers: [R8]
+  as: {role: anon}
+  sql: insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000001', 'anon')
+  expect: {denied: true}
+
+- name: service_role_sees_all_tickets
+  covers: [R9]
+  as: {role: service_role}
+  sql: select count(*) from tickets
+  expect: {rows: [[3]]}
+
+- name: service_role_can_change_agent_status
+  covers: [R9]
+  as: {role: service_role}
+  sql: update profiles set is_agent = true where id = '00000000-0000-0000-0000-000000000002'
+  expect: {affected: 1}
+
+- name: client_opens_ticket_and_reads_it_back
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: tickets
+    values: {requester_id: 00000000-0000-0000-0000-000000000001, subject: Help}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_renames_self_and_reads_profile_back
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: profiles
+    values: {display_name: Ana B.}
+    match: {id: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_agent_closes_ticket_and_reads_it_back
+  covers: [R3, R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: tickets
+    values: {status: closed}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}

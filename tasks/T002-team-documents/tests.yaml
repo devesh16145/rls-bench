@@ -1,0 +1,198 @@
+- name: viewer_reads_team_documents
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from documents order by id
+  expect: {rows: [[1], [2]]}
+
+- name: ana_reads_documents_of_both_teams
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from documents order by id
+  expect: {rows: [[1], [2], [3], [5]]}
+
+- name: user_without_team_reads_no_documents
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select id from documents
+  expect: {count: 0}
+
+- name: creator_cannot_read_deleted_document
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from documents where id = 4
+  expect: {count: 0}
+
+- name: editor_creates_document
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into documents (team_id, title, created_by) values (1, 'Plan', '00000000-0000-0000-0000-000000000002')
+  expect: {affected: 1}
+
+- name: editor_cannot_create_as_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into documents (team_id, title, created_by) values (1, 'Plan', '00000000-0000-0000-0000-000000000001')
+  expect: {denied: true}
+
+- name: viewer_cannot_create_document
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: insert into documents (team_id, title, created_by) values (1, 'Draft', '00000000-0000-0000-0000-000000000003')
+  expect: {denied: true}
+
+- name: editor_cannot_create_in_team_where_viewer
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into documents (team_id, title, created_by) values (2, 'Draft', '00000000-0000-0000-0000-000000000001')
+  expect: {denied: true}
+
+- name: editor_edits_colleagues_document
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update documents set title = 'Roadmap v2' where id = 1
+  expect: {affected: 1}
+
+- name: viewer_cannot_edit_document
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update documents set title = 'x' where id = 1
+  expect: {affected: 0}
+
+- name: editor_cannot_edit_in_team_where_viewer
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update documents set title = 'x' where id = 3
+  expect: {affected: 0}
+
+- name: editor_cannot_move_document_to_foreign_team
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update documents set team_id = 2 where id = 2
+  expect: {denied: true}
+
+- name: editor_cannot_move_document_to_team_where_viewer
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update documents set team_id = 2 where id = 1
+  expect: {denied: true}
+
+- name: editor_cannot_edit_deleted_document
+  covers: [R3, R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update documents set title = 'revived' where id = 4
+  expect: {affected: 0}
+
+- name: creator_deletes_own_document
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from documents where id = 2
+  expect: {affected: 1}
+
+- name: editor_cannot_delete_colleagues_document
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from documents where id = 1
+  expect: {affected: 0}
+
+- name: viewer_sees_own_team
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from teams order by id
+  expect: {rows: [[1]]}
+
+- name: user_without_team_sees_no_teams
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select id from teams
+  expect: {count: 0}
+
+- name: ana_sees_own_memberships
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select team_id, role from team_members order by team_id
+  expect: {rows: [[1, editor], [2, viewer]]}
+
+- name: ben_sees_only_own_membership
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select user_id from team_members order by team_id, user_id
+  expect: {rows: [["00000000-0000-0000-0000-000000000002"]]}
+
+- name: viewer_cannot_promote_self
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update team_members set role = 'editor' where user_id = '00000000-0000-0000-0000-000000000003'
+  expect: {denied: true}
+
+- name: user_cannot_join_team
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: insert into team_members (team_id, user_id, role) values (2, '00000000-0000-0000-0000-000000000003', 'editor')
+  expect: {denied: true}
+
+- name: user_cannot_create_team
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into teams (id, name) values (3, 'Initech')
+  expect: {denied: true}
+
+- name: member_cannot_remove_membership
+  covers: [R7]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from team_members where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {denied: true}
+
+- name: anon_sees_no_documents
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from documents
+  expect: {denied: true}
+
+- name: anon_sees_no_memberships
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from team_members
+  expect: {denied: true}
+
+- name: anon_cannot_create_document
+  covers: [R8]
+  as: {role: anon}
+  sql: insert into documents (team_id, title, created_by) values (1, 'x', '00000000-0000-0000-0000-000000000001')
+  expect: {denied: true}
+
+- name: service_role_sees_all_documents
+  covers: [R9]
+  as: {role: service_role}
+  sql: select count(*) from documents
+  expect: {rows: [[5]]}
+
+- name: client_editor_creates_document_and_reads_it_back
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: documents
+    values: {team_id: 1, title: Plan, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_editor_edits_document_and_reads_it_back
+  covers: [R3, R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: documents
+    values: {title: Roadmap v3}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_viewer_cannot_create_document
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: documents
+    values: {team_id: 1, title: x, created_by: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {denied: true}

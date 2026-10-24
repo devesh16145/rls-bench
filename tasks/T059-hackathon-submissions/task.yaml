@@ -1,0 +1,21 @@
+id: T059
+title: Hackathon submissions that lock at the deadline and open to judges after it
+tier: 2
+tags:
+- time-window
+- membership
+- judges
+- upsert
+traps:
+- private-row-leak
+- time-window
+- reference-check
+extra_tables: []
+fixture_notes:
+- event 1 deadline 2099 (still open), event 2 deadline 2020 (closed)
+- team 1 (al …01, bo …02) and team 2 (cy …03) in event 1; team 3 (cy) in event 2
+- 'judges: jj (…04) for event 1, kk (…05) for event 2'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

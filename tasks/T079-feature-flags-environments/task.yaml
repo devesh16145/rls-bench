@@ -1,0 +1,20 @@
+id: T079
+title: Feature flags where developers may change only dev flags
+tier: 2
+tags:
+- membership
+- role-column
+- environment-scoping
+- client-returning
+traps:
+- privilege-escalation
+- weak-with-check
+- recursive-policy
+extra_tables: []
+fixture_notes:
+- 'org 1: developer dev1 (…01), admin adm (…02); org 2: developer dev2 (…03)'
+- org 1 has 'new-ui' in dev (flag 1) and prod (flag 2); org 2 has a prod flag 3
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

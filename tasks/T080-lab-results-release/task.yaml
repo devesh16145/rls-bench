@@ -1,0 +1,21 @@
+id: T080
+title: Lab results that patients see only after the doctor releases them
+tier: 2
+tags:
+- time-window
+- care-team
+- release-gating
+- client-returning
+traps:
+- time-window
+- private-row-leak
+- negative-condition
+extra_tables: []
+fixture_notes:
+- 'patient pam (…01): result 1 released 2020, result 2 unreleased, result 3 scheduled for 2099'
+- 'patient pete (…02): result 4 released'
+- doctor doc (…03) in pam's care team
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

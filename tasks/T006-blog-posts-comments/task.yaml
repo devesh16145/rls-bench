@@ -1,0 +1,16 @@
+id: T006
+title: Blog posts with publish windows and inherited comment visibility
+tier: 2
+tags: [publish-window, parent-child, anon-read, ownership]
+traps: [child-leak, time-window, ownership-change]
+extra_tables: []
+fixture_notes:
+  - "draft post (published_at null): posts.id=2"
+  - "scheduled post (published_at 2099): posts.id=3"
+  - "expired post (unpublish_at 2021): posts.id=4, with a comment by cy (comments.id=4)"
+  - "live post with future unpublish_at (2099): posts.id=5"
+  - "comment on a draft: comments.id=3"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

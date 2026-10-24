@@ -1,0 +1,21 @@
+id: T026
+title: Public app config with per-user overrides
+tier: 1
+tags:
+- public-read
+- private-rows
+- upsert
+- reference-check
+traps:
+- private-row-leak
+- reference-check
+- upsert-needs-update
+extra_tables: []
+fixture_notes:
+- 'private entry: ''stripe_webhook_secret'''
+- 'public but not overridable: ''max_upload_mb'''
+- ana (…01) already overrides 'theme'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

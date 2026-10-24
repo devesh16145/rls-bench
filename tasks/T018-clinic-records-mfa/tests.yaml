@@ -1,0 +1,223 @@
+- name: patient_reads_own_records
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal1}
+  sql: select id from records order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: patient_reads_own_patient_row
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal1}
+  sql: select id from patients order by id
+  expect:
+    rows:
+    - [1]
+
+- name: doctor_with_mfa_reads_care_team_records
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  sql: select id from records order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: doctor_without_mfa_reads_no_records
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal1}
+  sql: select id from records
+  expect: {count: 0}
+
+- name: doctor_with_mfa_reads_care_team_patients
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  sql: select id from patients order by id
+  expect:
+    rows:
+    - [1]
+
+- name: doctor_without_mfa_reads_no_patients
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal1}
+  sql: select id from patients
+  expect: {count: 0}
+
+- name: doctor_with_mfa_cannot_read_other_patients_records
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  sql: select id from records where patient_id = 2
+  expect: {count: 0}
+
+- name: doctor_with_mfa_adds_record
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: records
+    values: {patient_id: 1, author_id: 00000000-0000-0000-0000-000000000003, note: Results normal}
+    returning: true
+  expect: {affected: 1}
+
+- name: doctor_without_mfa_cannot_add_record
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal1}
+  client:
+    op: insert
+    table: records
+    values: {patient_id: 1, author_id: 00000000-0000-0000-0000-000000000003, note: x}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_cannot_add_record_for_other_patient
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: records
+    values: {patient_id: 2, author_id: 00000000-0000-0000-0000-000000000003, note: x}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_cannot_add_record_as_another_doctor
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: records
+    values: {patient_id: 1, author_id: 00000000-0000-0000-0000-000000000004, note: x}
+    returning: false
+  expect: {denied: true}
+
+- name: patient_cannot_add_record
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: records
+    values: {patient_id: 1, author_id: 00000000-0000-0000-0000-000000000001, note: x}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_cannot_edit_record
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: update
+    table: records
+    values: {note: edited}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_cannot_delete_record
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: delete
+    table: records
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: patient_sees_own_care_team
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal1}
+  sql: select doctor_id from care_team order by doctor_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003]
+
+- name: doctor_sees_own_care_team_rows
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal1}
+  sql: select patient_id from care_team order by patient_id
+  expect:
+    rows:
+    - [1]
+
+- name: doctor_cannot_join_care_team
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: care_team
+    values: {patient_id: 2, doctor_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_role_in_user_metadata_grants_nothing
+  covers: [R6]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      aal: aal2
+      user_metadata: {role: doctor}
+  sql: select id from records where patient_id = 1
+  expect: {count: 0}
+
+- name: anon_sees_no_records
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from records
+  expect: {denied: true}
+
+- name: service_role_sees_all_records
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from records
+  expect:
+    rows:
+    - [3]

@@ -1,0 +1,144 @@
+- name: employee_sees_own_device
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from devices order by id
+  expect:
+    rows:
+    - [1]
+
+- name: admin_sees_org_devices
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from devices order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: employee_sees_own_device_commands
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from device_commands order by id
+  expect:
+    rows:
+    - [1]
+
+- name: other_employee_sees_no_commands
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from device_commands
+  expect: {count: 0}
+
+- name: admin_wipes_org_device
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 2, command: wipe, issued_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_wipe_other_org_device
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 3, command: wipe, issued_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: other_org_admin_cannot_lock_device
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 1, command: lock, issued_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_locates_own_device
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 1, command: locate, issued_by: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_locks_own_device
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 1, command: lock, issued_by: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_cannot_wipe_own_device
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 1, command: wipe, issued_by: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_lock_colleagues_device
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 2, command: lock, issued_by: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_issue_as_admin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: device_commands
+    values: {device_id: 1, command: lock, issued_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_delete_command
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: device_commands
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: employee_cannot_reassign_device
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: devices
+    values: {assigned_to: 00000000-0000-0000-0000-000000000004}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_commands
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from device_commands
+  expect: {denied: true}
+
+- name: service_role_sees_all_commands
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from device_commands
+  expect:
+    rows:
+    - [1]

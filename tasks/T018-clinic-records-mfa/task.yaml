@@ -1,0 +1,22 @@
+id: T018
+title: Clinic records that require an MFA session for doctors
+tier: 2
+tags:
+- mfa
+- jwt-claims
+- care-team
+- append-only
+- client-returning
+traps:
+- mfa-not-enforced
+- claim-trust
+- reference-check
+extra_tables: []
+fixture_notes:
+- doctor dia (…03) is in patient pam's (…01) care team; doctor ed (…04) in pete's (…02)
+- patient pete also carries user_metadata role=doctor in one test (claim-trust)
+- each doctor test runs once with aal1 and once with aal2
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

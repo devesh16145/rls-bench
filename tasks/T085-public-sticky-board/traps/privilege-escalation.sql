@@ -1,0 +1,18 @@
+alter table public.board_notes enable row level security;
+
+create policy board_notes_select on public.board_notes
+  for select to anon, authenticated
+  using (true);
+
+create policy board_notes_insert on public.board_notes
+  for insert to authenticated
+  with check (author_id = auth.uid());
+
+create policy board_notes_update on public.board_notes
+  for update to authenticated
+  using (author_id = auth.uid())
+  with check (author_id = auth.uid());
+
+create policy board_notes_delete on public.board_notes
+  for delete to authenticated
+  using (author_id = auth.uid());

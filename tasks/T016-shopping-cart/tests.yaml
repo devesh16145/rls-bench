@@ -1,0 +1,148 @@
+- name: anon_reads_active_products
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from products order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: shopper_cannot_see_inactive_product
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from products where id = 3
+  expect: {count: 0}
+
+- name: shopper_cannot_change_prices
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: products
+    values: {price: 0}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: shopper_cannot_add_products
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: products
+    values: {id: 9, name: Free stuff, price: 0, is_active: true}
+    returning: false
+  expect: {denied: true}
+
+- name: shopper_reads_own_cart
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select product_id, quantity from cart_items order by product_id
+  expect:
+    rows:
+    - [1, 2]
+
+- name: shopper_cannot_read_other_cart
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select product_id from cart_items where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {count: 0}
+
+- name: upsert_changes_quantity_of_existing_item
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: cart_items
+    values: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 1, quantity: 3}
+    on_conflict: [user_id, product_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: upsert_adds_new_item
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: cart_items
+    values: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 2, quantity: 1}
+    on_conflict: [user_id, product_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_add_inactive_product
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: cart_items
+    values: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 3, quantity: 1}
+    on_conflict: [user_id, product_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_switch_item_to_inactive_product
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cart_items
+    values: {product_id: 3}
+    match: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_add_to_someone_elses_cart
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: cart_items
+    values: {user_id: 00000000-0000-0000-0000-000000000002, product_id: 1, quantity: 1}
+    on_conflict: [user_id, product_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_change_someone_elses_item
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cart_items
+    values: {quantity: 9}
+    match: {user_id: 00000000-0000-0000-0000-000000000002, product_id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: shopper_removes_own_item
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: cart_items
+    match: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 1}
+  expect: {affected: 1}
+
+- name: anon_cannot_add_to_cart
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: insert
+    table: cart_items
+    values: {user_id: 00000000-0000-0000-0000-000000000001, product_id: 2, quantity: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_read_carts
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from cart_items
+  expect: {denied: true}
+
+- name: service_role_sees_inactive_products
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from products
+  expect:
+    rows:
+    - [3]

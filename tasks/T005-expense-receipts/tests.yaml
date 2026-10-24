@@ -1,0 +1,133 @@
+- name: ana_reads_own_receipts
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from receipts order by id
+  expect: {rows: [[1], [2]]}
+
+- name: ana_reads_amounts
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select merchant, amount from receipts where id = 1
+  expect: {rows: [[Taxi, 12.5]]}
+
+- name: ben_reads_only_own_receipt
+  covers: [R1, R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from receipts order by id
+  expect: {rows: [[3]]}
+
+- name: user_without_receipts_reads_none
+  covers: [R1, R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from receipts
+  expect: {count: 0}
+
+- name: anon_reads_nothing
+  covers: [R3, R4]
+  as: {role: anon}
+  sql: select id from receipts
+  expect: {denied: true}
+
+- name: ana_adds_receipt
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into receipts (uploaded_by, merchant, amount) values ('00000000-0000-0000-0000-000000000001', 'Cafe', 4.50)
+  expect: {affected: 1}
+
+- name: ana_cannot_add_receipt_as_ben
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into receipts (uploaded_by, merchant, amount) values ('00000000-0000-0000-0000-000000000002', 'Cafe', 4.50)
+  expect: {denied: true}
+
+- name: ana_cannot_add_imported_receipt
+  covers: [R2, R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into receipts (uploaded_by, merchant, amount) values (null, 'Fake import', 1.00)
+  expect: {denied: true}
+
+- name: ana_edits_own_receipt
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update receipts set amount = 13.00 where id = 1
+  expect: {affected: 1}
+
+- name: ana_cannot_edit_bens_receipt
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update receipts set amount = 0 where id = 3
+  expect: {denied: true}
+
+- name: ana_cannot_claim_imported_receipt
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update receipts set uploaded_by = '00000000-0000-0000-0000-000000000001' where id = 4
+  expect: {denied: true}
+
+- name: ana_cannot_turn_receipt_into_import
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update receipts set uploaded_by = null where id = 1
+  expect: {denied: true}
+
+- name: ana_deletes_own_receipt
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from receipts where id = 2
+  expect: {affected: 1}
+
+- name: ana_cannot_delete_imported_receipt
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from receipts where id = 4
+  expect: {denied: true}
+
+- name: anon_cannot_add_imported_receipt
+  covers: [R4]
+  as: {role: anon}
+  sql: insert into receipts (uploaded_by, merchant, amount) values (null, 'Anon', 1.00)
+  expect: {denied: true}
+
+- name: anon_cannot_delete_receipts
+  covers: [R4]
+  as: {role: anon}
+  sql: delete from receipts
+  expect: {denied: true}
+
+- name: service_role_sees_all_receipts
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from receipts
+  expect: {rows: [[5]]}
+
+- name: client_adds_receipt_and_reads_it_back
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: receipts
+    values: {uploaded_by: 00000000-0000-0000-0000-000000000001, merchant: Cafe, amount: 4.5}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_edits_own_receipt_and_reads_it_back
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: receipts
+    values: {amount: 13}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_cannot_edit_imported_receipt
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: receipts
+    values: {amount: 0}
+    match: {id: 4}
+    returning: true
+  expect: {denied: true}

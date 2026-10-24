@@ -1,0 +1,17 @@
+id: T014
+title: Per-user settings saved with upsert
+tier: 1
+tags:
+- single-owner
+- upsert
+- client-returning
+traps:
+- upsert-needs-update
+extra_tables: []
+fixture_notes:
+- 'user without a settings row yet: cy (…03) — first save inserts'
+- 'existing rows: ana (…01), ben (…02)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

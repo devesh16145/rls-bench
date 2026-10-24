@@ -1,0 +1,21 @@
+id: T060
+title: Bug tracker with confidential security issues
+tier: 2
+tags:
+- membership
+- role-column
+- private-rows
+- old-vs-new
+- client-returning
+traps:
+- private-row-leak
+- privilege-escalation
+- recursive-policy
+extra_tables: []
+fixture_notes:
+- 'project 1: mae maintainer (…01), dan developer (…02), rey and zed reporters (…03, …04); out (…05) not a member'
+- issue 2 confidential, reported by zed and assigned to dan; issue 3 confidential, reported by mae, unassigned
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

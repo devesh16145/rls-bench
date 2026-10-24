@@ -1,0 +1,250 @@
+- name: employee_reads_own_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from leave_requests order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: manager_reads_direct_reports_and_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from leave_requests order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: skip_level_manager_sees_only_direct_reports
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from leave_requests order by id
+  expect:
+    rows:
+    - [4]
+
+- name: peer_cannot_read_colleague_requests
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from leave_requests order by id
+  expect:
+    rows:
+    - [3]
+
+- name: employee_requests_leave
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: leave_requests
+    values: {employee_id: 00000000-0000-0000-0000-000000000002, starts_on: '2030-06-01', ends_on: '2030-06-02', note: Moving}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_cannot_request_for_colleague
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: leave_requests
+    values: {employee_id: 00000000-0000-0000-0000-000000000003, starts_on: '2030-06-01', ends_on: '2030-06-02'}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_create_approved_request
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: leave_requests
+    values: {employee_id: 00000000-0000-0000-0000-000000000002, starts_on: '2030-06-01', ends_on: '2030-06-02', status: approved}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_changes_pending_dates
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: leave_requests
+    values: {starts_on: '2030-03-03', ends_on: '2030-03-07', note: Family wedding, status: pending}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_cancels_pending_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: leave_requests
+    values: {starts_on: '2030-03-02', ends_on: '2030-03-06', note: Family wedding, status: cancelled}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_cannot_approve_own_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: leave_requests
+    values: {starts_on: '2030-03-02', ends_on: '2030-03-06', note: Family wedding, status: approved}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_edit_approved_request
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: leave_requests
+    values: {starts_on: '2030-01-10', ends_on: '2030-01-20', note: Conference, status: approved}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_approves_report_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_rejects_report_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: rejected, decided_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_cannot_change_dates_while_approving
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000001, ends_on: '2030-03-20'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_cannot_record_someone_else_as_decider
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000005}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_cannot_approve_own_request
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: skip_level_manager_cannot_decide
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000005}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: peer_cannot_decide
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000003}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: ceo_approves_direct_report
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: approved, decided_by: 00000000-0000-0000-0000-000000000005}
+    match: {id: 4}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_cannot_reopen_decided_request
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: leave_requests
+    values: {status: pending, decided_by: null}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_delete_request
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: leave_requests
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: employee_reads_directory
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from employees
+  expect:
+    rows:
+    - [5]
+
+- name: employee_cannot_change_own_manager
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: employees
+    values: {manager_id: null}
+    match: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_requests
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from leave_requests
+  expect: {denied: true}
+
+- name: service_role_reopens_request
+  covers: [R8]
+  as: {role: service_role}
+  sql: update leave_requests set status = 'pending', decided_by = null where id = 2; select status from leave_requests where id = 2
+  expect:
+    rows:
+    - [pending]

@@ -1,0 +1,18 @@
+id: T075
+title: Journal entries editable only for 24 hours after writing
+tier: 1
+tags:
+- single-owner
+- time-window
+- column-restriction
+traps:
+- time-window
+- old-vs-new
+extra_tables: []
+fixture_notes:
+- ana's (…01) entry 1 and ben's (…02) entry 2 were written in 2020, so they are permanent
+- fresh entries get created_at = now(), so tests create one and edit it in the same test
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

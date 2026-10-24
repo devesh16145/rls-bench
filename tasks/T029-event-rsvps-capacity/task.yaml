@@ -1,0 +1,22 @@
+id: T029
+title: Event RSVPs with private invites and capacity limits
+tier: 2
+tags:
+- aggregate-limit
+- private-rows
+- invitations
+- client-returning
+traps:
+- aggregate-limit
+- private-row-leak
+- reference-check
+extra_tables: []
+fixture_notes:
+- event 1 public, capacity 2, one RSVP (ana) — one seat left
+- event 2 private, invites ana and ben, ana RSVPed
+- event 3 public, capacity 1, full (ben)
+- host hal (…01); cy (…04) and dee (…05) not invited
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

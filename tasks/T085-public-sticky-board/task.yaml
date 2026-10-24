@@ -1,0 +1,18 @@
+id: T085
+title: Public sticky-note board where only moderators pin notes
+tier: 1
+tags:
+- public-read
+- single-owner
+- column-restriction
+- client-returning
+traps:
+- privilege-escalation
+- over-broad-for-all
+extra_tables: []
+fixture_notes:
+- ana's (…01) note 1 is pinned (by a moderator); ben's (…02) note 2 is not
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

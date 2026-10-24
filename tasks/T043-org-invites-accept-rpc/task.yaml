@@ -1,0 +1,25 @@
+id: T043
+title: Organization invites accepted through a token RPC
+tier: 3
+tags:
+- rpc
+- security-definer
+- invitations
+- jwt-claims
+- expiry
+- secret-rows
+traps:
+- rpc-missing-auth-check
+- time-window
+- state-transition
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- org 1 admin ada (…01), member bob (…02); org 2 admin bob
+- cal (…03) has a valid invite stored as 'Cal@Example.com' and an expired admin invite
+- dan (…04) has a used invite and an unused admin invite
+- one test gives cal a user_metadata email of dan's address
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

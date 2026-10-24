@@ -1,0 +1,183 @@
+- name: client_sees_own_project
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from projects order by id
+  expect:
+    rows:
+    - [1]
+
+- name: staff_sees_every_project
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from projects order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: client_reads_non_internal_comments
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from project_comments order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: other_client_reads_only_own_project_comments
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from project_comments order by id
+  expect:
+    rows:
+    - [4]
+
+- name: staff_reads_every_comment
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from project_comments order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: client_comments_on_own_project
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: project_comments
+    values: {project_id: 1, author_id: 00000000-0000-0000-0000-000000000003, body: 'Can we move the logo?', is_internal: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_cannot_post_internal_comment
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: project_comments
+    values: {project_id: 1, author_id: 00000000-0000-0000-0000-000000000003, body: Looks good, is_internal: true}
+    returning: false
+  expect: {denied: true}
+
+- name: client_cannot_comment_on_other_project
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: project_comments
+    values: {project_id: 2, author_id: 00000000-0000-0000-0000-000000000003, body: Looks good, is_internal: false}
+    returning: false
+  expect: {denied: true}
+
+- name: client_cannot_comment_as_staff
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: project_comments
+    values: {project_id: 1, author_id: 00000000-0000-0000-0000-000000000001, body: Looks good, is_internal: false}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_posts_internal_note
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: project_comments
+    values: {project_id: 2, author_id: 00000000-0000-0000-0000-000000000002, body: Budget tight, is_internal: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_edits_own_comment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: project_comments
+    values: {body: Thanks a lot!}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_cannot_edit_staff_comment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: project_comments
+    values: {body: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_deletes_own_comment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: project_comments
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: staff_cannot_delete_colleagues_comment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: project_comments
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: staff_sees_own_staff_row
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select user_id from staff order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+
+- name: client_sees_no_staff_rows
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select user_id from staff
+  expect: {count: 0}
+
+- name: client_cannot_become_staff
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: staff
+    values: {user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: client_cannot_rename_project
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: projects
+    values: {name: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_comments
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from project_comments
+  expect: {denied: true}
+
+- name: service_role_sees_all_comments
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from project_comments
+  expect:
+    rows:
+    - [4]

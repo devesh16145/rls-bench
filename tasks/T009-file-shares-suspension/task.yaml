@@ -1,0 +1,15 @@
+id: T009
+title: File sharing with expiring shares and account suspension
+tier: 3
+tags: [share-links, expiry, restrictive-policy, security-definer-helper, ownership]
+traps: [recursive-policy, restrictive-vs-permissive, ownership-change, time-window]
+extra_tables: []
+fixture_notes:
+  - "edit share with no expiry: file 1 → ben (…02)"
+  - "expired read share: file 1 → cy (…03), expires 2020-01-01"
+  - "read share expiring 2099: file 2 → dee (…04)"
+  - "suspended account: sam (…05) owns file 3 and has a read share on file 1"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

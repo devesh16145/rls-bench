@@ -1,0 +1,21 @@
+id: T065
+title: Pastebin with anonymous, private and expiring pastes
+tier: 1
+tags:
+- anon-insert
+- nullable-owner
+- time-window
+- public-read
+traps:
+- time-window
+- null-owner
+- anon-write-spoof
+extra_tables: []
+fixture_notes:
+- 'ana (…01): public paste 1, private paste 2, expired paste 3'
+- 'anonymous pastes (NULL author): 4 (expires 2099) and 5 (expired)'
+- ben's (…02) private paste 6
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

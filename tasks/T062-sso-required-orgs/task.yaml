@@ -1,0 +1,22 @@
+id: T062
+title: Organizations whose data is only reachable in SSO sessions
+tier: 3
+tags:
+- jwt-claims
+- amr
+- restrictive-policy
+- session-assurance
+- client-returning
+traps:
+- restrictive-vs-permissive
+- claim-trust
+- sso-not-enforced
+extra_tables: []
+fixture_notes:
+- org 1 'Bank' requires SSO; org 2 'Startup' does not
+- ana (…01) admin of org 1 and member of org 2; ben (…02) member of org 1; cy (…03) admin of org 2
+- each user is tested with an `amr` of sso/saml or password; ben once with user_metadata sso=true
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

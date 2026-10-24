@@ -1,0 +1,138 @@
+- name: editor_reads_accessible_documents
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from documents order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: reader_reads_only_shared_document
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from documents order by id
+  expect:
+    rows:
+    - [1]
+
+- name: user_sees_own_access_rows
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select doc_id, can_edit from doc_access order by doc_id
+  expect:
+    rows:
+    - [1, false]
+
+- name: editor_cannot_update_document_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: documents
+    values: {body: sneaky edit}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_take_lock_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: documents
+    values: {checked_out_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_grant_self_edit_access
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: doc_access
+    values: {can_edit: true}
+    match: {doc_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_checks_out_document
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkout_document(1); select checked_out_by from documents where id = 1
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+
+- name: holder_can_check_out_again
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkout_document(2); select checked_out_by from documents where id = 2
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+
+- name: cannot_check_out_document_held_by_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkout_document(4)
+  expect: {denied: true}
+
+- name: reader_cannot_check_out
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.checkout_document(1)
+  expect: {denied: true}
+
+- name: cannot_check_out_without_access
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkout_document(3)
+  expect: {denied: true}
+
+- name: cannot_check_out_unknown_document
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkout_document(99)
+  expect: {denied: true}
+
+- name: holder_checks_in_document
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkin_document(2, 'draft v2'); select body, checked_out_by from documents where id = 2
+  expect:
+    rows:
+    - [draft v2, null]
+
+- name: non_holder_cannot_check_in
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.checkin_document(2, 'overwritten')
+  expect: {denied: true}
+
+- name: cannot_check_in_unlocked_document
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.checkin_document(1, 'v2')
+  expect: {denied: true}
+
+- name: anon_cannot_check_out
+  covers: [R3, R5]
+  as: {role: anon}
+  sql: select public.checkout_document(1)
+  expect: {denied: true}
+
+- name: anon_sees_no_documents
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from documents
+  expect: {denied: true}
+
+- name: service_role_sees_all_documents
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from documents
+  expect:
+    rows:
+    - [4]

@@ -1,0 +1,166 @@
+- name: user_sees_events_and_teams
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from teams
+  expect:
+    rows:
+    - [3]
+
+- name: user_sees_own_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select team_id from team_members order by team_id
+  expect:
+    rows:
+    - [2]
+    - [3]
+
+- name: member_sees_own_team_submission
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select team_id from submissions order by team_id
+  expect:
+    rows:
+    - [1]
+
+- name: member_of_two_teams_sees_both
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select team_id from submissions order by team_id
+  expect:
+    rows:
+    - [3]
+
+- name: judge_cannot_see_before_deadline
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select team_id from submissions
+  expect: {count: 0}
+
+- name: judge_sees_submissions_after_deadline
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select team_id from submissions order by team_id
+  expect:
+    rows:
+    - [3]
+
+- name: member_updates_submission
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: submissions
+    values: {team_id: 1, repo_url: 'https://github.com/alpha/app-v2', notes: demo video in README}
+    on_conflict: [team_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: member_creates_submission
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: submissions
+    values: {team_id: 2, repo_url: 'https://github.com/beta/app', notes: demo video in README}
+    on_conflict: [team_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_submit_for_other_team
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: submissions
+    values: {team_id: 2, repo_url: 'https://github.com/evil/app', notes: demo video in README}
+    on_conflict: [team_id]
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_insert_for_other_team
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: submissions
+    values: {team_id: 2, repo_url: 'https://github.com/evil/app', notes: demo video in README}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_update_after_deadline
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: submissions
+    values: {notes: late fix}
+    match: {team_id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_edit_after_deadline
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: submissions
+    values: {team_id: 3, repo_url: 'https://github.com/gamma/late-fix', notes: demo video in README}
+    on_conflict: [team_id]
+    returning: false
+  expect: {denied: true}
+
+- name: judge_cannot_edit_submission
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: submissions
+    values: {notes: x}
+    match: {team_id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_delete_submission
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: submissions
+    match: {team_id: 1}
+  expect: {denied: true}
+
+- name: user_cannot_join_team
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: team_members
+    values: {team_id: 2, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_move_deadline
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: events
+    values: {deadline: '2099-01-01'}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_submissions
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from submissions
+  expect: {denied: true}
+
+- name: service_role_sees_all_submissions
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from submissions
+  expect:
+    rows:
+    - [2]

@@ -1,0 +1,186 @@
+- name: speaker_sees_own_proposals
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from proposals order by id
+  expect:
+    rows:
+    - [1]
+
+- name: reviewer_sees_every_proposal
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from proposals
+  expect:
+    rows:
+    - [3]
+
+- name: speaker_submits_proposal
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: proposals
+    values: {speaker_id: 00000000-0000-0000-0000-000000000001, title: Edge functions 101}
+    returning: true
+  expect: {affected: 1}
+
+- name: speaker_cannot_submit_accepted_proposal
+  covers: [R2, R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: proposals
+    values: {speaker_id: 00000000-0000-0000-0000-000000000001, title: x, status: accepted}
+    returning: false
+  expect: {denied: true}
+
+- name: speaker_edits_undecided_proposal
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: proposals
+    values: {title: Postgres RLS in production}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: speaker_cannot_edit_decided_proposal
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: proposals
+    values: {title: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: speaker_cannot_accept_own_proposal
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: proposals
+    values: {status: accepted}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_reviews_proposal
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: reviews
+    values: {proposal_id: 1, reviewer_id: 00000000-0000-0000-0000-000000000003, score: 4, comment: Clear and useful}
+    returning: true
+  expect: {affected: 1}
+
+- name: reviewer_cannot_review_own_proposal
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: reviews
+    values: {proposal_id: 3, reviewer_id: 00000000-0000-0000-0000-000000000003, score: 5, comment: Clear and useful}
+    returning: false
+  expect: {denied: true}
+
+- name: non_reviewer_cannot_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reviews
+    values: {proposal_id: 3, reviewer_id: 00000000-0000-0000-0000-000000000001, score: 5, comment: Clear and useful}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_cannot_review_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: reviews
+    values: {proposal_id: 1, reviewer_id: 00000000-0000-0000-0000-000000000004, score: 4, comment: Clear and useful}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_cannot_review_decided_proposal
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: reviews
+    values: {proposal_id: 2, reviewer_id: 00000000-0000-0000-0000-000000000004, score: 4, comment: Clear and useful}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_edits_own_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: reviews
+    values: {score: 5}
+    match: {proposal_id: 1, reviewer_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: reviewer_cannot_edit_review_after_decision
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: reviews
+    values: {score: 1}
+    match: {proposal_id: 2, reviewer_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_sees_only_own_reviews
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select proposal_id from reviews order by proposal_id
+  expect:
+    rows:
+    - [2]
+
+- name: speaker_cannot_see_reviews_before_decision
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select score from reviews
+  expect: {count: 0}
+
+- name: speaker_sees_reviews_after_decision
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from reviews
+  expect:
+    rows:
+    - [2]
+
+- name: user_cannot_become_reviewer
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reviewers
+    values: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_proposals
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from proposals
+  expect: {denied: true}
+
+- name: service_role_sees_all_reviews
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from reviews
+  expect:
+    rows:
+    - [3]

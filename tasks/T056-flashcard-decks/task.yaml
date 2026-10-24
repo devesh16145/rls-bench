@@ -1,0 +1,19 @@
+id: T056
+title: Flashcard decks whose cards follow the deck's visibility
+tier: 1
+tags:
+- public-read
+- parent-child
+- ownership
+- client-returning
+traps:
+- child-leak
+- ownership-change
+extra_tables: []
+fixture_notes:
+- ana's (…01) public deck 1 and private deck 2 (card 3)
+- ben's (…02) public deck 3 (card 4)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

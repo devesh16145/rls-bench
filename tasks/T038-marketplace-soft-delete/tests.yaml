@@ -1,0 +1,194 @@
+- name: anon_sees_public_listings
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from listings order by id
+  expect:
+    rows:
+    - [1]
+    - [5]
+
+- name: buyer_sees_public_and_own_listings
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from listings order by id
+  expect:
+    rows:
+    - [1]
+    - [5]
+    - [6]
+
+- name: seller_sees_all_own_listings
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from listings order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+    - [5]
+
+- name: moderator_sees_every_listing
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from listings
+  expect:
+    rows:
+    - [6]
+
+- name: seller_creates_listing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: listings
+    values: {seller_id: 00000000-0000-0000-0000-000000000001, title: Camera, price: 100, status: active}
+    returning: true
+  expect: {affected: 1}
+
+- name: seller_cannot_create_flagged_listing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: listings
+    values: {seller_id: 00000000-0000-0000-0000-000000000001, title: x, price: 100, status: active, is_flagged: true}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_cannot_create_listing_for_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: listings
+    values: {seller_id: 00000000-0000-0000-0000-000000000002, title: x, price: 100, status: active}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_edits_draft
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {price: 8500}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: seller_edits_flagged_listing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {title: Watch (genuine)}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: seller_cannot_unflag_listing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {is_flagged: false}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_cannot_edit_someone_elses_listing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: listings
+    values: {price: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_soft_deletes_listing
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {deleted_at: '2020-06-01'}
+    match: {id: 1}
+    returning: false
+  expect: {affected: 1}
+
+- name: seller_cannot_edit_deleted_listing
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {price: 1500}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: seller_cannot_restore_deleted_listing
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: listings
+    values: {deleted_at: null}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: moderator_flags_listing
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: listings
+    values: {is_flagged: true}
+    match: {id: 5}
+    returning: true
+  expect: {affected: 1}
+
+- name: moderator_unflags_listing
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: listings
+    values: {is_flagged: false}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: seller_cannot_hard_delete_listing
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: listings
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: user_cannot_become_moderator
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: moderators
+    values: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_listings
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from listings
+  expect:
+    rows:
+    - [6]

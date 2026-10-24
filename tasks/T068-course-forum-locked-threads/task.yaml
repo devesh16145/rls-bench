@@ -1,0 +1,21 @@
+id: T068
+title: Course forum with locked threads and TA moderation
+tier: 2
+tags:
+- membership
+- role-column
+- negative-condition
+- moderation
+- client-returning
+traps:
+- negative-condition
+- privilege-escalation
+- reference-check
+extra_tables: []
+fixture_notes:
+- 'course 1: students ana (…01) and ben (…02), TA tara (…03); course 2: student cy (…04)'
+- thread 2 in course 1 is locked; thread 1 was started by ana
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

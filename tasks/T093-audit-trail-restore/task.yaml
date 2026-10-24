@@ -1,0 +1,23 @@
+id: T093
+title: Audit trail written by a trigger, plus an admin-only restore RPC
+tier: 3
+tags:
+- trigger
+- audit-log
+- soft-delete
+- rpc
+- time-window
+traps:
+- audit-forgery
+- missing-audit
+- time-window
+- rpc-missing-auth-check
+extra_tables: []
+fixture_notes:
+- 'org 1: admin adm (…01), member mem (…02); org 2: admin oz (…03)'
+- record 3 (org 1) was soft-deleted in 2020, too long ago to restore; record 4 belongs to org 2
+- two seeded audit rows for org 1 records and one for record 4
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

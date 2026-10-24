@@ -1,0 +1,19 @@
+id: T086
+title: Event check-ins allowed only while the event is live
+tier: 1
+tags:
+- single-owner
+- time-window
+- column-restriction
+- append-only
+traps:
+- time-window
+- old-vs-new
+extra_tables: []
+fixture_notes:
+- event 1 is live (2020 to 2099); event 2 is over; event 3 starts in 2099
+- ana (…01) already checked in to event 2
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

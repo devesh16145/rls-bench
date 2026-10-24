@@ -1,0 +1,20 @@
+id: T042
+title: Document archive where legal holds override owners and admins
+tier: 2
+tags:
+- restrictive-policy
+- admin-role
+- negative-condition
+- client-returning
+traps:
+- restrictive-vs-permissive
+- negative-condition
+extra_tables: []
+fixture_notes:
+- ana's (…01) file 2 is under legal hold; file 1 is not
+- ben's (…02) file 3
+- 'org admin: adm (…03)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

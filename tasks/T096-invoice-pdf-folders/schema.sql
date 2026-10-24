@@ -1,0 +1,1 @@
+-- This task uses Supabase Storage only: storage.buckets and storage.objects already exist.

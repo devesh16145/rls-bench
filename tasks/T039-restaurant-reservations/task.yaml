@@ -1,0 +1,21 @@
+id: T039
+title: Restaurant reservations with booking and cancellation windows
+tier: 2
+tags:
+- time-window
+- staff-role
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- time-window
+- state-transition
+extra_tables: []
+fixture_notes:
+- future bookings in 2099, past bookings in 2020 (compared with now())
+- gia (…01) has future booking 1 and past booking 2 at restaurant 1
+- 'staff: sam (…03) at restaurant 1, tess (…04) at restaurant 2'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,174 @@
+- name: anon_reads_public_files
+  covers: [R1]
+  as: {role: anon}
+  sql: select name from storage.objects where bucket_id = 'media' order by name
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001/public/cv.pdf]
+    - [00000000-0000-0000-0000-000000000002/public/logo.svg]
+
+- name: user_reads_own_files_and_public_files
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where bucket_id = 'media' order by name
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001/private/passport.png]
+    - [00000000-0000-0000-0000-000000000001/public/cv.pdf]
+    - [00000000-0000-0000-0000-000000000002/public/logo.svg]
+
+- name: nested_public_folder_in_private_stays_private
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select name from storage.objects where name = '00000000-0000-0000-0000-000000000003/private/public/x.txt'
+  expect: {count: 0}
+
+- name: owner_reads_own_nested_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select name from storage.objects where bucket_id = 'media' and name like '00000000-0000-0000-0000-000000000003%' order by name
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003/private/public/x.txt]
+
+- name: user_cannot_read_internal_bucket
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where bucket_id = 'internal'
+  expect: {count: 0}
+
+- name: user_cannot_read_unowned_media_file
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where name = 'shared/readme.txt'
+  expect: {count: 0}
+
+- name: user_uploads_into_own_folder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: media, name: 00000000-0000-0000-0000-000000000001/private/new.txt, owner: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_upload_into_other_folder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: media, name: 00000000-0000-0000-0000-000000000002/public/fake.png, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_with_other_owner
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: media, name: 00000000-0000-0000-0000-000000000001/private/x.txt, owner: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_outside_user_folders
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: media, name: shared/x.txt, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_into_internal_bucket
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: internal, name: 00000000-0000-0000-0000-000000000001/x.txt, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_publishes_own_private_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {name: 00000000-0000-0000-0000-000000000001/public/passport.png}
+    match: {name: 00000000-0000-0000-0000-000000000001/private/passport.png}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_move_file_into_other_folder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {name: 00000000-0000-0000-0000-000000000002/public/gift.pdf}
+    match: {name: 00000000-0000-0000-0000-000000000001/public/cv.pdf}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_hand_file_to_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {owner: 00000000-0000-0000-0000-000000000002}
+    match: {name: 00000000-0000-0000-0000-000000000001/public/cv.pdf}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_rename_other_users_public_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {name: 00000000-0000-0000-0000-000000000002/public/logo-old.svg}
+    match: {name: 00000000-0000-0000-0000-000000000002/public/logo.svg}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: storage.objects
+    match: {name: 00000000-0000-0000-0000-000000000001/public/cv.pdf}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_other_users_public_file
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: storage.objects
+    match: {name: 00000000-0000-0000-0000-000000000002/public/logo.svg}
+  expect: {denied: true}
+
+- name: anon_cannot_upload
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: media, name: 00000000-0000-0000-0000-000000000001/public/anon.png, owner: null}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_objects
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from storage.objects
+  expect:
+    rows:
+    - [7]

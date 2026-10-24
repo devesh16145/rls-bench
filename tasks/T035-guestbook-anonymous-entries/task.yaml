@@ -1,0 +1,18 @@
+id: T035
+title: Public guestbook with ownerless anonymous entries
+tier: 1
+tags:
+- anon-insert
+- nullable-owner
+- moderation
+traps:
+- null-owner
+- anon-write-spoof
+extra_tables: []
+fixture_notes:
+- 'anonymous entries with NULL author_id: id 2 (approved) and id 3 (unapproved)'
+- 'ben''s (…02) own unapproved entry: id 4'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

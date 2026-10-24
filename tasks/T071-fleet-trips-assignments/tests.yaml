@@ -1,0 +1,178 @@
+- name: driver_sees_own_trips
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from trips order by id
+  expect:
+    rows:
+    - [1]
+
+- name: manager_sees_all_trips
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from trips
+  expect:
+    rows:
+    - [2]
+
+- name: driver_sees_own_assignments
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from assignments order by id
+  expect:
+    rows:
+    - [1]
+
+- name: driver_sees_vehicles
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from vehicles
+  expect:
+    rows:
+    - [2]
+
+- name: driver_logs_covered_trip
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: trips
+    values: {vehicle_id: 1, driver_id: 00000000-0000-0000-0000-000000000002, trip_date: '2020-01-20', km: 42}
+    returning: true
+  expect: {affected: 1}
+
+- name: driver_logs_trip_on_last_assigned_day
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: trips
+    values: {vehicle_id: 1, driver_id: 00000000-0000-0000-0000-000000000002, trip_date: '2020-01-31', km: 42}
+    returning: true
+  expect: {affected: 1}
+
+- name: driver_cannot_log_outside_assignment
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: trips
+    values: {vehicle_id: 1, driver_id: 00000000-0000-0000-0000-000000000002, trip_date: '2020-02-10', km: 42}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_log_unassigned_vehicle
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: trips
+    values: {vehicle_id: 2, driver_id: 00000000-0000-0000-0000-000000000002, trip_date: '2020-01-20', km: 42}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_log_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: trips
+    values: {vehicle_id: 1, driver_id: 00000000-0000-0000-0000-000000000003, trip_date: '2020-02-10', km: 42}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_edits_own_trip
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: trips
+    values: {km: 125}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: driver_cannot_move_trip_outside_assignment
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: trips
+    values: {trip_date: '2020-02-15'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_edit_someone_elses_trip
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: trips
+    values: {km: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_deletes_own_trip
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: trips
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: manager_creates_assignment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: assignments
+    values: {vehicle_id: 2, driver_id: 00000000-0000-0000-0000-000000000002, starts_on: '2021-01-01', ends_on: '2021-01-31'}
+    returning: true
+  expect: {affected: 1}
+
+- name: driver_cannot_extend_own_assignment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: assignments
+    values: {ends_on: '2020-12-31'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_create_assignment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: assignments
+    values: {vehicle_id: 2, driver_id: 00000000-0000-0000-0000-000000000002, starts_on: '2020-01-01', ends_on: '2020-12-31'}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_become_manager
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: fleet_managers
+    values: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_trips
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from trips
+  expect: {denied: true}
+
+- name: service_role_sees_all_assignments
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from assignments
+  expect:
+    rows:
+    - [3]

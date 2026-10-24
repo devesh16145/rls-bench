@@ -1,0 +1,15 @@
+id: T010
+title: Expense approvals through an RPC that must check the caller
+tier: 3
+tags: [rpc, security-definer, column-restriction, department-membership, service-role]
+traps: [rpc-missing-auth-check, service-role-broken, privilege-escalation]
+extra_tables: []
+fixture_notes:
+  - "manager with own pending expense: mia (…01), expense 2"
+  - "expense already approved: expense 4"
+  - "manager of a different department: raj (…04), department 2"
+  - "signed-in user in no department: eli (…06)"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

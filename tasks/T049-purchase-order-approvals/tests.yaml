@@ -1,0 +1,209 @@
+- name: requester_sees_own_pos
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from purchase_orders order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [5]
+
+- name: approver_sees_every_po
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from purchase_orders
+  expect:
+    rows:
+    - [5]
+
+- name: requester_creates_po
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: purchase_orders
+    values: {requester_id: 00000000-0000-0000-0000-000000000001, vendor: Printer ink, amount: 120}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_create_po_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: purchase_orders
+    values: {requester_id: 00000000-0000-0000-0000-000000000002, vendor: x, amount: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: requester_edits_undecided_po
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: purchase_orders
+    values: {amount: 850}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: requester_cannot_edit_decided_po
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: purchase_orders
+    values: {amount: 9000}
+    match: {id: 5}
+    returning: false
+  expect: {denied: true}
+
+- name: requester_deletes_undecided_po
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: purchase_orders
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: requester_cannot_delete_decided_po
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: purchase_orders
+    match: {id: 5}
+  expect: {denied: true}
+
+- name: approver_approves_within_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 2, approver_id: 00000000-0000-0000-0000-000000000002, decision: approve}
+    returning: true
+  expect: {affected: 1}
+
+- name: approver_cannot_approve_above_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 3, approver_id: 00000000-0000-0000-0000-000000000002, decision: approve}
+    returning: false
+  expect: {denied: true}
+
+- name: senior_approver_approves_large_po
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 3, approver_id: 00000000-0000-0000-0000-000000000003, decision: approve}
+    returning: true
+  expect: {affected: 1}
+
+- name: approver_cannot_approve_own_po
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 4, approver_id: 00000000-0000-0000-0000-000000000003, decision: approve}
+    returning: false
+  expect: {denied: true}
+
+- name: non_approver_cannot_decide
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 4, approver_id: 00000000-0000-0000-0000-000000000001, decision: reject}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_decide_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: po_approvals
+    values: {po_id: 2, approver_id: 00000000-0000-0000-0000-000000000003, decision: approve}
+    returning: false
+  expect: {denied: true}
+
+- name: approver_cannot_change_decision
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: po_approvals
+    values: {decision: reject}
+    match: {po_id: 5}
+    returning: false
+  expect: {denied: true}
+
+- name: approver_cannot_delete_decision
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: po_approvals
+    match: {po_id: 5}
+  expect: {denied: true}
+
+- name: requester_sees_decisions_on_own_pos
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select po_id, decision from po_approvals order by po_id
+  expect:
+    rows:
+    - [5, approve]
+
+- name: approver_sees_own_limit_row
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select user_id from approvers order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000002]
+
+- name: user_cannot_become_approver
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: approvers
+    values: {user_id: 00000000-0000-0000-0000-000000000001, limit_amount: 1000000}
+    returning: false
+  expect: {denied: true}
+
+- name: approver_cannot_raise_own_limit
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: approvers
+    values: {limit_amount: 1000000}
+    match: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_pos
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from purchase_orders
+  expect: {denied: true}
+
+- name: service_role_sees_all_decisions
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from po_approvals
+  expect:
+    rows:
+    - [1]

@@ -1,0 +1,21 @@
+id: T054
+title: Public and private recipes with user favourites
+tier: 1
+tags:
+- public-read
+- single-owner
+- reference-check
+- client-returning
+traps:
+- reference-check
+- ownership-change
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- ana's (…01) private recipe 2
+- 'favourites: ben → recipe 1, ana → recipe 3'
+- 'user with nothing: cy (…03)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

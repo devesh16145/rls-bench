@@ -1,0 +1,18 @@
+id: T027
+title: API keys whose hash column is never readable
+tier: 1
+tags:
+- column-restriction
+- single-owner
+- state-transition
+traps:
+- column-leak
+- state-transition
+extra_tables: []
+fixture_notes:
+- 'ana (…01): active keys 1 and 2, revoked key 3'
+- 'ben (…02): active key 4'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,15 @@
+id: T001
+title: Personal notes with optional public sharing
+tier: 1
+tags: [single-owner, public-read, insert-check, anon-vs-authenticated]
+traps: [weak-with-check, over-broad-for-all]
+extra_tables: []
+fixture_notes:
+  - "public note owned by another user: notes.id=4 (ben, is_public=true) — readable but not editable by ana"
+  - "private note owned by another user: notes.id=3 (ben)"
+  - "user with no notes: cy (…03)"
+  - "public note owned by ana: notes.id=2 — handing it over stays visible to ana, so only with check blocks it"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

@@ -1,0 +1,192 @@
+- name: member_sees_live_records
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from records order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: admin_also_sees_deleted_records
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from records order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: member_sees_own_membership
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select org_id, role from org_members
+  expect:
+    rows:
+    - [1, member]
+
+- name: member_creates_record
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: records
+    values: {org_id: 1, title: Meeting notes}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_create_in_other_org
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: records
+    values: {org_id: 2, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: member_edits_record
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: records
+    values: {title: Vendor contract v2}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_delete_record
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: records
+    values: {deleted_at: '2020-06-01'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_soft_deletes_record
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: records
+    values: {deleted_at: '2099-01-01'}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: nobody_hard_deletes_record
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: records
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: insert_is_audited
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into records (org_id, title) values (1, 'Board minutes'); select action, actor from audit_log where record_id = 5
+  expect:
+    rows:
+    - [insert, 00000000-0000-0000-0000-000000000001]
+
+- name: member_update_is_audited
+  covers: [R3]
+  as: {role: service_role}
+  sql: 'select set_config(''request.jwt.claims'', ''{"role": "authenticated", "sub": "00000000-0000-0000-0000-000000000002"}'', true); update records set title = ''Pricing sheet v2'' where id = 2; select action, actor from audit_log where record_id
+    = 2 order by id desc limit 1'
+  expect:
+    rows:
+    - [update, 00000000-0000-0000-0000-000000000002]
+
+- name: member_cannot_forge_audit_row
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: audit_log
+    values: {record_id: 1, action: update, actor: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_delete_audit_row
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: audit_log
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: admin_reads_org_audit_rows
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from audit_log
+  expect:
+    rows:
+    - [2]
+
+- name: admin_cannot_read_other_org_audit
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from audit_log where record_id = 4
+  expect: {count: 0}
+
+- name: member_cannot_read_audit
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select * from audit_log
+  expect: {denied: true}
+
+- name: admin_restores_recent_deletion
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update records set deleted_at = now() where id = 2; select public.restore_record(2); select deleted_at from records where id = 2
+  expect:
+    rows:
+    - [null]
+
+- name: admin_cannot_restore_old_deletion
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.restore_record(3)
+  expect: {denied: true}
+
+- name: admin_cannot_restore_live_record
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.restore_record(1)
+  expect: {denied: true}
+
+- name: member_cannot_restore
+  covers: [R5]
+  as: {role: service_role}
+  sql: 'select set_config(''request.jwt.claims'', ''{"role": "authenticated", "sub": "00000000-0000-0000-0000-000000000001"}'', true); update records set deleted_at = now() where id = 2; select set_config(''request.jwt.claims'', ''{"role": "authenticated",
+    "sub": "00000000-0000-0000-0000-000000000002"}'', true); select public.restore_record(2)'
+  expect: {denied: true}
+
+- name: other_org_admin_cannot_restore
+  covers: [R5]
+  as: {role: service_role}
+  sql: 'select set_config(''request.jwt.claims'', ''{"role": "authenticated", "sub": "00000000-0000-0000-0000-000000000001"}'', true); update records set deleted_at = now() where id = 2; select set_config(''request.jwt.claims'', ''{"role": "authenticated",
+    "sub": "00000000-0000-0000-0000-000000000003"}'', true); select public.restore_record(2)'
+  expect: {denied: true}
+
+- name: anon_sees_no_records
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from records
+  expect: {denied: true}
+
+- name: service_role_sees_all_audit_rows
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from audit_log
+  expect:
+    rows:
+    - [3]

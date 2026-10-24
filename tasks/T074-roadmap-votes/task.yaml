@@ -1,0 +1,18 @@
+id: T074
+title: Public roadmap with one vote per user on unshipped items
+tier: 1
+tags:
+- public-read
+- reference-check
+- single-owner
+traps:
+- reference-check
+- over-broad-for-all
+extra_tables: []
+fixture_notes:
+- item 3 is shipped
+- 'votes: ana (…01) on item 1; ben (…02) on items 1 and 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

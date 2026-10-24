@@ -1,0 +1,197 @@
+- name: student_reads_own_grades
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from grades order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: classmate_reads_only_own_grades
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from grades order by id
+  expect:
+    rows:
+    - [2]
+
+- name: guardian_reads_childs_grades
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from grades order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: teacher_reads_class_grades
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from grades order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: other_teacher_reads_only_own_class
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from grades order by id
+  expect:
+    rows:
+    - [3]
+
+- name: teacher_adds_grade
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: grades
+    values: {class_id: 1, student_id: 00000000-0000-0000-0000-000000000004, assignment: Quiz 2, score: 95, graded_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: teacher_cannot_grade_in_other_class
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: grades
+    values: {class_id: 2, student_id: 00000000-0000-0000-0000-000000000003, assignment: Quiz 2, score: 50, graded_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: teacher_cannot_grade_unenrolled_student
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: grades
+    values: {class_id: 1, student_id: 00000000-0000-0000-0000-000000000006, assignment: Quiz 2, score: 50, graded_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: teacher_cannot_grade_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: grades
+    values: {class_id: 1, student_id: 00000000-0000-0000-0000-000000000004, assignment: Quiz 2, score: 50, graded_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: teacher_corrects_grade
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: grades
+    values: {score: 90}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: other_teacher_cannot_change_grade
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: grades
+    values: {score: 10}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: teacher_deletes_grade
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: grades
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: student_cannot_change_own_grade
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: grades
+    values: {score: 100}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: guardian_cannot_change_grade
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: grades
+    values: {score: 100}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_add_grade
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: grades
+    values: {class_id: 1, student_id: 00000000-0000-0000-0000-000000000003, assignment: Quiz 2, score: 100, graded_by: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: student_sees_own_enrollments
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select class_id from class_students order by class_id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: teacher_sees_class_roster
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select student_id from class_students order by student_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003]
+    - [00000000-0000-0000-0000-000000000004]
+
+- name: student_cannot_enroll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000006}
+  client:
+    op: insert
+    table: class_students
+    values: {class_id: 1, student_id: 00000000-0000-0000-0000-000000000006}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_become_guardian
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: guardians
+    values: {guardian_id: 00000000-0000-0000-0000-000000000005, student_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_grades
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from grades
+  expect: {denied: true}
+
+- name: service_role_sees_all_grades
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from grades
+  expect:
+    rows:
+    - [3]

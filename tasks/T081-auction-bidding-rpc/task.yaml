@@ -1,0 +1,21 @@
+id: T081
+title: Auction bidding RPC with increments, end times and no self-bidding
+tier: 3
+tags:
+- rpc
+- security-definer
+- time-window
+- input-validation
+- read-only-tables
+traps:
+- time-window
+- self-approval
+- rpc-input-validation
+extra_tables: []
+fixture_notes:
+- seller sel (…01); bidders b1 (…02), b2 (…03)
+- 'auction 1: ends 2099, highest 150 by b1, increment 10; auction 2 ended in 2020; auction 3: ends 2099, no bids, starting price 200'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

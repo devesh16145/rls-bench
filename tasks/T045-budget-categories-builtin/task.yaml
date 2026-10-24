@@ -1,0 +1,19 @@
+id: T045
+title: Budget categories with shared built-in rows
+tier: 1
+tags:
+- single-owner
+- nullable-owner
+- shared-defaults
+- client-returning
+traps:
+- over-broad-for-all
+- null-owner
+extra_tables: []
+fixture_notes:
+- 'built-in categories with NULL user_id: ids 1 and 2'
+- ana's (…01) category 3, ben's (…02) category 4
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

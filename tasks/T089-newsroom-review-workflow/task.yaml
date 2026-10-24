@@ -1,0 +1,21 @@
+id: T089
+title: Newsroom articles moving from draft to review to published
+tier: 2
+tags:
+- workflow
+- state-transition
+- editor-role
+- anon-read
+- client-returning
+traps:
+- state-transition
+- private-row-leak
+- negative-condition
+extra_tables: []
+fixture_notes:
+- writers wen (…01) and wes (…02); editor ed (…03)
+- 'wen: draft 1, in-review 2; wes: published 3, draft 4'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

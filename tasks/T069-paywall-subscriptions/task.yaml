@@ -1,0 +1,22 @@
+id: T069
+title: Paywalled articles for users with an active subscription
+tier: 2
+tags:
+- paywall
+- time-window
+- jwt-claims
+- anon-read
+- server-written
+traps:
+- time-window
+- claim-trust
+- anon-vs-authenticated
+extra_tables: []
+fixture_notes:
+- ana (…01) pro until 2099; ben (…02) pro that ended in 2020; cy (…03) free plan; dee (…04) no subscription row
+- eve (…05) has no subscription but user_metadata plan=pro
+- articles 2 and 3 are premium
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

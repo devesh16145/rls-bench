@@ -1,0 +1,176 @@
+- name: member_sees_own_boards
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from boards order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: viewer_sees_only_own_board
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from boards order by id
+  expect:
+    rows:
+    - [1]
+
+- name: outsider_sees_no_boards
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from boards
+  expect: {count: 0}
+
+- name: member_sees_board_members
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select user_id from board_members order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+    - [00000000-0000-0000-0000-000000000002]
+
+- name: member_reads_board_cards
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from cards order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: member_of_archived_board_reads_its_cards
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from cards order by id
+  expect:
+    rows:
+    - [3]
+
+- name: editor_creates_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: cards
+    values: {board_id: 1, title: QA pass, column_name: todo}
+    returning: true
+  expect: {affected: 1}
+
+- name: editor_moves_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cards
+    values: {column_name: done}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: editor_deletes_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: cards
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: editor_cannot_move_card_to_board_where_viewer
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cards
+    values: {board_id: 2}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: viewer_cannot_move_card
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: cards
+    values: {column_name: doing}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: viewer_cannot_create_card
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: cards
+    values: {board_id: 1, title: x, column_name: todo}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_add_card_to_archived_board
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: cards
+    values: {board_id: 2, title: Late item, column_name: todo}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_edit_card_on_archived_board
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: cards
+    values: {title: Reopened}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_delete_card_on_archived_board
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: cards
+    match: {id: 3}
+  expect: {denied: true}
+
+- name: editor_cannot_unarchive_board
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: boards
+    values: {is_archived: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: viewer_cannot_promote_self
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: board_members
+    values: {role: editor}
+    match: {board_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_cards
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from cards
+  expect: {denied: true}
+
+- name: service_role_sees_all_cards
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from cards
+  expect:
+    rows:
+    - [3]

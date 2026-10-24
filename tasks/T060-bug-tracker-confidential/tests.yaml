@@ -1,0 +1,198 @@
+- name: member_sees_project_members
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from project_members
+  expect:
+    rows:
+    - [4]
+
+- name: outsider_sees_no_project
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from projects
+  expect: {count: 0}
+
+- name: reporter_sees_only_public_issues
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from issues order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: reporter_of_confidential_issue_sees_it
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from issues order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: assignee_sees_confidential_issue
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from issues order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: maintainer_sees_every_issue
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from issues order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: outsider_sees_no_issues
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from issues
+  expect: {count: 0}
+
+- name: reporter_files_issue
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: issues
+    values: {project_id: 1, title: Button misaligned, reporter_id: 00000000-0000-0000-0000-000000000003, is_confidential: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: reporter_files_confidential_issue
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: issues
+    values: {project_id: 1, title: SQL injection in search, reporter_id: 00000000-0000-0000-0000-000000000004, is_confidential: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: outsider_cannot_file_issue
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: issues
+    values: {project_id: 1, title: x, reporter_id: 00000000-0000-0000-0000-000000000005, is_confidential: false}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_file_issue_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: issues
+    values: {project_id: 1, title: x, reporter_id: 00000000-0000-0000-0000-000000000002, is_confidential: false}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_file_closed_issue
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: issues
+    values: {project_id: 1, title: x, reporter_id: 00000000-0000-0000-0000-000000000003, is_confidential: false, status: closed}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_closes_issue
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: issues
+    values: {status: closed}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: developer_cannot_update_hidden_issue
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: issues
+    values: {status: closed}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_cannot_declassify_issue
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: issues
+    values: {is_confidential: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: maintainer_marks_issue_confidential
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: issues
+    values: {is_confidential: true}
+    match: {id: 4}
+    returning: true
+  expect: {affected: 1}
+
+- name: reporter_cannot_update_issue
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: issues
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: maintainer_cannot_delete_issue
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: issues
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: reporter_cannot_promote_self
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: project_members
+    values: {role: maintainer}
+    match: {project_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_issues
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from issues
+  expect: {denied: true}
+
+- name: service_role_sees_all_issues
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from issues
+  expect:
+    rows:
+    - [4]

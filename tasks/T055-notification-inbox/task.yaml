@@ -1,0 +1,17 @@
+id: T055
+title: Notification inbox where users can only mark and dismiss
+tier: 1
+tags:
+- single-owner
+- column-restriction
+- server-created-rows
+traps:
+- over-broad-for-all
+- old-vs-new
+extra_tables: []
+fixture_notes:
+- 'ana (…01): notifications 1 (unread) and 2 (read); ben (…02): notification 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

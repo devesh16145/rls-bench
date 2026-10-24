@@ -1,0 +1,20 @@
+id: T057
+title: Clinic appointment slots booked by claiming an open slot
+tier: 2
+tags:
+- claim-a-row
+- time-window
+- column-restriction
+- private-rows
+traps:
+- time-window
+- private-row-leak
+- old-vs-new
+extra_tables: []
+fixture_notes:
+- providers ira (…01) and jo (…02)
+- slot 2 booked by pat (…03), slot 4 by quin (…04); slot 3 is open but in the past (2020)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

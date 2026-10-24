@@ -1,0 +1,20 @@
+id: T097
+title: Conference proposals with independent reviews revealed after the decision
+tier: 2
+tags:
+- reviewer-role
+- self-approval
+- private-rows
+- client-returning
+traps:
+- self-approval
+- private-row-leak
+- negative-condition
+extra_tables: []
+fixture_notes:
+- speakers spk1 (…01), spk2 (…02); reviewers rv1 (…03, who also submitted proposal 3) and rv2 (…04)
+- proposal 1 undecided (reviewed by rv2); proposal 2 accepted (reviewed by rv1 and rv2)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

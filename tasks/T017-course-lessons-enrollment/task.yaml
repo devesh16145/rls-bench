@@ -1,0 +1,22 @@
+id: T017
+title: Courses with preview lessons and self-enrollment
+tier: 2
+tags:
+- parent-child
+- enrollment
+- public-read
+- client-returning
+traps:
+- child-leak
+- reference-check
+- ownership-change
+extra_tables: []
+fixture_notes:
+- 'unpublished course with a preview lesson: course 2 / lesson 3'
+- 'enrolled student: sam (…02) in course 1; non-enrolled student: tia (…03)'
+- 'non-preview lesson of a published course: lesson 2'
+- 'second instructor: ola (…04), course 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

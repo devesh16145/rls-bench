@@ -1,0 +1,166 @@
+- name: anon_reads_public_recipes
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from recipes order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: author_reads_own_private_recipe
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from recipes order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_user_cannot_read_private_recipe
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from recipes where id = 2
+  expect: {count: 0}
+
+- name: user_creates_recipe
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: recipes
+    values: {author_id: 00000000-0000-0000-0000-000000000003, title: Masala oats, is_public: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: author_edits_own_private_recipe
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: recipes
+    values: {title: Secret chutney v2}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_recipe
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: recipes
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_give_recipe_away
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: recipes
+    values: {author_id: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: author_deletes_own_recipe
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: recipes
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: user_sees_own_favourites
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select recipe_id from favorites order by recipe_id
+  expect:
+    rows:
+    - [1]
+
+- name: user_without_favourites_sees_none
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select recipe_id from favorites
+  expect: {count: 0}
+
+- name: user_favourites_public_recipe
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: favorites
+    values: {user_id: 00000000-0000-0000-0000-000000000003, recipe_id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: author_favourites_own_private_recipe
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: favorites
+    values: {user_id: 00000000-0000-0000-0000-000000000001, recipe_id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_favourite_unreadable_recipe
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: favorites
+    values: {user_id: 00000000-0000-0000-0000-000000000003, recipe_id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_favourite_for_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: favorites
+    values: {user_id: 00000000-0000-0000-0000-000000000002, recipe_id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_removes_own_favourite
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: favorites
+    match: {user_id: 00000000-0000-0000-0000-000000000002, recipe_id: 1}
+  expect: {affected: 1}
+
+- name: user_cannot_remove_someone_elses_favourite
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: favorites
+    match: {user_id: 00000000-0000-0000-0000-000000000002, recipe_id: 1}
+  expect: {denied: true}
+
+- name: anon_cannot_favourite
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: insert
+    table: favorites
+    values: {user_id: 00000000-0000-0000-0000-000000000001, recipe_id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_favourites
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from favorites
+  expect:
+    rows:
+    - [2]

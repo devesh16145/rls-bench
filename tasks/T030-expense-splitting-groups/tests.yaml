@@ -1,0 +1,206 @@
+- name: member_sees_own_groups
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from groups order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: member_sees_group_members
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select group_id, user_id from group_members order by group_id, user_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000001]
+    - [1, 00000000-0000-0000-0000-000000000002]
+
+- name: member_reads_group_expenses
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from expenses order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: outsider_reads_no_expenses
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from expenses
+  expect: {count: 0}
+
+- name: member_reads_group_shares
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select expense_id, user_id from expense_shares order by expense_id, user_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000001]
+    - [1, 00000000-0000-0000-0000-000000000002]
+    - [3, 00000000-0000-0000-0000-000000000001]
+    - [3, 00000000-0000-0000-0000-000000000002]
+
+- name: other_group_member_cannot_read_shares
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select user_id from expense_shares where expense_id = 1
+  expect: {count: 0}
+
+- name: member_adds_expense
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: expenses
+    values: {group_id: 1, paid_by: 00000000-0000-0000-0000-000000000001, description: Cleaning, amount: 40}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_add_expense_to_other_group
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: expenses
+    values: {group_id: 2, paid_by: 00000000-0000-0000-0000-000000000001, description: x, amount: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_add_expense_paid_by_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: expenses
+    values: {group_id: 1, paid_by: 00000000-0000-0000-0000-000000000002, description: x, amount: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: payer_edits_expense
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: expenses
+    values: {amount: 65}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: non_payer_cannot_edit_expense
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: expenses
+    values: {amount: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: payer_cannot_move_expense_to_other_group
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: expenses
+    values: {group_id: 2}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: payer_cannot_change_payer
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: expenses
+    values: {paid_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: payer_deletes_expense
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: expenses
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: payer_adds_share_for_new_expense
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into expenses (group_id, paid_by, description, amount) values (1, '00000000-0000-0000-0000-000000000001', 'Dinner', 40); insert into expense_shares (expense_id, user_id, share) values (4, '00000000-0000-0000-0000-000000000002',
+    20) returning *
+  expect: {affected: 1}
+
+- name: payer_changes_share
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: expense_shares
+    values: {share: 20}
+    match: {expense_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_add_share_for_non_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: expense_shares
+    values: {expense_id: 1, user_id: 00000000-0000-0000-0000-000000000003, share: 10}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_move_share_to_non_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: expense_shares
+    values: {user_id: 00000000-0000-0000-0000-000000000004}
+    match: {expense_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: non_payer_cannot_change_share
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: expense_shares
+    values: {share: 0}
+    match: {expense_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_join_group
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: group_members
+    values: {group_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_expenses
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from expenses
+  expect: {denied: true}
+
+- name: service_role_sees_all_shares
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from expense_shares
+  expect:
+    rows:
+    - [6]

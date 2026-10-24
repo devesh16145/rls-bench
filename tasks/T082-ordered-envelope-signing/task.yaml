@@ -1,0 +1,21 @@
+id: T082
+title: E-signature envelopes signed strictly in recipient order
+tier: 3
+tags:
+- rpc
+- security-definer
+- sequencing
+- state-machine
+- read-only-tables
+traps:
+- sequence-bypass
+- duplicate-approval
+- state-transition
+extra_tables: []
+fixture_notes:
+- sender snd (…01); recipients r1 (…02), r2 (…03), r3 (…04); outsider oth (…05)
+- 'envelope 1 (sent): r1 signed, then r2, then r3; envelope 2 completed; envelope 3 voided (r2 unsigned); envelope 4 (sent): r1 signed, r2 last'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

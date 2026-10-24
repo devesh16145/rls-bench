@@ -1,0 +1,231 @@
+- name: user_sees_own_conversations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from conversations order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_sees_participants_of_own_conversations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select conversation_id, user_id from participants order by conversation_id, user_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000001]
+    - [1, 00000000-0000-0000-0000-000000000002]
+    - [2, 00000000-0000-0000-0000-000000000001]
+    - [2, 00000000-0000-0000-0000-000000000002]
+    - [2, 00000000-0000-0000-0000-000000000003]
+
+- name: other_user_sees_only_own_conversations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from conversations order by id
+  expect:
+    rows:
+    - [3]
+
+- name: user_reads_messages_of_own_conversations
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from messages order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: user_cannot_read_other_conversation
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from messages where conversation_id = 1
+  expect: {count: 0}
+
+- name: participant_sends_message
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 2, sender_id: 00000000-0000-0000-0000-000000000001, body: I can drive}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_send_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 2, sender_id: 00000000-0000-0000-0000-000000000002, body: spoof}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_send_into_conversation_not_joined
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 3, sender_id: 00000000-0000-0000-0000-000000000001, body: x}
+    returning: false
+  expect: {denied: true}
+
+- name: blocked_user_cannot_post_in_group_with_blocker
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 2, sender_id: 00000000-0000-0000-0000-000000000003, body: 'hello?'}
+    returning: false
+  expect: {denied: true}
+
+- name: blocked_user_cannot_post_to_blocker_directly
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 3, sender_id: 00000000-0000-0000-0000-000000000003, body: 'hello?'}
+    returning: false
+  expect: {denied: true}
+
+- name: blocker_can_still_post
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: messages
+    values: {conversation_id: 3, sender_id: 00000000-0000-0000-0000-000000000004, body: bye}
+    returning: true
+  expect: {affected: 1}
+
+- name: sender_edits_own_message
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: messages
+    values: {body: hey!}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_edit_someone_elses_message
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: messages
+    values: {body: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: sender_cannot_move_message_to_other_conversation
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: messages
+    values: {conversation_id: 2}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: sender_deletes_own_message
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: messages
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: cannot_delete_someone_elses_message
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: messages
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: blocker_sees_own_blocks
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select blocked_id from blocks order by blocked_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003]
+
+- name: blocked_user_cannot_see_who_blocked_them
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select blocker_id from blocks
+  expect: {count: 0}
+
+- name: user_creates_block
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: blocks
+    values: {blocker_id: 00000000-0000-0000-0000-000000000001, blocked_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_create_block_for_someone_else
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: blocks
+    values: {blocker_id: 00000000-0000-0000-0000-000000000002, blocked_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: blocker_removes_block
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: blocks
+    match: {blocker_id: 00000000-0000-0000-0000-000000000002, blocked_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: blocked_user_cannot_remove_block
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: blocks
+    match: {blocker_id: 00000000-0000-0000-0000-000000000002, blocked_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: user_cannot_join_conversation
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: participants
+    values: {conversation_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_messages
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from messages
+  expect: {denied: true}
+
+- name: service_role_sees_all_messages
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from messages
+  expect:
+    rows:
+    - [4]

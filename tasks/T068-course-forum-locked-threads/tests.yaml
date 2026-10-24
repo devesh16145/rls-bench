@@ -1,0 +1,213 @@
+- name: member_reads_course_posts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_course_member_reads_only_own_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [4]
+
+- name: member_sees_own_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from courses order by id
+  expect:
+    rows:
+    - [1]
+
+- name: student_starts_thread
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: threads
+    values: {course_id: 1, title: Week 2 questions, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: student_cannot_start_locked_thread
+  covers: [R2, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: threads
+    values: {course_id: 1, title: x, created_by: 00000000-0000-0000-0000-000000000002, is_locked: true}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_start_thread_in_other_course
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: threads
+    values: {course_id: 2, title: x, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: student_posts_in_open_thread
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: posts
+    values: {thread_id: 1, author_id: 00000000-0000-0000-0000-000000000002, body: 'Thanks, that helps'}
+    returning: true
+  expect: {affected: 1}
+
+- name: student_cannot_post_in_locked_thread
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: posts
+    values: {thread_id: 2, author_id: 00000000-0000-0000-0000-000000000002, body: 'Thanks, that helps'}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_post_in_other_course
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: posts
+    values: {thread_id: 3, author_id: 00000000-0000-0000-0000-000000000001, body: 'Thanks, that helps'}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_post_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: posts
+    values: {thread_id: 1, author_id: 00000000-0000-0000-0000-000000000002, body: 'Thanks, that helps'}
+    returning: false
+  expect: {denied: true}
+
+- name: author_edits_own_post
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {body: 'What exactly is a foreign key?'}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: student_cannot_edit_someone_elses_post
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {body: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_edit_post_in_locked_thread
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: posts
+    values: {body: Open book now}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: author_deletes_own_post
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: posts
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: ta_locks_thread
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: threads
+    values: {is_locked: true}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: ta_unlocks_thread
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: threads
+    values: {is_locked: false}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: student_cannot_lock_own_thread
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: threads
+    values: {is_locked: true}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: ta_deletes_student_post
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: posts
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: student_cannot_delete_someone_elses_post
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: posts
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: student_cannot_become_ta
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: enrollments
+    values: {role: ta}
+    match: {course_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_posts
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from posts
+  expect: {denied: true}
+
+- name: service_role_sees_all_posts
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from posts
+  expect:
+    rows:
+    - [4]

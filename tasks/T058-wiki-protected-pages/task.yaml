@@ -1,0 +1,21 @@
+id: T058
+title: Wiki with protected pages and append-only revisions
+tier: 2
+tags:
+- role-by-table
+- negative-condition
+- append-only
+- anon-read
+- client-full-row-update
+traps:
+- negative-condition
+- privilege-escalation
+- reference-check
+extra_tables: []
+fixture_notes:
+- protected page 'home'; unprotected 'faq' and 'drafts'
+- 'editor: ed (…01); ana (…02) and ben (…03) are not editors'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

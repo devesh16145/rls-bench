@@ -1,0 +1,14 @@
+id: T007
+title: Helpdesk tickets with support agents from a profiles table
+tier: 2
+tags: [admin-via-profiles, column-restriction, insert-defaults, no-delete]
+traps: [privilege-escalation, claim-trust, recursive-policy]
+extra_tables: []
+fixture_notes:
+  - "agent: sam (…03) has profiles.is_agent = true"
+  - "requester with two tickets, one closed and assigned: ana (…01), tickets 1 and 2"
+  - "requester ben (…02) with a pending ticket assigned to sam: ticket 3"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

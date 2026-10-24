@@ -1,0 +1,21 @@
+id: T030
+title: Expense splitting with shares limited to group members
+tier: 2
+tags:
+- membership
+- parent-child
+- reference-check
+- ownership
+- client-returning
+traps:
+- reference-check
+- ownership-change
+- child-leak
+extra_tables: []
+fixture_notes:
+- 'group 1: ana, ben; group 2: ben, cy; dee (…04) in no group'
+- expense 3 paid by ben in group 1 (ben is also in group 2)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

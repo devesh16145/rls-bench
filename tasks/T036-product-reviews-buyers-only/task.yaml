@@ -1,0 +1,19 @@
+id: T036
+title: Product reviews by verified buyers with staff-only featuring
+tier: 1
+tags:
+- public-read
+- reference-check
+- upsert
+- column-restriction
+traps:
+- reference-check
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- 'purchases: ana (…01) bought products 1 and 2, ben (…02) bought 1, cy (…03) none'
+- ben's featured review on product 1
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

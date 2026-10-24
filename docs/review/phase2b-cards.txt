@@ -1,0 +1,502 @@
+====================================================================================================
+TASK T011 — Organization creation and membership roles from the supabase-js client — tier 3 — traps: insert-returning-visibility, self-join, last-owner, recursive-policy — verified: False
+tags: org-hierarchy, client-returning, bootstrap-membership, role-management, security-definer-helper
+
+REQUIREMENT (verbatim)
+A team app built with supabase-js. Users create organizations and manage who belongs to them. To create an organization the app calls `supabase.from('orgs').insert({ name }).select()` (so the new row is read back immediately), then inserts the creator's membership with role `owner`. Other writes also use `.select()` to read back the written row.
+
+R1. Any signed-in user can create an organization; its `created_by` is always themselves.
+R2. The creator of an organization that has no members yet can add themselves to it as `owner`. Apart from this, nobody can add themselves to an organization.
+R3. Members can see the organizations they belong to and every membership row of those organizations. The creator of an organization can also see it before joining it.
+R4. Owners and admins can add people with role `member` and remove memberships whose role is `member`. Only owners can give someone the role `admin` or `owner`, change someone's role, or remove admins and owners.
+R5. Any member can leave an organization by deleting their own membership, except an organization's only owner.
+R6. Nobody can change their own role.
+R7. Only owners can rename their organization. Organizations cannot be deleted through the app.
+R8. Anonymous visitors cannot see or change anything.
+R9. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  client_creates_org_and_reads_it_back → authenticated:04 → {"affected": 1} → R1, R3
+      [supabase-js] insert into orgs (name) values ('Initech') returning *
+  cannot_create_org_for_someone_else → authenticated:04 → {"denied": true} → R1
+      [supabase-js] insert into orgs (name, created_by) values ('Spoof', '00000000-0000-0000-0000-000000000001') returning *
+  creator_becomes_owner_of_new_org → authenticated:04 → {"rows": [[3, "00000000-0000-0000-0000-000000000004", "owner"]]} → R2
+      insert into orgs (name) values ('Initech'); insert into org_members (org_id, user_id, role) values (3, '00000000-0000-0000-0000-000000000004', 'owner') returning org_id, user_id, role
+  creator_cannot_make_someone_else_first_owner → authenticated:04 → {"denied": true} → R2, R4
+      insert into orgs (name) values ('Initech'); insert into org_members (org_id, user_id, role) values (3, '00000000-0000-0000-0000-000000000001', 'owner')
+  user_cannot_join_existing_org_as_owner → authenticated:04 → {"denied": true} → R2
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'owner')
+  user_cannot_join_existing_org_as_member → authenticated:04 → {"denied": true} → R2
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'member')
+  creator_cannot_join_own_org_that_has_members → authenticated:05 → {"denied": true} → R2
+      [supabase-js] insert into org_members (org_id, user_id, role) values (2, '00000000-0000-0000-0000-000000000005', 'owner')
+  creator_sees_own_org_before_joining → authenticated:05 → {"rows": [[2]]} → R3
+      select id from orgs order by id
+  creator_sees_no_memberships_before_joining → authenticated:05 → {"count": 0} → R3
+      select user_id from org_members
+  member_of_two_orgs_sees_both → authenticated:03 → {"rows": [[1], [2]]} → R3
+      select id from orgs order by id
+  member_sees_all_memberships_of_her_orgs → authenticated:03 → {"rows": [[1, "00000000-0000-0000-0000-000000000001"], [1, "00000000-0000-0000-0000-000000000002"], [1, "00000000-0000-0000-0000-000000000003"], [2, "00000000-0000-0000-0000-000000000003"]]} → R3
+      select org_id, user_id from org_members order by org_id, user_id
+  admin_sees_only_own_org_memberships → authenticated:02 → {"count": 3} → R3
+      select user_id from org_members
+  outsider_sees_no_orgs → authenticated:04 → {"count": 0} → R3
+      select id from orgs
+  admin_adds_member → authenticated:02 → {"affected": 1} → R4
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'member') returning *
+  admin_cannot_add_admin → authenticated:02 → {"denied": true} → R4
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'admin')
+  member_cannot_add_member → authenticated:03 → {"denied": true} → R4
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'member')
+  owner_adds_admin → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000004', 'admin') returning *
+  admin_removes_member → authenticated:02 → {"affected": 1} → R4
+      [supabase-js] delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000003'
+  admin_cannot_remove_owner → authenticated:02 → {"denied": true} → R4
+      [supabase-js] delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  owner_promotes_member_to_admin → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] update org_members set role = 'admin' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000003' returning *
+  admin_cannot_change_roles → authenticated:02 → {"denied": true} → R4
+      [supabase-js] update org_members set role = 'admin' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000003'
+  owner_removes_admin → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  admin_cannot_promote_self_to_owner → authenticated:02 → {"denied": true} → R4, R6
+      [supabase-js] update org_members set role = 'owner' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  owner_cannot_demote_self → authenticated:01 → {"denied": true} → R6
+      [supabase-js] update org_members set role = 'member' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  member_leaves_org → authenticated:03 → {"affected": 1} → R5
+      [supabase-js] delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000003'
+  admin_leaves_org → authenticated:02 → {"affected": 1} → R5
+      [supabase-js] delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  only_owner_cannot_leave → authenticated:03 → {"denied": true} → R5
+      [supabase-js] delete from org_members where org_id = 2 and user_id = '00000000-0000-0000-0000-000000000003'
+  owner_leaves_when_another_owner_exists → authenticated:01 → {"affected": 1} → R5
+      update org_members set role = 'owner' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'; delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  owner_renames_org_and_reads_it_back → authenticated:01 → {"affected": 1} → R7
+      [supabase-js] update orgs set name = 'Northwind Ltd' where id = 1 returning *
+  admin_cannot_rename_org → authenticated:02 → {"denied": true} → R7
+      [supabase-js] update orgs set name = 'x' where id = 1
+  owner_cannot_delete_org → authenticated:01 → {"denied": true} → R7
+      [supabase-js] delete from orgs where id = 1
+  anon_sees_no_orgs → anon → {"denied": true} → R8
+      select * from orgs
+  anon_sees_no_memberships → anon → {"denied": true} → R8
+      select * from org_members
+  anon_cannot_create_org → anon → {"denied": true} → R8
+      [supabase-js] insert into orgs (name, created_by) values ('Anon', '00000000-0000-0000-0000-000000000001')
+  service_role_sees_all_memberships → service_role → {"rows": [[4]]} → R9
+      select count(*) from org_members
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.org_role(p_org_id bigint) returns text
+language sql stable security definer set search_path = ''
+as $$
+  select m.role from public.org_members m
+  where m.org_id = p_org_id and m.user_id = auth.uid()
+$$;
+
+create function private.can_bootstrap(p_org_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.orgs o where o.id = p_org_id and o.created_by = auth.uid())
+    and not exists (select 1 from public.org_members m where m.org_id = p_org_id)
+$$;
+
+create function private.has_other_owner(p_org_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.org_members m
+    where m.org_id = p_org_id and m.role = 'owner' and m.user_id <> auth.uid()
+  )
+$$;
+
+alter table public.orgs enable row level security;
+alter table public.org_members enable row level security;
+
+create policy orgs_select on public.orgs
+  for select to authenticated
+  using (created_by = auth.uid() or private.org_role(id) is not null);
+
+create policy orgs_insert on public.orgs
+  for insert to authenticated
+  with check (created_by = auth.uid());
+
+create policy orgs_update on public.orgs
+  for update to authenticated
+  using (private.org_role(id) = 'owner')
+  with check (private.org_role(id) = 'owner');
+
+create policy org_members_select on public.org_members
+  for select to authenticated
+  using (user_id = auth.uid() or private.org_role(org_id) is not null);
+
+create policy org_members_insert on public.org_members
+  for insert to authenticated
+  with check (
+    (user_id = auth.uid() and role = 'owner' and private.can_bootstrap(org_id))
+    or (user_id <> auth.uid() and role = 'member' and private.org_role(org_id) in ('owner', 'admin'))
+    or (user_id <> auth.uid() and private.org_role(org_id) = 'owner')
+  );
+
+create policy org_members_update on public.org_members
+  for update to authenticated
+  using (user_id <> auth.uid() and private.org_role(org_id) = 'owner')
+  with check (user_id <> auth.uid() and private.org_role(org_id) = 'owner');
+
+create policy org_members_delete on public.org_members
+  for delete to authenticated
+  using (
+    (user_id = auth.uid() and (role <> 'owner' or private.has_other_owner(org_id)))
+    or (user_id <> auth.uid() and role = 'member' and private.org_role(org_id) in ('owner', 'admin'))
+    or (user_id <> auth.uid() and private.org_role(org_id) = 'owner')
+  );
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on cannot_create_org_for_someone_else, creator_cannot_make_someone_else_first_owner, user_cannot_join_existing_org_as_owner, user_cannot_join_existing_org_as_member, creator_cannot_join_own_org_that_has_members, creator_sees_own_org_before_joining, creator_sees_no_memberships_before_joining, admin_sees_only_own_org_memberships, outsider_sees_no_orgs, admin_cannot_add_admin, member_cannot_add_member, admin_cannot_remove_owner, admin_cannot_change_roles, admin_cannot_promote_self_to_owner, owner_cannot_demote_self, only_owner_cannot_leave, admin_cannot_rename_org, owner_cannot_delete_org, anon_sees_no_orgs, anon_sees_no_memberships, anon_cannot_create_org
+  allow-all: fails on cannot_create_org_for_someone_else, creator_cannot_make_someone_else_first_owner, user_cannot_join_existing_org_as_owner, user_cannot_join_existing_org_as_member, creator_cannot_join_own_org_that_has_members, creator_sees_own_org_before_joining, creator_sees_no_memberships_before_joining, admin_sees_only_own_org_memberships, outsider_sees_no_orgs, admin_cannot_add_admin, member_cannot_add_member, admin_cannot_remove_owner, admin_cannot_change_roles, admin_cannot_promote_self_to_owner, owner_cannot_demote_self, only_owner_cannot_leave, admin_cannot_rename_org, owner_cannot_delete_org, anon_sees_no_orgs, anon_sees_no_memberships, anon_cannot_create_org
+  deny-all: fails on client_creates_org_and_reads_it_back, creator_becomes_owner_of_new_org, creator_sees_own_org_before_joining, member_of_two_orgs_sees_both, member_sees_all_memberships_of_her_orgs, admin_sees_only_own_org_memberships, admin_adds_member, owner_adds_admin, admin_removes_member, owner_promotes_member_to_admin, owner_removes_admin, member_leaves_org, admin_leaves_org, owner_leaves_when_another_owner_exists, owner_renames_org_and_reads_it_back
+  coverage: 9 rules covered
+  traps: insert-returning-visibility caught by client_creates_org_and_reads_it_back, creator_sees_own_org_before_joining; self-join caught by creator_cannot_join_own_org_that_has_members; last-owner caught by only_owner_cannot_leave; recursive-policy caught by creator_becomes_owner_of_new_org, creator_sees_no_memberships_before_joining, member_sees_all_memberships_of_her_orgs, admin_sees_only_own_org_memberships, admin_adds_member, owner_adds_admin, admin_removes_member, admin_cannot_remove_owner, owner_promotes_member_to_admin, admin_cannot_change_roles, owner_removes_admin, admin_cannot_promote_self_to_owner, owner_cannot_demote_self, member_leaves_org, admin_leaves_org, only_owner_cannot_leave, owner_leaves_when_another_owner_exists
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - user in no organization: dee (…04) — creates the new org (id 3 after setval)
+  - creator who is not a member of the org they created: eli (…05) created org 2, which already has an owner
+  - sole owner: cy (…03) is the only owner of org 2; ana (…01) the only owner of org 1
+  - admin who is not owner: ben (…02) in org 1
+
+====================================================================================================
+TASK T012 — Invoice lifecycle with fields that lock once sent — tier 3 — traps: old-vs-new, state-transition, column-grant-blocks-client, ownership-change — verified: False
+tags: state-machine, old-vs-new, trigger, finance-role, client-full-row-update
+
+REQUIREMENT (verbatim)
+An invoicing app built with supabase-js. Invoices move through the statuses `draft` → `sent` → `paid` or `void`. Users listed in `finance_staff` handle payments. The invoice form saves with `supabase.from('invoices').update({ customer, amount, status }).eq('id', id).select()`: every save sends all three fields, changed or not, and reads the row back. New invoices are created with `.insert({ customer, amount }).select()`.
+
+R1. Users can read the invoices they created. Finance staff can read every invoice.
+R2. Users can create invoices only as themselves, and only as drafts.
+R3. The creator of a draft invoice can change its customer and amount, and can change its status from `draft` to `sent`. Once an invoice is no longer a draft, nobody can change its customer or amount.
+R4. Finance staff can change a `sent` invoice's status to `paid` or `void`. No other status change is allowed, for anyone.
+R5. Creators can delete their own draft invoices. No other invoice can be deleted.
+R6. Nobody can change who created an invoice.
+R7. Users can see whether they themselves are finance staff (their own `finance_staff` row). Nobody can change `finance_staff` through the app.
+R8. Anonymous visitors cannot see or change anything.
+R9. Server-side code using the service role keeps full access and is not bound by the status rules.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  creator_reads_own_invoices → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from invoices order by id
+  finance_reads_every_invoice → authenticated:03 → {"rows": [[1], [2], [3], [4]]} → R1
+      select id from invoices order by id
+  outsider_reads_no_invoices → authenticated:04 → {"count": 0} → R1
+      select id from invoices
+  client_creates_draft_and_reads_it_back → authenticated:04 → {"affected": 1} → R2
+      [supabase-js] insert into invoices (customer, amount) values ('Hooli', 40) returning *
+  cannot_create_invoice_as_someone_else → authenticated:04 → {"denied": true} → R2
+      [supabase-js] insert into invoices (customer, amount, created_by) values ('Hooli', 40, '00000000-0000-0000-0000-000000000001')
+  cannot_create_invoice_already_sent → authenticated:04 → {"denied": true} → R2
+      [supabase-js] insert into invoices (customer, amount, status) values ('Hooli', 40, 'sent')
+  creator_edits_draft → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] update invoices set customer = 'Acme Corp', amount = 120, status = 'draft' where id = 1 returning *
+  creator_sends_draft → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] update invoices set customer = 'Acme', amount = 100, status = 'sent' where id = 1 returning *
+  creator_cannot_change_amount_of_sent_invoice → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update invoices set customer = 'Globex', amount = 999, status = 'sent' where id = 2 returning *
+  creator_cannot_mark_own_invoice_paid → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update invoices set customer = 'Globex', amount = 250, status = 'paid' where id = 2 returning *
+  other_user_cannot_send_someone_elses_draft → authenticated:02 → {"denied": true} → R3
+      [supabase-js] update invoices set customer = 'Acme', amount = 100, status = 'sent' where id = 1 returning *
+  finance_marks_sent_invoice_paid → authenticated:03 → {"affected": 1} → R4
+      [supabase-js] update invoices set customer = 'Umbrella', amount = 500, status = 'paid' where id = 4 returning *
+  finance_voids_sent_invoice → authenticated:03 → {"affected": 1} → R4
+      [supabase-js] update invoices set customer = 'Globex', amount = 250, status = 'void' where id = 2 returning *
+  finance_cannot_change_amount_while_marking_paid → authenticated:03 → {"denied": true} → R3, R4
+      [supabase-js] update invoices set customer = 'Umbrella', amount = 5, status = 'paid' where id = 4 returning *
+  finance_cannot_mark_draft_paid → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update invoices set customer = 'Acme', amount = 100, status = 'paid' where id = 1 returning *
+  finance_cannot_reopen_paid_invoice → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update invoices set customer = 'Initech', amount = 75, status = 'sent' where id = 3 returning *
+  creator_cannot_skip_to_paid → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update invoices set customer = 'Acme', amount = 100, status = 'paid' where id = 1 returning *
+  creator_cannot_hand_invoice_to_someone_else → authenticated:01 → {"denied": true} → R6
+      [supabase-js] update invoices set created_by = '00000000-0000-0000-0000-000000000002' where id = 1
+  finance_cannot_change_creator → authenticated:03 → {"denied": true} → R6
+      [supabase-js] update invoices set created_by = '00000000-0000-0000-0000-000000000003' where id = 4
+  creator_deletes_draft → authenticated:01 → {"affected": 1} → R5
+      [supabase-js] delete from invoices where id = 1
+  creator_cannot_delete_sent_invoice → authenticated:01 → {"denied": true} → R5
+      [supabase-js] delete from invoices where id = 2
+  finance_cannot_delete_invoice → authenticated:03 → {"denied": true} → R5
+      [supabase-js] delete from invoices where id = 4
+  finance_sees_own_staff_row → authenticated:03 → {"rows": [["00000000-0000-0000-0000-000000000003"]]} → R7
+      select user_id from finance_staff order by user_id
+  non_finance_sees_no_staff_rows → authenticated:01 → {"count": 0} → R7
+      select user_id from finance_staff
+  user_cannot_join_finance → authenticated:01 → {"denied": true} → R7
+      [supabase-js] insert into finance_staff (user_id) values ('00000000-0000-0000-0000-000000000001')
+  anon_sees_no_invoices → anon → {"denied": true} → R8
+      select * from invoices
+  anon_cannot_create_invoice → anon → {"denied": true} → R8
+      [supabase-js] insert into invoices (customer, amount, created_by) values ('x', 1, '00000000-0000-0000-0000-000000000001')
+  service_role_reopens_paid_invoice → service_role → {"rows": [["sent"]]} → R9
+      update invoices set status = 'sent' where id = 3; select status from invoices where id = 3
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_finance() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.finance_staff f where f.user_id = auth.uid())
+$$;
+
+create function private.invoice_guard() returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if auth.role() = 'service_role' then
+    return new;
+  end if;
+  if new.created_by is distinct from old.created_by then
+    raise exception 'created_by cannot change';
+  end if;
+  if old.status <> 'draft'
+     and (new.customer is distinct from old.customer or new.amount is distinct from old.amount) then
+    raise exception 'invoice % is locked', old.id;
+  end if;
+  if new.status is distinct from old.status then
+    if old.status = 'draft' and new.status = 'sent' and old.created_by = auth.uid() then
+      return new;
+    end if;
+    if old.status = 'sent' and new.status in ('paid', 'void') and private.is_finance() then
+      return new;
+    end if;
+    raise exception 'status change % -> % not allowed', old.status, new.status;
+  end if;
+  return new;
+end
+$$;
+
+create trigger invoices_guard
+  before update on public.invoices
+  for each row execute function private.invoice_guard();
+
+alter table public.finance_staff enable row level security;
+alter table public.invoices enable row level security;
+
+create policy finance_staff_select on public.finance_staff
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy invoices_select on public.invoices
+  for select to authenticated
+  using (created_by = auth.uid() or private.is_finance());
+
+create policy invoices_insert on public.invoices
+  for insert to authenticated
+  with check (created_by = auth.uid() and status = 'draft');
+
+create policy invoices_update on public.invoices
+  for update to authenticated
+  using ((created_by = auth.uid() and status = 'draft') or (private.is_finance() and status = 'sent'))
+  with check (created_by = auth.uid() or private.is_finance());
+
+create policy invoices_delete on public.invoices
+  for delete to authenticated
+  using (created_by = auth.uid() and status = 'draft');
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on creator_reads_own_invoices, outsider_reads_no_invoices, cannot_create_invoice_as_someone_else, cannot_create_invoice_already_sent, creator_cannot_change_amount_of_sent_invoice, creator_cannot_mark_own_invoice_paid, other_user_cannot_send_someone_elses_draft, finance_cannot_change_amount_while_marking_paid, finance_cannot_mark_draft_paid, finance_cannot_reopen_paid_invoice, creator_cannot_skip_to_paid, creator_cannot_hand_invoice_to_someone_else, finance_cannot_change_creator, creator_cannot_delete_sent_invoice, finance_cannot_delete_invoice, non_finance_sees_no_staff_rows, user_cannot_join_finance, anon_sees_no_invoices, anon_cannot_create_invoice
+  allow-all: fails on creator_reads_own_invoices, outsider_reads_no_invoices, cannot_create_invoice_as_someone_else, cannot_create_invoice_already_sent, creator_cannot_change_amount_of_sent_invoice, creator_cannot_mark_own_invoice_paid, other_user_cannot_send_someone_elses_draft, finance_cannot_change_amount_while_marking_paid, finance_cannot_mark_draft_paid, finance_cannot_reopen_paid_invoice, creator_cannot_skip_to_paid, creator_cannot_hand_invoice_to_someone_else, finance_cannot_change_creator, creator_cannot_delete_sent_invoice, finance_cannot_delete_invoice, non_finance_sees_no_staff_rows, user_cannot_join_finance, anon_sees_no_invoices, anon_cannot_create_invoice
+  deny-all: fails on creator_reads_own_invoices, finance_reads_every_invoice, client_creates_draft_and_reads_it_back, creator_edits_draft, creator_sends_draft, finance_marks_sent_invoice_paid, finance_voids_sent_invoice, creator_deletes_draft, finance_sees_own_staff_row
+  coverage: 9 rules covered
+  traps: old-vs-new caught by finance_cannot_change_amount_while_marking_paid; state-transition caught by creator_cannot_mark_own_invoice_paid, finance_cannot_mark_draft_paid, finance_cannot_reopen_paid_invoice, creator_cannot_skip_to_paid; column-grant-blocks-client caught by creator_edits_draft, creator_sends_draft, finance_marks_sent_invoice_paid, finance_voids_sent_invoice; ownership-change caught by finance_cannot_change_creator
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - draft, sent, paid and a second sent invoice: ids 1 (ana draft), 2 (ana sent), 3 (ben paid), 4 (ben sent)
+  - finance staff member: fin (…03), in finance_staff
+  - user with no invoices: dee (…04)
+
+====================================================================================================
+TASK T013 — Calendar delegation with private events and a busy-time view — tier 3 — traps: private-row-leak, time-window, ownership-change, view-bypass, transitive-delegation — verified: False
+tags: delegation, expiry, private-rows, view, ownership, client-returning
+
+REQUIREMENT (verbatim)
+A calendar app built with supabase-js. Each event sits on its owner's calendar (`owner_id`). Calendar owners can delegate their calendar to assistants through `delegations`; a delegation may allow editing and may expire at `expires_at` (no value means it never expires). Events are created with `.insert({...}).select()` and edited with `.update({...}).eq('id', id).select()`, so written rows are read back immediately.
+
+R1. Users can create, read, edit and delete events on their own calendar.
+R2. An event can never be moved to another calendar: `owner_id` never changes.
+R3. A user holding an unexpired delegation can read the grantor's events that are not private. If the delegation allows editing, they can also create, edit and delete the grantor's non-private events, but can never create private events or make an event private.
+R4. Private events are never visible to delegates in `events`. Provide a view `public.busy_slots` with exactly the columns `owner_id`, `starts_at` and `ends_at` that lists every event (private or not) on the viewer's own calendar and on the calendars they hold an unexpired delegation for, and nothing else.
+R5. Calendar owners can create, change and remove delegations of their own calendar. Delegates can see the delegations given to them. Nobody can create or change delegations of a calendar that isn't theirs, so delegates cannot pass access on.
+R6. Anonymous visitors cannot see or change anything, including `busy_slots`.
+R7. Server-side code using the service role keeps full access, including to `busy_slots`.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  owner_reads_all_own_events → authenticated:01 → {"rows": [[1], [2], [3]]} → R1
+      select id from events order by id
+  client_owner_creates_private_event → authenticated:01 → {"affected": 1} → R1
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'Dentist', '2030-01-09 09:00+00', '2030-01-09 10:00+00', true) returning *
+  client_owner_edits_own_private_event → authenticated:01 → {"affected": 1} → R1
+      [supabase-js] update events set title = 'Doctor (moved)' where id = 2 returning *
+  owner_deletes_own_event → authenticated:01 → {"affected": 1} → R1
+      [supabase-js] delete from events where id = 3
+  owner_cannot_create_event_on_someone_elses_calendar → authenticated:01 → {"denied": true} → R1, R3
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000005', 'Spam', '2030-01-09 09:00+00', '2030-01-09 10:00+00', false)
+  editing_delegate_reads_own_and_grantors_public_events → authenticated:02 → {"rows": [[1], [3], [4]]} → R3, R4
+      select id from events order by id
+  reading_delegate_reads_grantors_public_events → authenticated:03 → {"rows": [[1], [3]]} → R3, R4
+      select id from events order by id
+  expired_delegate_reads_nothing → authenticated:04 → {"count": 0} → R3
+      select id from events
+  user_without_delegation_reads_only_own → authenticated:05 → {"rows": [[5]]} → R1, R3
+      select id from events order by id
+  client_editing_delegate_creates_event_for_grantor → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'Press call', '2030-01-09 09:00+00', '2030-01-09 10:00+00', false) returning *
+  editing_delegate_cannot_create_private_event → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'Secret', '2030-01-09 09:00+00', '2030-01-09 10:00+00', true)
+  reading_delegate_cannot_create_event → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'x', '2030-01-09 09:00+00', '2030-01-09 10:00+00', false)
+  expired_delegate_cannot_create_event → authenticated:04 → {"denied": true} → R3
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'x', '2030-01-09 09:00+00', '2030-01-09 10:00+00', false)
+  client_editing_delegate_edits_public_event → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] update events set title = 'Board meeting (room 2)' where id = 1 returning *
+  editing_delegate_cannot_edit_private_event → authenticated:02 → {"denied": true} → R3, R4
+      [supabase-js] update events set title = 'x' where id = 2
+  editing_delegate_cannot_make_event_private → authenticated:02 → {"denied": true} → R3
+      [supabase-js] update events set is_private = true where id = 3
+  editing_delegate_cannot_move_event_to_own_calendar → authenticated:02 → {"denied": true} → R2
+      [supabase-js] update events set owner_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  owner_cannot_move_own_event_to_another_calendar → authenticated:02 → {"denied": true} → R2
+      [supabase-js] update events set owner_id = '00000000-0000-0000-0000-000000000001' where id = 4
+  editing_delegate_deletes_public_event → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] delete from events where id = 3
+  reading_delegate_cannot_delete_event → authenticated:03 → {"denied": true} → R3
+      [supabase-js] delete from events where id = 3
+  delegate_sees_busy_slots_including_private → authenticated:02 → {"rows": [["00000000-0000-0000-0000-000000000002", "2030-01-07T07:00:00+00:00"], ["00000000-0000-0000-0000-000000000001", "2030-01-07T09:00:00+00:00"], ["00000000-0000-0000-0000-000000000001", "2030-01-07T14:00:00+00:00"], ["00000000-0000-0000-0000-000000000001", "2030-01-08T12:00:00+00:00"]]} → R4
+      select owner_id, starts_at from busy_slots order by starts_at
+  reading_delegate_sees_grantors_busy_slots → authenticated:03 → {"count": 3} → R4
+      select starts_at from busy_slots
+  expired_delegate_sees_no_busy_slots → authenticated:04 → {"denied": true} → R4
+      select * from busy_slots
+  user_sees_only_own_busy_slots → authenticated:05 → {"rows": [["00000000-0000-0000-0000-000000000005"]]} → R4
+      select owner_id from busy_slots order by owner_id
+  busy_slots_has_exactly_three_columns → authenticated:02 → {"rows": [["owner_id"], ["starts_at"], ["ends_at"]]} → R4
+      select column_name from information_schema.columns where table_schema = 'public' and table_name = 'busy_slots' order by ordinal_position
+  owner_sees_all_own_delegations → authenticated:01 → {"count": 3} → R5
+      select delegate_id from delegations
+  delegate_sees_only_own_delegation → authenticated:02 → {"rows": [["00000000-0000-0000-0000-000000000001", true]]} → R5
+      select grantor_id, can_edit from delegations order by grantor_id
+  client_owner_creates_delegation → authenticated:01 → {"affected": 1} → R5
+      [supabase-js] insert into delegations (grantor_id, delegate_id, can_edit) values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000005', false) returning *
+  client_owner_upserts_delegation → authenticated:01 → {"affected": 1} → R5
+      [supabase-js] insert into delegations (grantor_id, delegate_id, can_edit, expires_at) values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000003', true, null) on conflict (grantor_id, delegate_id) do update set can_edit = excluded.can_edit, expires_at = excluded.expires_at returning *
+  delegate_cannot_pass_access_on → authenticated:02 → {"denied": true} → R5
+      [supabase-js] insert into delegations (grantor_id, delegate_id, can_edit) values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000005', true)
+  expired_delegate_cannot_renew_own_delegation → authenticated:04 → {"denied": true} → R5
+      [supabase-js] update delegations set expires_at = null where grantor_id = '00000000-0000-0000-0000-000000000001' and delegate_id = '00000000-0000-0000-0000-000000000004'
+  owner_revokes_delegation → authenticated:01 → {"affected": 1} → R5
+      [supabase-js] delete from delegations where grantor_id = '00000000-0000-0000-0000-000000000001' and delegate_id = '00000000-0000-0000-0000-000000000003'
+  anon_sees_no_events → anon → {"denied": true} → R6
+      select * from events
+  anon_sees_no_busy_slots → anon → {"denied": true} → R6
+      select * from busy_slots
+  anon_cannot_create_event → anon → {"denied": true} → R6
+      [supabase-js] insert into events (owner_id, title, starts_at, ends_at, is_private) values ('00000000-0000-0000-0000-000000000001', 'anon', '2030-01-09 09:00+00', '2030-01-09 10:00+00', false)
+  service_role_sees_all_busy_slots → service_role → {"rows": [[5]]} → R7
+      select count(*) from busy_slots
+  service_role_sees_all_events → service_role → {"rows": [[5]]} → R7
+      select count(*) from events
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to anon, authenticated;
+
+create function private.has_delegation(p_grantor_id uuid, p_edit boolean) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.delegations d
+    where d.grantor_id = p_grantor_id
+      and d.delegate_id = auth.uid()
+      and (d.expires_at is null or d.expires_at > now())
+      and (d.can_edit or not p_edit)
+  )
+$$;
+
+create function private.event_owner(p_event_id bigint) returns uuid
+language sql stable security definer set search_path = ''
+as $$
+  select e.owner_id from public.events e where e.id = p_event_id
+$$;
+
+alter table public.events enable row level security;
+alter table public.delegations enable row level security;
+
+create policy events_select on public.events
+  for select to authenticated
+  using (owner_id = auth.uid() or (not is_private and private.has_delegation(owner_id, false)));
+
+create policy events_insert on public.events
+  for insert to authenticated
+  with check (owner_id = auth.uid() or (not is_private and private.has_delegation(owner_id, true)));
+
+create policy events_update on public.events
+  for update to authenticated
+  using (owner_id = auth.uid() or (not is_private and private.has_delegation(owner_id, true)))
+  with check (
+    owner_id = private.event_owner(id)
+    and (owner_id = auth.uid() or (not is_private and private.has_delegation(owner_id, true)))
+  );
+
+create policy events_delete on public.events
+  for delete to authenticated
+  using (owner_id = auth.uid() or (not is_private and private.has_delegation(owner_id, true)));
+
+create policy delegations_select on public.delegations
+  for select to authenticated
+  using (grantor_id = auth.uid() or delegate_id = auth.uid());
+
+create policy delegations_insert on public.delegations
+  for insert to authenticated
+  with check (grantor_id = auth.uid());
+
+create policy delegations_update on public.delegations
+  for update to authenticated
+  using (grantor_id = auth.uid())
+  with check (grantor_id = auth.uid());
+
+create policy delegations_delete on public.delegations
+  for delete to authenticated
+  using (grantor_id = auth.uid());
+
+create view public.busy_slots as
+  select e.owner_id, e.starts_at, e.ends_at
+  from public.events e
+  where e.owner_id = auth.uid()
+     or private.has_delegation(e.owner_id, false)
+     or auth.role() = 'service_role';
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on owner_reads_all_own_events, owner_cannot_create_event_on_someone_elses_calendar, editing_delegate_reads_own_and_grantors_public_events, reading_delegate_reads_grantors_public_events, expired_delegate_reads_nothing, user_without_delegation_reads_only_own, editing_delegate_cannot_create_private_event, reading_delegate_cannot_create_event, expired_delegate_cannot_create_event, editing_delegate_cannot_edit_private_event, editing_delegate_cannot_make_event_private, editing_delegate_cannot_move_event_to_own_calendar, owner_cannot_move_own_event_to_another_calendar, reading_delegate_cannot_delete_event, delegate_sees_busy_slots_including_private, reading_delegate_sees_grantors_busy_slots, expired_delegate_sees_no_busy_slots, user_sees_only_own_busy_slots, busy_slots_has_exactly_three_columns, delegate_sees_only_own_delegation, delegate_cannot_pass_access_on, expired_delegate_cannot_renew_own_delegation, anon_sees_no_events, anon_sees_no_busy_slots, anon_cannot_create_event, service_role_sees_all_busy_slots
+  allow-all: fails on owner_reads_all_own_events, owner_cannot_create_event_on_someone_elses_calendar, editing_delegate_reads_own_and_grantors_public_events, reading_delegate_reads_grantors_public_events, expired_delegate_reads_nothing, user_without_delegation_reads_only_own, editing_delegate_cannot_create_private_event, reading_delegate_cannot_create_event, expired_delegate_cannot_create_event, editing_delegate_cannot_edit_private_event, editing_delegate_cannot_make_event_private, editing_delegate_cannot_move_event_to_own_calendar, owner_cannot_move_own_event_to_another_calendar, reading_delegate_cannot_delete_event, delegate_sees_busy_slots_including_private, reading_delegate_sees_grantors_busy_slots, expired_delegate_sees_no_busy_slots, user_sees_only_own_busy_slots, busy_slots_has_exactly_three_columns, delegate_sees_only_own_delegation, delegate_cannot_pass_access_on, expired_delegate_cannot_renew_own_delegation, anon_sees_no_events, anon_sees_no_busy_slots, anon_cannot_create_event, service_role_sees_all_busy_slots
+  deny-all: fails on owner_reads_all_own_events, client_owner_creates_private_event, client_owner_edits_own_private_event, owner_deletes_own_event, editing_delegate_reads_own_and_grantors_public_events, reading_delegate_reads_grantors_public_events, user_without_delegation_reads_only_own, client_editing_delegate_creates_event_for_grantor, client_editing_delegate_edits_public_event, editing_delegate_deletes_public_event, delegate_sees_busy_slots_including_private, reading_delegate_sees_grantors_busy_slots, expired_delegate_sees_no_busy_slots, user_sees_only_own_busy_slots, busy_slots_has_exactly_three_columns, owner_sees_all_own_delegations, delegate_sees_only_own_delegation, client_owner_creates_delegation, client_owner_upserts_delegation, owner_revokes_delegation, anon_sees_no_busy_slots, service_role_sees_all_busy_slots
+  coverage: 7 rules covered
+  traps: private-row-leak caught by editing_delegate_reads_own_and_grantors_public_events, reading_delegate_reads_grantors_public_events; time-window caught by expired_delegate_reads_nothing, expired_delegate_cannot_create_event, expired_delegate_sees_no_busy_slots; ownership-change caught by editing_delegate_cannot_move_event_to_own_calendar; view-bypass caught by delegate_sees_busy_slots_including_private, reading_delegate_sees_grantors_busy_slots, expired_delegate_sees_no_busy_slots, user_sees_only_own_busy_slots, anon_sees_no_busy_slots; transitive-delegation caught by delegate_cannot_pass_access_on
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - edit delegation without expiry: ana → ben (…02)
+  - read-only delegation expiring 2099: ana → cy (…03)
+  - expired edit delegation: ana → dee (…04), expired 2020-01-01
+  - private events: ana's event 2, ben's own event 4
+  - user with no delegations: eli (…05)
+

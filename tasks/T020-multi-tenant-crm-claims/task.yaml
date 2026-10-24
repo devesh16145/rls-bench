@@ -1,0 +1,23 @@
+id: T020
+title: Multi-tenant CRM isolated by server-set JWT claims
+tier: 3
+tags:
+- multi-tenant
+- jwt-claims
+- restrictive-policy
+- role-from-claims
+- client-returning
+traps:
+- restrictive-vs-permissive
+- claim-trust
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- acme admin ana (…01), acme agent ben (…02), globex agent cy (…03)
+- 'user with no tenant claim: dee (…04)'
+- globex agent eve (…05) whose user_metadata claims acme admin
+- 'archived acme contact: contacts.id=3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

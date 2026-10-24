@@ -1,0 +1,304 @@
+- name: client_creates_org_and_reads_it_back
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: orgs
+    values: {name: Initech}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_create_org_for_someone_else
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: orgs
+    values: {name: Spoof, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {denied: true}
+
+- name: creator_becomes_owner_of_new_org
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: insert into orgs (name) values ('Initech'); insert into org_members (org_id, user_id, role) values (3, '00000000-0000-0000-0000-000000000004', 'owner') returning org_id, user_id, role
+  expect:
+    rows:
+    - [3, 00000000-0000-0000-0000-000000000004, owner]
+
+- name: creator_cannot_make_someone_else_first_owner
+  covers: [R2, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: insert into orgs (name) values ('Initech'); insert into org_members (org_id, user_id, role) values (3, '00000000-0000-0000-0000-000000000001', 'owner')
+  expect: {denied: true}
+
+- name: user_cannot_join_existing_org_as_owner
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: owner}
+  expect: {denied: true}
+
+- name: user_cannot_join_existing_org_as_member
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: member}
+  expect: {denied: true}
+
+- name: creator_cannot_join_own_org_that_has_members
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 2, user_id: 00000000-0000-0000-0000-000000000005, role: owner}
+  expect: {denied: true}
+
+- name: creator_sees_own_org_before_joining
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from orgs order by id
+  expect:
+    rows:
+    - [2]
+
+- name: creator_sees_no_memberships_before_joining
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select user_id from org_members
+  expect: {count: 0}
+
+- name: member_of_two_orgs_sees_both
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from orgs order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: member_sees_all_memberships_of_her_orgs
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select org_id, user_id from org_members order by org_id, user_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000001]
+    - [1, 00000000-0000-0000-0000-000000000002]
+    - [1, 00000000-0000-0000-0000-000000000003]
+    - [2, 00000000-0000-0000-0000-000000000003]
+
+- name: admin_sees_only_own_org_memberships
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select user_id from org_members
+  expect: {count: 3}
+
+- name: outsider_sees_no_orgs
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from orgs
+  expect: {count: 0}
+
+- name: admin_adds_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: member}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_add_admin
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: admin}
+  expect: {denied: true}
+
+- name: member_cannot_add_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: member}
+  expect: {denied: true}
+
+- name: owner_adds_admin
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000004, role: admin}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_removes_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: admin_cannot_remove_owner
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+  expect: {denied: true}
+
+- name: owner_promotes_member_to_admin
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_change_roles
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: owner_removes_admin
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: admin_cannot_promote_self_to_owner
+  covers: [R4, R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: org_members
+    values: {role: owner}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {denied: true}
+
+- name: owner_cannot_demote_self
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: org_members
+    values: {role: member}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+  expect: {denied: true}
+
+- name: member_leaves_org
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: admin_leaves_org
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: only_owner_cannot_leave
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: org_members
+    match: {org_id: 2, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: owner_leaves_when_another_owner_exists
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update org_members set role = 'owner' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'; delete from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  expect: {affected: 1}
+
+- name: owner_renames_org_and_reads_it_back
+  covers: [R7]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: orgs
+    values: {name: Northwind Ltd}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_rename_org
+  covers: [R7]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: orgs
+    values: {name: x}
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: owner_cannot_delete_org
+  covers: [R7]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: orgs
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_orgs
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from orgs
+  expect: {denied: true}
+
+- name: anon_sees_no_memberships
+  covers: [R8]
+  as: {role: anon}
+  sql: select * from org_members
+  expect: {denied: true}
+
+- name: anon_cannot_create_org
+  covers: [R8]
+  as: {role: anon}
+  client:
+    op: insert
+    table: orgs
+    values: {name: Anon, created_by: 00000000-0000-0000-0000-000000000001}
+  expect: {denied: true}
+
+- name: service_role_sees_all_memberships
+  covers: [R9]
+  as: {role: service_role}
+  sql: select count(*) from org_members
+  expect:
+    rows:
+    - [4]

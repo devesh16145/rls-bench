@@ -1,0 +1,19 @@
+id: T096
+title: Private invoice PDFs stored in each user's own folder
+tier: 1
+tags:
+- storage-paths
+- single-owner
+- file-type
+traps:
+- owner-column-trust
+- file-type-check
+extra_tables:
+- storage.objects
+fixture_notes:
+- ana's (…01) and ben's (…02) invoices in their folders
+- 'an object outside any user folder: ''misc/readme.txt'''
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,192 @@
+- name: anon_reads_live_posts
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from posts order by id
+  expect: {rows: [[1], [5]]}
+
+- name: reader_reads_live_posts
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from posts order by id
+  expect: {rows: [[1], [5]]}
+
+- name: author_reads_own_drafts_and_scheduled
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from posts order by id
+  expect: {rows: [[1], [2], [3], [5]]}
+
+- name: author_reads_own_expired_post
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from posts order by id
+  expect: {rows: [[1], [4], [5]]}
+
+- name: author_writes_post
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into posts (id, author_id, title) values (6, '00000000-0000-0000-0000-000000000001', 'New')
+  expect: {affected: 1}
+
+- name: author_cannot_write_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into posts (id, author_id, title) values (7, '00000000-0000-0000-0000-000000000002', 'Spoof')
+  expect: {denied: true}
+
+- name: author_edits_own_draft
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update posts set title = 'Better ideas' where id = 2
+  expect: {affected: 1}
+
+- name: author_cannot_edit_other_authors_live_post
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update posts set title = 'x' where id = 5
+  expect: {denied: true}
+
+- name: author_cannot_hand_live_post_to_other_author
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update posts set author_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  expect: {denied: true}
+
+- name: author_deletes_own_scheduled_post
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from posts where id = 3
+  expect: {affected: 1}
+
+- name: author_cannot_delete_other_authors_post
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from posts where id = 5
+  expect: {denied: true}
+
+- name: anon_reads_comments_on_live_posts
+  covers: [R4]
+  as: {role: anon}
+  sql: select id from comments order by id
+  expect: {rows: [[1], [2], [5]]}
+
+- name: author_reads_comments_on_own_draft
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from comments order by id
+  expect: {rows: [[1], [2], [3], [5]]}
+
+- name: commenter_cannot_read_own_comment_on_expired_post
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from comments where post_id = 4
+  expect: {count: 0}
+
+- name: post_author_reads_comments_on_expired_post
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from comments where post_id = 4 order by id
+  expect: {rows: [[4]]}
+
+- name: reader_comments_on_live_post
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000003', 'Agreed')
+  expect: {affected: 1}
+
+- name: reader_cannot_comment_on_draft
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: insert into comments (post_id, author_id, body) values (2, '00000000-0000-0000-0000-000000000003', 'Sneaky')
+  expect: {denied: true}
+
+- name: reader_cannot_comment_as_someone_else
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000002', 'Spoof')
+  expect: {denied: true}
+
+- name: author_comments_on_own_draft
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into comments (post_id, author_id, body) values (2, '00000000-0000-0000-0000-000000000001', 'Todo')
+  expect: {affected: 1}
+
+- name: commenter_deletes_own_comment
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: delete from comments where id = 2
+  expect: {affected: 1}
+
+- name: post_author_deletes_comment_on_own_post
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from comments where id = 5
+  expect: {affected: 1}
+
+- name: reader_cannot_delete_others_comment
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: delete from comments where id = 1
+  expect: {denied: true}
+
+- name: commenter_cannot_edit_own_comment
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update comments set body = 'edited' where id = 1
+  expect: {denied: true}
+
+- name: anon_cannot_comment
+  covers: [R7]
+  as: {role: anon}
+  sql: insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000001', 'anon')
+  expect: {denied: true}
+
+- name: anon_cannot_write_post
+  covers: [R7]
+  as: {role: anon}
+  sql: insert into posts (id, author_id, title) values (8, '00000000-0000-0000-0000-000000000001', 'anon')
+  expect: {denied: true}
+
+- name: service_role_sees_all_posts
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from posts
+  expect: {rows: [[5]]}
+
+- name: service_role_sees_all_comments
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from comments
+  expect: {rows: [[5]]}
+
+- name: client_comments_and_reads_comment_back
+  covers: [R4, R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: comments
+    values: {post_id: 1, author_id: 00000000-0000-0000-0000-000000000003, body: Agreed}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_author_creates_draft_and_reads_it_back
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: posts
+    values: {id: 9, author_id: 00000000-0000-0000-0000-000000000001, title: Draft}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_author_edits_own_post_and_reads_it_back
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {title: Hello again}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}

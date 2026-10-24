@@ -1,0 +1,263 @@
+- name: member_sees_own_orgs
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {email: bob@example.com}
+  sql: select id from orgs order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: member_sees_org_members
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  sql: select user_id from org_members order by user_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001]
+    - [00000000-0000-0000-0000-000000000002]
+
+- name: outsider_sees_no_orgs
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select id from orgs
+  expect: {count: 0}
+
+- name: admin_sees_org_invites
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  sql: select count(*) from invites
+  expect:
+    rows:
+    - [4]
+
+- name: admin_of_other_org_sees_only_its_invites
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {email: bob@example.com}
+  sql: select token from invites order by token
+  expect:
+    rows:
+    - [tok-org2]
+
+- name: invitee_cannot_read_invites
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select token from invites
+  expect: {denied: true}
+
+- name: admin_creates_invite
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-new, org_id: 1, email: eve@example.com, role: member, expires_at: '2099-01-01', invited_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_invite_to_other_org
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-x1, org_id: 2, email: eve@example.com, role: member, expires_at: '2099-01-01', invited_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_create_invite
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {email: bob@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-x2, org_id: 1, email: eve@example.com, role: member, expires_at: '2099-01-01', invited_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_create_accepted_invite
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-x3, org_id: 1, email: eve@example.com, role: member, expires_at: '2099-01-01', invited_by: 00000000-0000-0000-0000-000000000001, accepted_at: '2020-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_create_expired_invite
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-x4, org_id: 1, email: eve@example.com, role: member, expires_at: '2020-01-01', invited_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_create_invite_as_someone_else
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: insert
+    table: invites
+    values: {token: tok-x5, org_id: 1, email: eve@example.com, role: member, expires_at: '2099-01-01', invited_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_revokes_invite
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ada@example.com}
+  client:
+    op: delete
+    table: invites
+    match: {token: tok-dan-admin}
+  expect: {affected: 1}
+
+- name: invitee_accepts_and_joins
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select public.accept_invite('tok-cal-member'); select org_id, role from org_members where user_id = '00000000-0000-0000-0000-000000000003' order by org_id
+  expect:
+    rows:
+    - [1, member]
+
+- name: accept_returns_org_id
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select public.accept_invite('tok-org2')
+  expect:
+    rows:
+    - [2]
+
+- name: expired_invite_is_refused
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select public.accept_invite('tok-cal-expired')
+  expect: {denied: true}
+
+- name: used_invite_is_refused
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000004
+    claims: {email: dan@example.com}
+  sql: select public.accept_invite('tok-dan-used')
+  expect: {denied: true}
+
+- name: invite_for_other_email_is_refused
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select public.accept_invite('tok-dan-admin')
+  expect: {denied: true}
+
+- name: user_metadata_email_does_not_count
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      email: cal@example.com
+      user_metadata: {email: dan@example.com}
+  sql: select public.accept_invite('tok-dan-admin')
+  expect: {denied: true}
+
+- name: unknown_token_is_refused
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  sql: select public.accept_invite('tok-guess')
+  expect: {denied: true}
+
+- name: anon_cannot_accept
+  covers: [R3, R5]
+  as: {role: anon}
+  sql: select public.accept_invite('tok-cal-member')
+  expect: {denied: true}
+
+- name: user_cannot_join_org_directly
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {email: cal@example.com}
+  client:
+    op: insert
+    table: org_members
+    values: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003, role: member}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_promote_self
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {email: bob@example.com}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_invites
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from invites
+  expect:
+    rows:
+    - [5]

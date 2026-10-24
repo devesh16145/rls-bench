@@ -1,0 +1,142 @@
+- name: member_sees_org_flags
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from flags order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: other_org_member_sees_only_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from flags order by id
+  expect:
+    rows:
+    - [3]
+
+- name: member_sees_org_members
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from org_members
+  expect:
+    rows:
+    - [2]
+
+- name: developer_toggles_dev_flag
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: flags
+    values: {enabled: true}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: developer_creates_dev_flag
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: flags
+    values: {org_id: 1, env: dev, key: fast-checkout, enabled: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: developer_cannot_change_other_org_flag
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: flags
+    values: {enabled: false}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_cannot_toggle_prod_flag
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: flags
+    values: {enabled: true}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_cannot_create_prod_flag
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: flags
+    values: {org_id: 1, env: prod, key: x, enabled: true}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_cannot_move_flag_to_prod
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: flags
+    values: {env: prod, key: new-ui-v2}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: developer_cannot_delete_prod_flag
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: flags
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: admin_toggles_prod_flag
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: flags
+    values: {enabled: true}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_deletes_prod_flag
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: flags
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: developer_cannot_promote_self
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_flags
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from flags
+  expect: {denied: true}
+
+- name: service_role_sees_all_flags
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from flags
+  expect:
+    rows:
+    - [3]

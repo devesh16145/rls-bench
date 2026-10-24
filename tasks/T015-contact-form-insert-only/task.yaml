@@ -1,0 +1,17 @@
+id: T015
+title: Public contact form that only accepts inserts
+tier: 1
+tags:
+- anon-insert
+- insert-check
+- write-only
+traps:
+- anon-write-spoof
+- anon-vs-authenticated
+extra_tables: []
+fixture_notes:
+- two existing messages, one already handled by staff user (…01)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

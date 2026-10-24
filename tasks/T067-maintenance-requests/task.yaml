@@ -1,0 +1,21 @@
+id: T067
+title: Apartment maintenance requests handled by building staff
+tier: 2
+tags:
+- membership
+- parent-child
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- reference-check
+- child-leak
+- state-transition
+extra_tables: []
+fixture_notes:
+- 'building 1: units 101 (ana …01) and 102 (ben …02), staff sam (…04); building 2: unit 201 (cy …03), staff tia (…05)'
+- photos on requests 1 and 2
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

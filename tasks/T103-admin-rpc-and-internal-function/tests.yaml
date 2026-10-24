@@ -1,0 +1,129 @@
+- name: member_sees_org_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from org_members
+  expect:
+    rows:
+    - [3]
+
+- name: user_sees_leaderboard
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select count(*) from leaderboard
+  expect:
+    rows:
+    - [2]
+
+- name: member_cannot_change_role_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_edit_leaderboard
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: leaderboard
+    values: {score: 999}
+    match: {user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_promotes_member
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000003', 'admin'); select role from org_members where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000003'
+  expect:
+    rows:
+    - [admin]
+
+- name: owner_demotes_admin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000002', 'member')
+  expect:
+    rows:
+    - [member]
+
+- name: member_cannot_set_roles
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000002', 'member')
+  expect: {denied: true}
+
+- name: admin_cannot_change_own_role
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000002', 'member')
+  expect: {denied: true}
+
+- name: admin_cannot_change_owner
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000001', 'member')
+  expect: {denied: true}
+
+- name: admin_cannot_grant_owner_role
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000003', 'owner')
+  expect: {denied: true}
+
+- name: admin_cannot_change_other_org_member
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000005', 'admin')
+  expect: {denied: true}
+
+- name: other_org_admin_cannot_change_roles
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000003', 'admin')
+  expect: {denied: true}
+
+- name: signed_in_user_cannot_run_internal_function
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.recalculate_leaderboard()
+  expect: {denied: true}
+
+- name: anon_cannot_run_internal_function
+  covers: [R4]
+  as: {role: anon}
+  sql: select public.recalculate_leaderboard()
+  expect: {denied: true}
+
+- name: service_role_runs_internal_function
+  covers: [R4]
+  as: {role: service_role}
+  sql: select public.recalculate_leaderboard(); select count(*) from leaderboard
+  expect:
+    rows:
+    - [2]
+
+- name: anon_cannot_set_roles
+  covers: [R3, R5]
+  as: {role: anon}
+  sql: select public.set_member_role(1, '00000000-0000-0000-0000-000000000003', 'admin')
+  expect: {denied: true}
+
+- name: anon_sees_no_memberships
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from org_members
+  expect: {denied: true}
+
+- name: service_role_sees_all_memberships
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from org_members
+  expect:
+    rows:
+    - [5]

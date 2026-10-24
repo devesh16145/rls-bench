@@ -1,0 +1,120 @@
+- name: user_reads_own_emails
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from emails order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_cannot_read_someone_elses_email
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from emails where id = 3
+  expect: {count: 0}
+
+- name: user_creates_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: emails
+    values: {user_id: 00000000-0000-0000-0000-000000000001, to_address: client@example.org, subject: Quote, body: 'Hi, attached.'}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_draft_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: emails
+    values: {user_id: 00000000-0000-0000-0000-000000000002, to_address: client@example.org, subject: Quote, body: 'Hi, attached.'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_create_already_sent_email
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: emails
+    values: {user_id: 00000000-0000-0000-0000-000000000001, to_address: client@example.org, subject: Quote, body: 'Hi, attached.', sent_at: '2020-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_edits_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: emails
+    values: {body: 'Free on Saturday?'}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_deletes_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: emails
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: emails
+    values: {body: x}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_edit_sent_email
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: emails
+    values: {body: Taking Tuesday off.}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_sent_email
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: emails
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: user_cannot_mark_draft_sent
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: emails
+    values: {sent_at: '2020-02-01'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_emails
+  covers: [R4]
+  as: {role: anon}
+  sql: select * from emails
+  expect: {denied: true}
+
+- name: service_role_sees_all_emails
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from emails
+  expect:
+    rows:
+    - [3]

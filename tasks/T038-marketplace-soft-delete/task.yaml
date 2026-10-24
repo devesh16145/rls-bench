@@ -1,0 +1,21 @@
+id: T038
+title: Marketplace listings with soft delete and moderator flags
+tier: 2
+tags:
+- soft-delete
+- moderation
+- public-read
+- client-returning
+traps:
+- soft-delete-visibility
+- soft-delete-leak
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- 'sal''s (…01) listings: 1 active, 2 draft, 3 flagged, 4 soft-deleted'
+- 'bea''s (…02) listings: 5 active, 6 draft'
+- 'moderator: mo (…03)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

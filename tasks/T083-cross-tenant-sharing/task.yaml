@@ -1,0 +1,21 @@
+id: T083
+title: Cross-tenant item sharing with expiring shares and no resharing
+tier: 3
+tags:
+- multi-tenant
+- jwt-claims
+- sharing
+- expiry
+- client-returning
+traps:
+- claim-trust
+- time-window
+- transitive-delegation
+extra_tables: []
+fixture_notes:
+- acme admin (…01), acme member (…02), globex admin (…03), globex member (…04); eve (…05) is a globex member whose user_metadata claims acme admin
+- item 1 shared with globex (no expiry); item 2's share to globex expired in 2020
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

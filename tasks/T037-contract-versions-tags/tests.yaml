@@ -1,0 +1,200 @@
+- name: owner_reads_own_contracts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from contracts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: shared_user_reads_shared_contract
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from contracts order by id
+  expect:
+    rows:
+    - [1]
+
+- name: outsider_reads_no_contracts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from contracts
+  expect: {count: 0}
+
+- name: owner_renames_contract
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: contracts
+    values: {title: NDA with Acme (signed)}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: shared_user_cannot_rename_contract
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: contracts
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: shared_user_reads_contract_versions
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from contract_versions order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: outsider_reads_no_versions
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from contract_versions
+  expect: {count: 0}
+
+- name: shared_user_reads_contract_tags
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select tag from contract_tags order by tag
+  expect:
+    rows:
+    - [nda]
+
+- name: outsider_reads_no_tags
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select tag from contract_tags
+  expect: {count: 0}
+
+- name: shared_user_adds_version
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contract_versions
+    values: {contract_id: 1, version: 3, body: Counter-offer, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: shared_user_cannot_add_version_to_unshared_contract
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contract_versions
+    values: {contract_id: 2, version: 2, body: x, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_add_version_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contract_versions
+    values: {contract_id: 1, version: 3, body: x, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_edit_version
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: contract_versions
+    values: {body: rewritten}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_delete_version
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: contract_versions
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: owner_adds_tag
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: contract_tags
+    values: {contract_id: 2, tag: urgent}
+    returning: true
+  expect: {affected: 1}
+
+- name: shared_user_cannot_add_tag
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contract_tags
+    values: {contract_id: 1, tag: x}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_removes_tag
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: contract_tags
+    match: {contract_id: 1, tag: nda}
+  expect: {affected: 1}
+
+- name: owner_shares_contract
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: contract_shares
+    values: {contract_id: 2, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: shared_user_cannot_reshare
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: contract_shares
+    values: {contract_id: 1, user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: recipient_sees_own_share
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select contract_id, user_id from contract_shares order by contract_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002]
+
+- name: unrelated_owner_sees_no_shares
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select contract_id from contract_shares
+  expect: {count: 0}
+
+- name: anon_sees_no_versions
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from contract_versions
+  expect: {denied: true}
+
+- name: service_role_sees_all_versions
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from contract_versions
+  expect:
+    rows:
+    - [4]

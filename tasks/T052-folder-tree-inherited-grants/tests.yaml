@@ -1,0 +1,192 @@
+- name: owner_reads_whole_tree
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from folders order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+    - [6]
+
+- name: read_grant_inherits_to_subfolder
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from folders order by id
+  expect:
+    rows:
+    - [2]
+    - [3]
+
+- name: grant_reader_reads_documents_below
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from documents order by id
+  expect:
+    rows:
+    - [2]
+    - [3]
+
+- name: grant_does_not_reach_parent_folder
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from documents where id = 1
+  expect: {count: 0}
+
+- name: deep_grant_sees_only_its_subtree
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from documents order by id
+  expect:
+    rows:
+    - [3]
+
+- name: other_owner_sees_only_own_tree
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from documents order by id
+  expect:
+    rows:
+    - [5]
+
+- name: editor_adds_document
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: documents
+    values: {folder_id: 4, title: Q3 campaign}
+    returning: true
+  expect: {affected: 1}
+
+- name: edit_grant_inherits_to_subfolder
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: documents
+    values: {folder_id: 6, title: Diwali sale}
+    returning: true
+  expect: {affected: 1}
+
+- name: reader_cannot_add_document
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: documents
+    values: {folder_id: 2, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: reader_cannot_edit_inherited_document
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: documents
+    values: {title: x}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_move_document_into_read_only_folder
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: documents
+    values: {folder_id: 2}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_deletes_document
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: delete
+    table: documents
+    match: {id: 4}
+  expect: {affected: 1}
+
+- name: owner_creates_subfolder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: folders
+    values: {parent_id: 2, owner_id: 00000000-0000-0000-0000-000000000001, name: Contracts}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_creates_top_level_folder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: folders
+    values: {parent_id: null, owner_id: 00000000-0000-0000-0000-000000000003, name: Hal private}
+    returning: true
+  expect: {affected: 1}
+
+- name: editor_cannot_create_subfolder
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: folders
+    values: {parent_id: 4, owner_id: 00000000-0000-0000-0000-000000000004, name: x}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_grants_access
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: folder_grants
+    values: {folder_id: 4, user_id: 00000000-0000-0000-0000-000000000003, can_edit: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: reader_cannot_grant_access
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: folder_grants
+    values: {folder_id: 2, user_id: 00000000-0000-0000-0000-000000000005, can_edit: true}
+    returning: false
+  expect: {denied: true}
+
+- name: user_sees_own_grants
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select folder_id, user_id from folder_grants order by folder_id
+  expect:
+    rows:
+    - [3, 00000000-0000-0000-0000-000000000005]
+
+- name: owner_sees_grants_on_own_tree
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from folder_grants
+  expect:
+    rows:
+    - [4]
+
+- name: anon_sees_no_documents
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from documents
+  expect: {denied: true}
+
+- name: service_role_sees_all_documents
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from documents
+  expect:
+    rows:
+    - [5]

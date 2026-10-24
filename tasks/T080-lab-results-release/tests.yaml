@@ -1,0 +1,153 @@
+- name: patient_sees_released_results
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from lab_results order by id
+  expect:
+    rows:
+    - [1]
+
+- name: patient_cannot_see_unreleased_result
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from lab_results where id = 2
+  expect: {count: 0}
+
+- name: patient_cannot_see_scheduled_result
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from lab_results where id = 3
+  expect: {count: 0}
+
+- name: other_patient_sees_only_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from lab_results order by id
+  expect:
+    rows:
+    - [4]
+
+- name: doctor_sees_all_care_team_results
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from lab_results order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: patient_sees_own_care_team
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select doctor_id from care_team order by doctor_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000003]
+
+- name: doctor_adds_result
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: lab_results
+    values: {patient_id: 1, test_name: TSH, result_text: 2.1 mIU/L}
+    returning: true
+  expect: {affected: 1}
+
+- name: doctor_cannot_add_result_for_other_patient
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: lab_results
+    values: {patient_id: 2, test_name: x, result_text: x}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_releases_result
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: lab_results
+    values: {released_at: '2020-06-01'}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: doctor_reschedules_release
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: lab_results
+    values: {released_at: '2099-02-01'}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: doctor_edits_unreleased_result
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: lab_results
+    values: {result_text: LDL 150 mg/dL}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: doctor_cannot_edit_released_result
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: lab_results
+    values: {result_text: 6.1%}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: patient_cannot_release_own_result
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: lab_results
+    values: {released_at: '2020-01-01'}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: patient_cannot_add_result
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: lab_results
+    values: {patient_id: 1, test_name: x, result_text: x}
+    returning: false
+  expect: {denied: true}
+
+- name: doctor_cannot_delete_result
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: lab_results
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: anon_sees_no_results
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from lab_results
+  expect: {denied: true}
+
+- name: service_role_sees_all_results
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from lab_results
+  expect:
+    rows:
+    - [4]

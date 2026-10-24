@@ -1,0 +1,21 @@
+id: T050
+title: School grades visible to students, guardians and their teachers
+tier: 2
+tags:
+- roles-by-table
+- delegated-access
+- reference-check
+- client-returning
+traps:
+- private-row-leak
+- reference-check
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- teacher tina (…01) class 1; teacher tom (…02) class 2
+- sid (…03) in classes 1 and 2; sue (…04) in class 1; sam (…06) only in class 2
+- guardian gus (…05) of sid
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

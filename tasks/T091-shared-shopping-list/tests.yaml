@@ -1,0 +1,194 @@
+- name: member_sees_household_items
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from shopping_items order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_household_sees_only_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from shopping_items order by id
+  expect:
+    rows:
+    - [4]
+
+- name: member_sees_household_members
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from household_members
+  expect:
+    rows:
+    - [2]
+
+- name: member_adds_item
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: shopping_items
+    values: {household_id: 1, name: Bread, added_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_add_to_other_household
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: shopping_items
+    values: {household_id: 2, name: Bread, added_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_add_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: shopping_items
+    values: {household_id: 1, name: Bread, added_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_add_preclaimed_item
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: shopping_items
+    values: {household_id: 1, name: Bread, added_by: 00000000-0000-0000-0000-000000000001, claimed_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: member_claims_unclaimed_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {claimed_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_claim_for_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {claimed_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_take_someone_elses_claim
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {claimed_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: claimer_unclaims_item
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: shopping_items
+    values: {claimed_by: null}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: claimer_marks_item_bought
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: shopping_items
+    values: {is_bought: true}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_mark_someone_elses_claim_bought
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {is_bought: true}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_mark_unclaimed_item_bought
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {is_bought: true}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_rename_item
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shopping_items
+    values: {name: Oat milk}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: adder_deletes_unbought_item
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: shopping_items
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: adder_cannot_delete_bought_item
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: shopping_items
+    match: {id: 3}
+  expect: {denied: true}
+
+- name: member_cannot_delete_item_added_by_someone_else
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: shopping_items
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_items
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from shopping_items
+  expect: {denied: true}
+
+- name: service_role_sees_all_items
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from shopping_items
+  expect:
+    rows:
+    - [4]

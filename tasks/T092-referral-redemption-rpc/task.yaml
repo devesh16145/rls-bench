@@ -1,0 +1,22 @@
+id: T092
+title: Referral codes redeemed through an RPC with fraud limits
+tier: 3
+tags:
+- rpc
+- security-definer
+- fraud-limits
+- aggregate-limit
+- read-only-tables
+traps:
+- self-approval
+- duplicate-approval
+- aggregate-limit
+extra_tables: []
+fixture_notes:
+- ana (…01) owns code REF-ANA and referred old (…09); max (…02) owns code MAXED and already referred five users (…03–…07)
+- newbie (…08) has never been referred; r1 (…03) owns code REF-R1 with no referrals yet
+- referrals has no unique constraint on referee_id, so the function must enforce one redemption per user
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

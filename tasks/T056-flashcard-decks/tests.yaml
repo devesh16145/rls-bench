@@ -1,0 +1,147 @@
+- name: anon_reads_public_decks
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from decks order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: anon_reads_cards_of_public_decks
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from cards order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: owner_reads_own_private_cards
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from cards order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: other_user_cannot_read_private_card
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from cards where id = 3
+  expect: {count: 0}
+
+- name: owner_publishes_deck
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: decks
+    values: {is_public: true}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_rename_someone_elses_deck
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: decks
+    values: {name: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_creates_deck
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: decks
+    values: {id: 4, owner_id: 00000000-0000-0000-0000-000000000002, name: Marathi, is_public: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: owner_adds_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: cards
+    values: {deck_id: 2, front: ATP, back: energy currency}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_add_card_to_someone_elses_deck
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: cards
+    values: {deck_id: 3, front: x, back: y}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_edits_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cards
+    values: {back: the cell's power plant}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: cards
+    values: {back: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_move_card_into_someone_elses_deck
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cards
+    values: {deck_id: 3}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_deletes_card
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: cards
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: anon_cannot_add_card
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: cards
+    values: {deck_id: 1, front: x, back: y}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_cards
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from cards
+  expect:
+    rows:
+    - [4]

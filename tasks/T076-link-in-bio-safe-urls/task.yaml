@@ -1,0 +1,18 @@
+id: T076
+title: Link-in-bio pages that only accept https links
+tier: 1
+tags:
+- public-read
+- single-owner
+- input-validation
+- client-returning
+traps:
+- unsafe-url
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- 'ana (…01): visible link 1 and hidden link 2; ben (…02): visible link 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,18 @@
+id: T066
+title: Daily API usage with a per-user summary view
+tier: 1
+tags:
+- view
+- security-invoker
+- aggregate
+- read-only
+traps:
+- view-bypass
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- 'ana (…01): two days of usage (100 and 50 requests); ben (…02): one day (7)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

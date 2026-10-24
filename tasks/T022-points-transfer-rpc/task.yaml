@@ -1,0 +1,20 @@
+id: T022
+title: Points transfer RPC that must validate its own input
+tier: 3
+tags:
+- rpc
+- security-definer
+- input-validation
+- read-only-tables
+traps:
+- rpc-input-validation
+- overdraft
+extra_tables: []
+fixture_notes:
+- 'balances: ana 100, ben 20, cy 0; dee (…04) has no wallet'
+- 'existing transfer: ana → ben 30'
+- no check constraints on balance or amount, so the function must validate
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

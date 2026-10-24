@@ -1,0 +1,20 @@
+id: T032
+title: Agency client portal with staff-only internal comments
+tier: 2
+tags:
+- staff-role
+- private-rows
+- client-scoping
+- client-returning
+traps:
+- private-row-leak
+- privilege-escalation
+- reference-check
+extra_tables: []
+fixture_notes:
+- 'internal comment on cara''s project: project_comments.id=2'
+- 'staff: sue (…01), sam (…02); clients: cara (…03) project 1, carl (…04) project 2'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

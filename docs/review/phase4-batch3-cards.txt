@@ -1,0 +1,1118 @@
+====================================================================================================
+TASK T034 — Saved searches whose alerts only go to the user's own email — tier 1 — traps: foreign-email, claim-trust — verified: False
+tags: single-owner, jwt-claims, insert-check, client-returning
+
+REQUIREMENT (verbatim)
+A property-search site built with supabase-js. Users save searches with `supabase.from('saved_searches').insert({...}).select()` and edit them with `.update({...}).eq('id', id).select()`. When `notify_email` is set, a server job emails new matches to that address. Supabase puts the account's verified email address in the JWT claim `email`; users can edit their `user_metadata`.
+
+R1. Users can read, create, edit and delete only their own saved searches.
+R2. `notify_email` must be empty or the user's own verified email address from the JWT `email` claim, ignoring upper and lower case. Nothing in `user_metadata` counts.
+R3. Anonymous visitors cannot see or change saved searches.
+R4. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_reads_own_searches → authenticated:01 +claims{"email": "ana@example.com"} → {"rows": [[1]]} → R1
+      select id from saved_searches order by id
+  other_user_reads_only_own_searches → authenticated:02 +claims{"email": "ben@example.com"} → {"rows": [[2]]} → R1
+      select id from saved_searches order by id
+  user_saves_search_with_own_email → authenticated:01 +claims{"email": "ana@example.com"} → {"affected": 1} → R1, R2
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000001', 'Villa in Goa', 'ana@example.com', 'weekly') returning *
+  user_saves_search_without_alerts → authenticated:01 +claims{"email": "ana@example.com"} → {"affected": 1} → R1, R2
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000001', 'Plot in Nashik', null, 'off') returning *
+  own_email_in_other_case_is_accepted → authenticated:01 +claims{"email": "ana@example.com"} → {"affected": 1} → R2
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000001', 'Flat in Kochi', 'ANA@Example.com', 'weekly') returning *
+  cannot_send_alerts_to_someone_else → authenticated:01 +claims{"email": "ana@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000001', 'x', 'ben@example.com', 'weekly')
+  cannot_redirect_existing_alerts → authenticated:01 +claims{"email": "ana@example.com"} → {"denied": true} → R2
+      [supabase-js] update saved_searches set notify_email = 'victim@example.org' where id = 1
+  user_metadata_email_does_not_count → authenticated:01 +claims{"email": "ana@example.com", "user_metadata": {"email": "victim@example.org"}} → {"denied": true} → R2
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000001', 'x', 'victim@example.org', 'weekly')
+  cannot_save_search_for_someone_else → authenticated:01 +claims{"email": "ana@example.com"} → {"denied": true} → R1
+      [supabase-js] insert into saved_searches (user_id, query, notify_email, frequency) values ('00000000-0000-0000-0000-000000000002', 'x', null, 'weekly')
+  user_edits_own_search → authenticated:01 +claims{"email": "ana@example.com"} → {"affected": 1} → R1
+      [supabase-js] update saved_searches set query = '3BHK in Pune' where id = 1 returning *
+  user_cannot_edit_someone_elses_search → authenticated:01 +claims{"email": "ana@example.com"} → {"denied": true} → R1
+      [supabase-js] update saved_searches set query = 'x' where id = 2
+  user_deletes_own_search → authenticated:01 +claims{"email": "ana@example.com"} → {"affected": 1} → R1
+      [supabase-js] delete from saved_searches where id = 1
+  anon_sees_no_searches → anon → {"denied": true} → R3
+      select * from saved_searches
+  service_role_sees_all_searches → service_role → {"rows": [[2]]} → R4
+      select count(*) from saved_searches
+
+SOLUTION (verbatim)
+alter table public.saved_searches enable row level security;
+
+create policy saved_searches_select on public.saved_searches
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy saved_searches_insert on public.saved_searches
+  for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and (notify_email is null or lower(notify_email) = lower(auth.jwt() ->> 'email'))
+  );
+
+create policy saved_searches_update on public.saved_searches
+  for update to authenticated
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and (notify_email is null or lower(notify_email) = lower(auth.jwt() ->> 'email'))
+  );
+
+create policy saved_searches_delete on public.saved_searches
+  for delete to authenticated
+  using (user_id = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_reads_own_searches, other_user_reads_only_own_searches, cannot_send_alerts_to_someone_else, cannot_redirect_existing_alerts, user_metadata_email_does_not_count, cannot_save_search_for_someone_else, user_cannot_edit_someone_elses_search, anon_sees_no_searches
+  allow-all: fails on user_reads_own_searches, other_user_reads_only_own_searches, cannot_send_alerts_to_someone_else, cannot_redirect_existing_alerts, user_metadata_email_does_not_count, cannot_save_search_for_someone_else, user_cannot_edit_someone_elses_search, anon_sees_no_searches
+  deny-all: fails on user_reads_own_searches, other_user_reads_only_own_searches, user_saves_search_with_own_email, user_saves_search_without_alerts, own_email_in_other_case_is_accepted, user_edits_own_search, user_deletes_own_search
+  coverage: 4 rules covered
+  traps: foreign-email caught by cannot_send_alerts_to_someone_else, cannot_redirect_existing_alerts, user_metadata_email_does_not_count; claim-trust caught by user_metadata_email_does_not_count
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - ana's (…01) JWT email ana@example.com; ben's ben@example.com
+  - one test gives ana a user_metadata email of victim@example.org
+
+====================================================================================================
+TASK T035 — Public guestbook with ownerless anonymous entries — tier 1 — traps: null-owner, anon-write-spoof — verified: False
+tags: anon-insert, nullable-owner, moderation
+
+REQUIREMENT (verbatim)
+A personal website's guestbook built with supabase-js. Visitors sign it with `supabase.from('guestbook_entries').insert({ display_name, message })` and do not read the row back. `author_id` defaults to `auth.uid()`, so signed-in visitors' entries record their user id and anonymous entries have no author. The site owner moderates in an admin tool that uses the service role.
+
+R1. Anyone, including anonymous visitors, can read approved entries.
+R2. Anyone can sign the guestbook. New entries are always unapproved, and their `author_id` is always the signer: their own user id when signed in, empty when anonymous.
+R3. Signed-in visitors can also read and delete their own entries, approved or not. Entries without an author can only be removed by the site owner.
+R4. Nobody can edit or approve entries through the app.
+R5. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_approved_entries → anon → {"rows": [[1], [2]]} → R1
+      select id from guestbook_entries order by id
+  author_also_reads_own_unapproved_entry → authenticated:02 → {"rows": [[1], [2], [4]]} → R1, R3
+      select id from guestbook_entries order by id
+  anon_signs_guestbook → anon → {"affected": 1} → R2
+      [supabase-js] insert into guestbook_entries (display_name, message) values ('Visitor', 'Lovely site!')
+  signed_in_visitor_signs_guestbook → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into guestbook_entries (display_name, message) values ('Ana', 'Lovely site!')
+  anon_cannot_post_approved_entry → anon → {"denied": true} → R2, R4
+      [supabase-js] insert into guestbook_entries (display_name, message, is_approved) values ('Visitor', 'Lovely site!', true)
+  visitor_cannot_sign_as_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into guestbook_entries (display_name, message, author_id) values ('Visitor', 'Lovely site!', '00000000-0000-0000-0000-000000000002')
+  anon_cannot_claim_an_author → anon → {"denied": true} → R2
+      [supabase-js] insert into guestbook_entries (display_name, message, author_id) values ('Visitor', 'Lovely site!', '00000000-0000-0000-0000-000000000001')
+  signed_in_visitor_cannot_post_anonymously → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into guestbook_entries (display_name, message, author_id) values ('Visitor', 'Lovely site!', null)
+  author_deletes_own_entry → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] delete from guestbook_entries where id = 4
+  visitor_cannot_delete_someone_elses_entry → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from guestbook_entries where id = 4
+  anon_cannot_delete_anonymous_entry → anon → {"denied": true} → R3
+      [supabase-js] delete from guestbook_entries where id = 3
+  anon_cannot_delete_approved_anonymous_entry → anon → {"denied": true} → R3
+      [supabase-js] delete from guestbook_entries where id = 2
+  signed_in_visitor_cannot_delete_anonymous_entry → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from guestbook_entries where id = 2
+  author_cannot_edit_own_entry → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update guestbook_entries set message = 'edited' where id = 1
+  author_cannot_approve_own_entry → authenticated:02 → {"denied": true} → R4
+      [supabase-js] update guestbook_entries set is_approved = true where id = 4
+  service_role_sees_all_entries → service_role → {"rows": [[4]]} → R5
+      select count(*) from guestbook_entries
+
+SOLUTION (verbatim)
+alter table public.guestbook_entries enable row level security;
+
+create policy guestbook_select on public.guestbook_entries
+  for select to anon, authenticated
+  using (is_approved or author_id = auth.uid());
+
+create policy guestbook_insert on public.guestbook_entries
+  for insert to anon, authenticated
+  with check (not is_approved and author_id is not distinct from auth.uid());
+
+create policy guestbook_delete on public.guestbook_entries
+  for delete to authenticated
+  using (author_id = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on anon_reads_approved_entries, author_also_reads_own_unapproved_entry, anon_cannot_post_approved_entry, visitor_cannot_sign_as_someone_else, anon_cannot_claim_an_author, signed_in_visitor_cannot_post_anonymously, visitor_cannot_delete_someone_elses_entry, anon_cannot_delete_anonymous_entry, anon_cannot_delete_approved_anonymous_entry, signed_in_visitor_cannot_delete_anonymous_entry, author_cannot_edit_own_entry, author_cannot_approve_own_entry
+  allow-all: fails on anon_reads_approved_entries, author_also_reads_own_unapproved_entry, anon_cannot_post_approved_entry, visitor_cannot_sign_as_someone_else, anon_cannot_claim_an_author, signed_in_visitor_cannot_post_anonymously, visitor_cannot_delete_someone_elses_entry, anon_cannot_delete_anonymous_entry, anon_cannot_delete_approved_anonymous_entry, signed_in_visitor_cannot_delete_anonymous_entry, author_cannot_edit_own_entry, author_cannot_approve_own_entry
+  deny-all: fails on anon_reads_approved_entries, author_also_reads_own_unapproved_entry, anon_signs_guestbook, signed_in_visitor_signs_guestbook, author_deletes_own_entry
+  coverage: 5 rules covered
+  traps: null-owner caught by anon_cannot_delete_approved_anonymous_entry; anon-write-spoof caught by anon_cannot_post_approved_entry, visitor_cannot_sign_as_someone_else, anon_cannot_claim_an_author, signed_in_visitor_cannot_post_anonymously
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - anonymous entries with NULL author_id: id 2 (approved) and id 3 (unapproved)
+  - ben's (…02) own unapproved entry: id 4
+
+====================================================================================================
+TASK T036 — Product reviews by verified buyers with staff-only featuring — tier 1 — traps: reference-check, privilege-escalation — verified: False
+tags: public-read, reference-check, upsert, column-restriction
+
+REQUIREMENT (verbatim)
+A shop built with supabase-js. Purchases are recorded by the server. Customers write or update their review with `supabase.from('reviews').upsert({ product_id, user_id, rating, body }).select()`. Staff choose featured reviews in an admin tool that uses the service role.
+
+R1. Anyone, including anonymous visitors, can read products and reviews.
+R2. Users can see only their own purchases. Nobody can record purchases through the app.
+R3. Signed-in users can write one review per product, as themselves, only for products they have purchased, and can edit and delete their own reviews.
+R4. Only staff decide which reviews are featured: users can never set or change `is_featured`, even on their own reviews.
+R5. Anonymous visitors cannot write anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_reviews → anon → {"rows": [[1, "00000000-0000-0000-0000-000000000002", 4]]} → R1
+      select product_id, user_id, rating from reviews order by product_id
+  anon_reads_products → anon → {"rows": [[2]]} → R1
+      select count(*) from products
+  user_sees_own_purchases → authenticated:01 → {"rows": [[1], [2]]} → R2
+      select product_id from purchases order by product_id
+  user_without_purchases_sees_none → authenticated:03 → {"count": 0} → R2
+      select product_id from purchases
+  user_cannot_record_purchase → authenticated:03 → {"denied": true} → R2
+      [supabase-js] insert into purchases (user_id, product_id) values ('00000000-0000-0000-0000-000000000003', 1)
+  buyer_writes_review → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] insert into reviews (product_id, user_id, rating, body) values (1, '00000000-0000-0000-0000-000000000001', 5, 'Works well') on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body returning *
+  buyer_updates_own_featured_review → authenticated:02 → {"affected": 1} → R3, R4
+      [supabase-js] insert into reviews (product_id, user_id, rating, body) values (1, '00000000-0000-0000-0000-000000000002', 5, 'Works well') on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body returning *
+  non_buyer_cannot_review → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into reviews (product_id, user_id, rating, body) values (1, '00000000-0000-0000-0000-000000000003', 1, 'Works well') on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body
+  cannot_review_as_someone_else → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into reviews (product_id, user_id, rating, body) values (2, '00000000-0000-0000-0000-000000000002', 1, 'Works well') on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body
+  cannot_edit_someone_elses_review → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update reviews set rating = 1 where product_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  author_deletes_own_review → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] delete from reviews where product_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  user_cannot_feature_own_new_review → authenticated:01 → {"denied": true} → R4
+      [supabase-js] insert into reviews (product_id, user_id, rating, body, is_featured) values (2, '00000000-0000-0000-0000-000000000001', 5, 'Works well', true) on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body, is_featured = excluded.is_featured
+  author_cannot_unfeature_review → authenticated:02 → {"denied": true} → R4
+      [supabase-js] update reviews set is_featured = false where product_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  anon_cannot_review → anon → {"denied": true} → R5
+      [supabase-js] insert into reviews (product_id, user_id, rating, body) values (2, '00000000-0000-0000-0000-000000000001', 5, 'Works well') on conflict (product_id, user_id) do update set rating = excluded.rating, body = excluded.body
+  service_role_sees_all_purchases → service_role → {"rows": [[3]]} → R6
+      select count(*) from purchases
+
+SOLUTION (verbatim)
+alter table public.products enable row level security;
+alter table public.purchases enable row level security;
+alter table public.reviews enable row level security;
+
+revoke insert, update on public.reviews from anon, authenticated;
+grant insert (product_id, user_id, rating, body) on public.reviews to authenticated;
+grant update (rating, body) on public.reviews to authenticated;
+
+create policy products_select on public.products
+  for select to anon, authenticated
+  using (true);
+
+create policy purchases_select on public.purchases
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy reviews_select on public.reviews
+  for select to anon, authenticated
+  using (true);
+
+create policy reviews_insert on public.reviews
+  for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and exists (select 1 from public.purchases p where p.user_id = auth.uid() and p.product_id = reviews.product_id)
+  );
+
+create policy reviews_update on public.reviews
+  for update to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create policy reviews_delete on public.reviews
+  for delete to authenticated
+  using (user_id = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_sees_own_purchases, user_without_purchases_sees_none, user_cannot_record_purchase, non_buyer_cannot_review, cannot_review_as_someone_else, cannot_edit_someone_elses_review, user_cannot_feature_own_new_review, author_cannot_unfeature_review, anon_cannot_review
+  allow-all: fails on user_sees_own_purchases, user_without_purchases_sees_none, user_cannot_record_purchase, non_buyer_cannot_review, cannot_review_as_someone_else, cannot_edit_someone_elses_review, user_cannot_feature_own_new_review, author_cannot_unfeature_review, anon_cannot_review
+  deny-all: fails on anon_reads_reviews, anon_reads_products, user_sees_own_purchases, buyer_writes_review, buyer_updates_own_featured_review, author_deletes_own_review
+  coverage: 6 rules covered
+  traps: reference-check caught by non_buyer_cannot_review; privilege-escalation caught by user_cannot_feature_own_new_review, author_cannot_unfeature_review
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - purchases: ana (…01) bought products 1 and 2, ben (…02) bought 1, cy (…03) none
+  - ben's featured review on product 1
+
+====================================================================================================
+TASK T037 — Contracts whose versions and tags inherit sharing — tier 2 — traps: forgot-enable, child-leak, reference-check — verified: False
+tags: parent-child, sharing, multi-table, append-only, client-returning
+
+REQUIREMENT (verbatim)
+A contract-management app built with supabase-js. Each contract has an owner and can be shared with other users. Versions and tags hang off a contract. Writes read the row back with `.select()`.
+
+R1. Owners can create contracts as themselves and read, rename and delete their own contracts. Users can read the contracts shared with them.
+R2. A contract's versions and tags are visible to exactly the people who can read the contract.
+R3. Owners and the users a contract is shared with can add new versions to it, as themselves. Versions are never edited or deleted.
+R4. Only a contract's owner can add or remove its tags and its shares.
+R5. Users can see the share rows of the contracts they own and the shares addressed to them.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  owner_reads_own_contracts → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from contracts order by id
+  shared_user_reads_shared_contract → authenticated:02 → {"rows": [[1]]} → R1
+      select id from contracts order by id
+  outsider_reads_no_contracts → authenticated:04 → {"count": 0} → R1
+      select id from contracts
+  owner_renames_contract → authenticated:01 → {"affected": 1} → R1
+      [supabase-js] update contracts set title = 'NDA with Acme (signed)' where id = 1 returning *
+  shared_user_cannot_rename_contract → authenticated:02 → {"denied": true} → R1
+      [supabase-js] update contracts set title = 'x' where id = 1
+  shared_user_reads_contract_versions → authenticated:02 → {"rows": [[1], [2]]} → R2
+      select id from contract_versions order by id
+  outsider_reads_no_versions → authenticated:04 → {"count": 0} → R2
+      select id from contract_versions
+  shared_user_reads_contract_tags → authenticated:02 → {"rows": [["nda"]]} → R2
+      select tag from contract_tags order by tag
+  outsider_reads_no_tags → authenticated:04 → {"count": 0} → R2
+      select tag from contract_tags
+  shared_user_adds_version → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] insert into contract_versions (contract_id, version, body, created_by) values (1, 3, 'Counter-offer', '00000000-0000-0000-0000-000000000002') returning *
+  shared_user_cannot_add_version_to_unshared_contract → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into contract_versions (contract_id, version, body, created_by) values (2, 2, 'x', '00000000-0000-0000-0000-000000000002')
+  cannot_add_version_as_someone_else → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into contract_versions (contract_id, version, body, created_by) values (1, 3, 'x', '00000000-0000-0000-0000-000000000001')
+  owner_cannot_edit_version → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update contract_versions set body = 'rewritten' where id = 1
+  owner_cannot_delete_version → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from contract_versions where id = 2
+  owner_adds_tag → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] insert into contract_tags (contract_id, tag) values (2, 'urgent') returning *
+  shared_user_cannot_add_tag → authenticated:02 → {"denied": true} → R4
+      [supabase-js] insert into contract_tags (contract_id, tag) values (1, 'x')
+  owner_removes_tag → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] delete from contract_tags where contract_id = 1 and tag = 'nda'
+  owner_shares_contract → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] insert into contract_shares (contract_id, user_id) values (2, '00000000-0000-0000-0000-000000000004') returning *
+  shared_user_cannot_reshare → authenticated:02 → {"denied": true} → R4
+      [supabase-js] insert into contract_shares (contract_id, user_id) values (1, '00000000-0000-0000-0000-000000000004')
+  recipient_sees_own_share → authenticated:02 → {"rows": [[1, "00000000-0000-0000-0000-000000000002"]]} → R5
+      select contract_id, user_id from contract_shares order by contract_id
+  unrelated_owner_sees_no_shares → authenticated:03 → {"count": 0} → R5
+      select contract_id from contract_shares
+  anon_sees_no_versions → anon → {"denied": true} → R6
+      select * from contract_versions
+  service_role_sees_all_versions → service_role → {"rows": [[4]]} → R7
+      select count(*) from contract_versions
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_contract_owner(p_contract_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.contracts c where c.id = p_contract_id and c.owner_id = auth.uid())
+$$;
+
+create function private.can_read_contract(p_contract_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.contracts c
+    where c.id = p_contract_id
+      and (c.owner_id = auth.uid()
+           or exists (select 1 from public.contract_shares s where s.contract_id = c.id and s.user_id = auth.uid()))
+  )
+$$;
+
+alter table public.contracts enable row level security;
+alter table public.contract_shares enable row level security;
+alter table public.contract_versions enable row level security;
+alter table public.contract_tags enable row level security;
+
+create policy contracts_select on public.contracts
+  for select to authenticated
+  using (
+    owner_id = auth.uid()
+    or exists (select 1 from public.contract_shares s where s.contract_id = contracts.id and s.user_id = auth.uid())
+  );
+
+create policy contracts_insert on public.contracts
+  for insert to authenticated
+  with check (owner_id = auth.uid());
+
+create policy contracts_update on public.contracts
+  for update to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
+create policy contracts_delete on public.contracts
+  for delete to authenticated
+  using (owner_id = auth.uid());
+
+create policy contract_shares_select on public.contract_shares
+  for select to authenticated
+  using (user_id = auth.uid() or private.is_contract_owner(contract_id));
+
+create policy contract_shares_insert on public.contract_shares
+  for insert to authenticated
+  with check (private.is_contract_owner(contract_id));
+
+create policy contract_shares_delete on public.contract_shares
+  for delete to authenticated
+  using (private.is_contract_owner(contract_id));
+
+create policy contract_versions_select on public.contract_versions
+  for select to authenticated
+  using (private.can_read_contract(contract_id));
+
+create policy contract_versions_insert on public.contract_versions
+  for insert to authenticated
+  with check (created_by = auth.uid() and private.can_read_contract(contract_id));
+
+create policy contract_tags_select on public.contract_tags
+  for select to authenticated
+  using (private.can_read_contract(contract_id));
+
+create policy contract_tags_insert on public.contract_tags
+  for insert to authenticated
+  with check (private.is_contract_owner(contract_id));
+
+create policy contract_tags_delete on public.contract_tags
+  for delete to authenticated
+  using (private.is_contract_owner(contract_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on owner_reads_own_contracts, shared_user_reads_shared_contract, outsider_reads_no_contracts, shared_user_cannot_rename_contract, shared_user_reads_contract_versions, outsider_reads_no_versions, shared_user_reads_contract_tags, outsider_reads_no_tags, shared_user_cannot_add_version_to_unshared_contract, cannot_add_version_as_someone_else, owner_cannot_edit_version, owner_cannot_delete_version, shared_user_cannot_add_tag, shared_user_cannot_reshare, unrelated_owner_sees_no_shares, anon_sees_no_versions
+  allow-all: fails on owner_reads_own_contracts, shared_user_reads_shared_contract, outsider_reads_no_contracts, shared_user_cannot_rename_contract, shared_user_reads_contract_versions, outsider_reads_no_versions, shared_user_reads_contract_tags, outsider_reads_no_tags, shared_user_cannot_add_version_to_unshared_contract, cannot_add_version_as_someone_else, owner_cannot_edit_version, owner_cannot_delete_version, shared_user_cannot_add_tag, shared_user_cannot_reshare, unrelated_owner_sees_no_shares, anon_sees_no_versions
+  deny-all: fails on owner_reads_own_contracts, shared_user_reads_shared_contract, owner_renames_contract, shared_user_reads_contract_versions, shared_user_reads_contract_tags, shared_user_adds_version, owner_adds_tag, owner_removes_tag, owner_shares_contract, recipient_sees_own_share
+  coverage: 7 rules covered
+  traps: forgot-enable caught by shared_user_reads_contract_tags, outsider_reads_no_tags, shared_user_cannot_add_tag; child-leak caught by shared_user_reads_contract_versions, outsider_reads_no_versions; reference-check caught by shared_user_cannot_add_version_to_unshared_contract
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - contract 1 owned by olga (…01) and shared with sid (…02); contract 2 olga's, not shared; contract 3 tara's (…03)
+  - user with no access: ugo (…04)
+
+====================================================================================================
+TASK T038 — Marketplace listings with soft delete and moderator flags — tier 2 — traps: soft-delete-visibility, soft-delete-leak, privilege-escalation — verified: False
+tags: soft-delete, moderation, public-read, client-returning
+
+REQUIREMENT (verbatim)
+A second-hand marketplace built with supabase-js. Sellers create listings with `.insert({...}).select()` and edit them with `.update({...}).eq('id', id)`. Listings are never hard-deleted: a seller removes one with `.update({ deleted_at }).eq('id', id)`. Moderators (users in `moderators`) flag listings that break the rules.
+
+R1. Anyone, including anonymous visitors, can see listings that are active, not flagged and not deleted.
+R2. Sellers can see all of their own listings, including drafts, flagged and deleted ones. Moderators can see every listing.
+R3. Sellers can create listings as themselves, never flagged or deleted, and can edit their own listings that are not deleted, but can never flag or unflag a listing.
+R4. Sellers remove their own listings by setting `deleted_at`. A deleted listing can no longer be changed by its seller.
+R5. Moderators can change any listing, including flagging and unflagging it.
+R6. Nobody can hard-delete listings or change `moderators` through the app.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_sees_public_listings → anon → {"rows": [[1], [5]]} → R1
+      select id from listings order by id
+  buyer_sees_public_and_own_listings → authenticated:02 → {"rows": [[1], [5], [6]]} → R1, R2
+      select id from listings order by id
+  seller_sees_all_own_listings → authenticated:01 → {"rows": [[1], [2], [3], [4], [5]]} → R2
+      select id from listings order by id
+  moderator_sees_every_listing → authenticated:03 → {"rows": [[6]]} → R2
+      select count(*) from listings
+  seller_creates_listing → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] insert into listings (seller_id, title, price, status) values ('00000000-0000-0000-0000-000000000001', 'Camera', 100, 'active') returning *
+  seller_cannot_create_flagged_listing → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into listings (seller_id, title, price, status, is_flagged) values ('00000000-0000-0000-0000-000000000001', 'x', 100, 'active', true)
+  seller_cannot_create_listing_for_someone_else → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into listings (seller_id, title, price, status) values ('00000000-0000-0000-0000-000000000002', 'x', 100, 'active')
+  seller_edits_draft → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] update listings set price = 8500 where id = 2 returning *
+  seller_edits_flagged_listing → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] update listings set title = 'Watch (genuine)' where id = 3 returning *
+  seller_cannot_unflag_listing → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update listings set is_flagged = false where id = 3
+  seller_cannot_edit_someone_elses_listing → authenticated:02 → {"denied": true} → R3
+      [supabase-js] update listings set price = 1 where id = 1
+  seller_soft_deletes_listing → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] update listings set deleted_at = '2020-06-01' where id = 1
+  seller_cannot_edit_deleted_listing → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update listings set price = 1500 where id = 4
+  seller_cannot_restore_deleted_listing → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update listings set deleted_at = null where id = 4
+  moderator_flags_listing → authenticated:03 → {"affected": 1} → R5
+      [supabase-js] update listings set is_flagged = true where id = 5 returning *
+  moderator_unflags_listing → authenticated:03 → {"affected": 1} → R5
+      [supabase-js] update listings set is_flagged = false where id = 3 returning *
+  seller_cannot_hard_delete_listing → authenticated:01 → {"denied": true} → R6
+      [supabase-js] delete from listings where id = 2
+  user_cannot_become_moderator → authenticated:02 → {"denied": true} → R6
+      [supabase-js] insert into moderators (user_id) values ('00000000-0000-0000-0000-000000000002')
+  service_role_sees_all_listings → service_role → {"rows": [[6]]} → R7
+      select count(*) from listings
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to anon, authenticated;
+
+create function private.is_moderator() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.moderators m where m.user_id = auth.uid())
+$$;
+
+create function private.listing_flagged(p_listing_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select l.is_flagged from public.listings l where l.id = p_listing_id
+$$;
+
+alter table public.moderators enable row level security;
+alter table public.listings enable row level security;
+
+create policy listings_select on public.listings
+  for select to anon, authenticated
+  using (
+    (status = 'active' and not is_flagged and deleted_at is null)
+    or seller_id = auth.uid()
+    or private.is_moderator()
+  );
+
+create policy listings_insert on public.listings
+  for insert to authenticated
+  with check (seller_id = auth.uid() and not is_flagged and deleted_at is null);
+
+create policy listings_update on public.listings
+  for update to authenticated
+  using ((seller_id = auth.uid() and deleted_at is null) or private.is_moderator())
+  with check (
+    (seller_id = auth.uid() and is_flagged = private.listing_flagged(id))
+    or private.is_moderator()
+  );
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on anon_sees_public_listings, buyer_sees_public_and_own_listings, seller_sees_all_own_listings, seller_cannot_create_flagged_listing, seller_cannot_create_listing_for_someone_else, seller_cannot_unflag_listing, seller_cannot_edit_someone_elses_listing, seller_cannot_edit_deleted_listing, seller_cannot_restore_deleted_listing, seller_cannot_hard_delete_listing, user_cannot_become_moderator
+  allow-all: fails on anon_sees_public_listings, buyer_sees_public_and_own_listings, seller_sees_all_own_listings, seller_cannot_create_flagged_listing, seller_cannot_create_listing_for_someone_else, seller_cannot_unflag_listing, seller_cannot_edit_someone_elses_listing, seller_cannot_edit_deleted_listing, seller_cannot_restore_deleted_listing, seller_cannot_hard_delete_listing, user_cannot_become_moderator
+  deny-all: fails on anon_sees_public_listings, buyer_sees_public_and_own_listings, seller_sees_all_own_listings, moderator_sees_every_listing, seller_creates_listing, seller_edits_draft, seller_edits_flagged_listing, seller_soft_deletes_listing, moderator_flags_listing, moderator_unflags_listing
+  coverage: 7 rules covered
+  traps: soft-delete-visibility caught by seller_sees_all_own_listings, seller_soft_deletes_listing; soft-delete-leak caught by anon_sees_public_listings, buyer_sees_public_and_own_listings; privilege-escalation caught by seller_cannot_unflag_listing
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - sal's (…01) listings: 1 active, 2 draft, 3 flagged, 4 soft-deleted
+  - bea's (…02) listings: 5 active, 6 draft
+  - moderator: mo (…03)
+
+====================================================================================================
+TASK T039 — Restaurant reservations with booking and cancellation windows — tier 2 — traps: time-window, state-transition — verified: False
+tags: time-window, staff-role, state-transition, column-restriction, client-returning
+
+REQUIREMENT (verbatim)
+A restaurant-booking app built with supabase-js. Guests book with `supabase.from('reservations').insert({ restaurant_id, user_id, reserved_for, party_size }).select()` and cancel with `.update({ status: 'cancelled' }).eq('id', id).select()`. Staff record what happened with `.update({ status }).eq('id', id).select()`. Times are compared with the database clock, `now()`.
+
+R1. Signed-in users can see the list of restaurants. Guests can see their own reservations; restaurant staff can see every reservation at their restaurant.
+R2. Guests can book, as themselves, only for a time in the future, and new reservations are always `booked`.
+R3. Guests can cancel their own `booked` reservations while the reservation time is still in the future. Guests cannot change anything else.
+R4. Staff can mark `booked` reservations at their restaurant as `seated` or `no_show`, but only once the reservation time has passed. Staff cannot change anything else.
+R5. Restaurants and staff lists cannot be changed through the app, and reservations are never deleted.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_sees_restaurants → authenticated:01 → {"rows": [[2]]} → R1
+      select count(*) from restaurants
+  guest_sees_own_reservations → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from reservations order by id
+  staff_sees_restaurant_reservations → authenticated:03 → {"rows": [[1], [2], [3]]} → R1
+      select id from reservations order by id
+  other_staff_sees_only_own_restaurant → authenticated:04 → {"rows": [[4]]} → R1
+      select id from reservations order by id
+  guest_books_future_table → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into reservations (restaurant_id, user_id, reserved_for, party_size) values (2, '00000000-0000-0000-0000-000000000001', '2099-08-15 20:00+00', 2) returning *
+  guest_cannot_book_in_the_past → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into reservations (restaurant_id, user_id, reserved_for, party_size) values (2, '00000000-0000-0000-0000-000000000001', '2020-01-01 20:00+00', 2)
+  guest_cannot_book_for_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into reservations (restaurant_id, user_id, reserved_for, party_size) values (2, '00000000-0000-0000-0000-000000000002', '2099-08-15 20:00+00', 2)
+  guest_cannot_book_as_seated → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into reservations (restaurant_id, user_id, reserved_for, party_size, status) values (2, '00000000-0000-0000-0000-000000000001', '2099-08-15 20:00+00', 2, 'seated')
+  guest_cancels_future_booking → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] update reservations set status = 'cancelled' where id = 1 returning *
+  guest_cannot_cancel_past_booking → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update reservations set status = 'cancelled' where id = 2
+  guest_cannot_cancel_someone_elses_booking → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update reservations set status = 'cancelled' where id = 3
+  guest_cannot_move_booking_time → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update reservations set reserved_for = '2099-05-02 19:00+00' where id = 1
+  guest_cannot_mark_own_booking_seated → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update reservations set status = 'seated' where id = 2
+  staff_marks_past_booking_seated → authenticated:03 → {"affected": 1} → R4
+      [supabase-js] update reservations set status = 'seated' where id = 2 returning *
+  staff_cannot_mark_future_booking_no_show → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update reservations set status = 'no_show' where id = 3
+  staff_cannot_cancel_past_booking → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update reservations set status = 'cancelled' where id = 2
+  staff_cannot_change_party_size → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update reservations set party_size = 12 where id = 2
+  other_restaurant_staff_cannot_update → authenticated:04 → {"denied": true} → R4
+      [supabase-js] update reservations set status = 'seated' where id = 2
+  guest_cannot_delete_reservation → authenticated:01 → {"denied": true} → R5
+      [supabase-js] delete from reservations where id = 1
+  anon_sees_no_reservations → anon → {"denied": true} → R6
+      select * from reservations
+  service_role_sees_all_reservations → service_role → {"rows": [[4]]} → R7
+      select count(*) from reservations
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_staff(p_restaurant_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.restaurant_staff s where s.restaurant_id = p_restaurant_id and s.user_id = auth.uid())
+$$;
+
+alter table public.restaurants enable row level security;
+alter table public.restaurant_staff enable row level security;
+alter table public.reservations enable row level security;
+
+revoke update on public.reservations from anon, authenticated;
+grant update (status) on public.reservations to authenticated;
+
+create policy restaurants_select on public.restaurants
+  for select to authenticated
+  using (true);
+
+create policy reservations_select on public.reservations
+  for select to authenticated
+  using (user_id = auth.uid() or private.is_staff(restaurant_id));
+
+create policy reservations_insert on public.reservations
+  for insert to authenticated
+  with check (user_id = auth.uid() and status = 'booked' and reserved_for > now());
+
+create policy reservations_update on public.reservations
+  for update to authenticated
+  using (
+    status = 'booked'
+    and (
+      (user_id = auth.uid() and reserved_for > now())
+      or (private.is_staff(restaurant_id) and reserved_for <= now())
+    )
+  )
+  with check (
+    (user_id = auth.uid() and status = 'cancelled' and reserved_for > now())
+    or (private.is_staff(restaurant_id) and status in ('seated', 'no_show') and reserved_for <= now())
+  );
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on guest_sees_own_reservations, staff_sees_restaurant_reservations, other_staff_sees_only_own_restaurant, guest_cannot_book_in_the_past, guest_cannot_book_for_someone_else, guest_cannot_book_as_seated, guest_cannot_cancel_past_booking, guest_cannot_cancel_someone_elses_booking, guest_cannot_move_booking_time, guest_cannot_mark_own_booking_seated, staff_cannot_mark_future_booking_no_show, staff_cannot_cancel_past_booking, staff_cannot_change_party_size, other_restaurant_staff_cannot_update, guest_cannot_delete_reservation, anon_sees_no_reservations
+  allow-all: fails on guest_sees_own_reservations, staff_sees_restaurant_reservations, other_staff_sees_only_own_restaurant, guest_cannot_book_in_the_past, guest_cannot_book_for_someone_else, guest_cannot_book_as_seated, guest_cannot_cancel_past_booking, guest_cannot_cancel_someone_elses_booking, guest_cannot_move_booking_time, guest_cannot_mark_own_booking_seated, staff_cannot_mark_future_booking_no_show, staff_cannot_cancel_past_booking, staff_cannot_change_party_size, other_restaurant_staff_cannot_update, guest_cannot_delete_reservation, anon_sees_no_reservations
+  deny-all: fails on user_sees_restaurants, guest_sees_own_reservations, staff_sees_restaurant_reservations, other_staff_sees_only_own_restaurant, guest_books_future_table, guest_cancels_future_booking, staff_marks_past_booking_seated
+  coverage: 7 rules covered
+  traps: time-window caught by guest_cannot_book_in_the_past; state-transition caught by guest_cannot_cancel_past_booking, guest_cannot_mark_own_booking_seated, staff_cannot_mark_future_booking_no_show, staff_cannot_cancel_past_booking
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - future bookings in 2099, past bookings in 2020 (compared with now())
+  - gia (…01) has future booking 1 and past booking 2 at restaurant 1
+  - staff: sam (…03) at restaurant 1, tess (…04) at restaurant 2
+
+====================================================================================================
+TASK T040 — Survey results visible to owners only above a minimum group size — tier 2 — traps: k-anonymity, private-row-leak, view-bypass — verified: False
+tags: view, aggregate, k-anonymity, upsert
+
+REQUIREMENT (verbatim)
+An employee-pulse app built with supabase-js. Respondents answer or change their answer with `supabase.from('survey_responses').upsert({ survey_id, respondent_id, score, comment }).select()`. Survey owners see results with `supabase.from('survey_results').select()`; individual answers must stay anonymous.
+
+R1. Signed-in users can see every survey. Users can create surveys as their owner and rename their own surveys.
+R2. Respondents can create, change and read their own response to any survey, as themselves.
+R3. Nobody else can read individual responses, including the survey's owner.
+R4. Provide a view `public.survey_results` with exactly the columns `survey_id`, `responses` (number of responses) and `avg_score` (average score rounded to 2 decimals). It shows the surveys the viewer owns, and only those with at least 3 responses.
+R5. Anonymous visitors cannot see or change anything, including `survey_results`.
+R6. Server-side code using the service role keeps full access, and sees `survey_results` for every survey with at least 3 responses.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_sees_all_surveys → authenticated:02 → {"rows": [[3]]} → R1
+      select count(*) from surveys
+  owner_creates_survey → authenticated:01 → {"affected": 1} → R1
+      [supabase-js] insert into surveys (id, owner_id, title) values (4, '00000000-0000-0000-0000-000000000001', 'Q2 pulse') returning *
+  user_cannot_rename_someone_elses_survey → authenticated:01 → {"denied": true} → R1
+      [supabase-js] update surveys set title = 'x' where id = 3
+  respondent_reads_own_responses → authenticated:02 → {"rows": [[1, 4], [2, 5], [3, 2]]} → R2
+      select survey_id, score from survey_responses order by survey_id
+  respondent_answers_survey → authenticated:05 → {"affected": 1} → R2
+      [supabase-js] insert into survey_responses (survey_id, respondent_id, score, comment) values (3, '00000000-0000-0000-0000-000000000005', 5, 'ok') on conflict (survey_id, respondent_id) do update set score = excluded.score, comment = excluded.comment returning *
+  respondent_changes_answer → authenticated:02 → {"affected": 1} → R2
+      [supabase-js] insert into survey_responses (survey_id, respondent_id, score, comment) values (1, '00000000-0000-0000-0000-000000000002', 2, 'ok') on conflict (survey_id, respondent_id) do update set score = excluded.score, comment = excluded.comment returning *
+  cannot_answer_as_someone_else → authenticated:02 → {"denied": true} → R2
+      [supabase-js] insert into survey_responses (survey_id, respondent_id, score, comment) values (3, '00000000-0000-0000-0000-000000000005', 1, 'ok') on conflict (survey_id, respondent_id) do update set score = excluded.score, comment = excluded.comment
+  owner_cannot_read_individual_responses → authenticated:01 → {"count": 0} → R3
+      select score from survey_responses where survey_id = 1
+  respondent_cannot_read_other_responses → authenticated:02 → {"rows": [[3]]} → R3
+      select count(*) from survey_responses
+  owner_sees_results_above_threshold_only → authenticated:01 → {"rows": [[1, 4, 4]]} → R4
+      select survey_id, responses, avg_score from survey_results order by survey_id
+  other_owner_sees_own_results → authenticated:06 → {"rows": [[3, 3, 3]]} → R4
+      select survey_id, responses, avg_score from survey_results order by survey_id
+  respondent_sees_no_results → authenticated:02 → {"denied": true} → R4
+      select * from survey_results
+  survey_results_has_exactly_three_columns → authenticated:01 → {"rows": [["survey_id"], ["responses"], ["avg_score"]]} → R4
+      select column_name from information_schema.columns where table_schema = 'public' and table_name = 'survey_results' order by ordinal_position
+  anon_sees_no_results → anon → {"denied": true} → R5
+      select * from survey_results
+  anon_sees_no_responses → anon → {"denied": true} → R5
+      select * from survey_responses
+  service_role_sees_all_results → service_role → {"rows": [[1], [3]]} → R6
+      select survey_id from survey_results order by survey_id
+
+SOLUTION (verbatim)
+alter table public.surveys enable row level security;
+alter table public.survey_responses enable row level security;
+
+create policy surveys_select on public.surveys
+  for select to authenticated
+  using (true);
+
+create policy surveys_insert on public.surveys
+  for insert to authenticated
+  with check (owner_id = auth.uid());
+
+create policy surveys_update on public.surveys
+  for update to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
+create policy responses_select on public.survey_responses
+  for select to authenticated
+  using (respondent_id = auth.uid());
+
+create policy responses_insert on public.survey_responses
+  for insert to authenticated
+  with check (respondent_id = auth.uid());
+
+create policy responses_update on public.survey_responses
+  for update to authenticated
+  using (respondent_id = auth.uid())
+  with check (respondent_id = auth.uid());
+
+create view public.survey_results as
+  select r.survey_id, count(*)::integer as responses, round(avg(r.score), 2) as avg_score
+  from public.survey_responses r
+  join public.surveys s on s.id = r.survey_id
+  where s.owner_id = auth.uid() or auth.role() = 'service_role'
+  group by r.survey_id
+  having count(*) >= 3;
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_cannot_rename_someone_elses_survey, respondent_reads_own_responses, cannot_answer_as_someone_else, owner_cannot_read_individual_responses, respondent_cannot_read_other_responses, owner_sees_results_above_threshold_only, other_owner_sees_own_results, respondent_sees_no_results, survey_results_has_exactly_three_columns, anon_sees_no_results, anon_sees_no_responses, service_role_sees_all_results
+  allow-all: fails on user_cannot_rename_someone_elses_survey, respondent_reads_own_responses, cannot_answer_as_someone_else, owner_cannot_read_individual_responses, respondent_cannot_read_other_responses, owner_sees_results_above_threshold_only, other_owner_sees_own_results, respondent_sees_no_results, survey_results_has_exactly_three_columns, anon_sees_no_results, anon_sees_no_responses, service_role_sees_all_results
+  deny-all: fails on user_sees_all_surveys, owner_creates_survey, respondent_reads_own_responses, respondent_answers_survey, respondent_changes_answer, respondent_cannot_read_other_responses, owner_sees_results_above_threshold_only, other_owner_sees_own_results, respondent_sees_no_results, survey_results_has_exactly_three_columns, anon_sees_no_results, service_role_sees_all_results
+  coverage: 6 rules covered
+  traps: k-anonymity caught by owner_sees_results_above_threshold_only, service_role_sees_all_results; private-row-leak caught by owner_cannot_read_individual_responses; view-bypass caught by owner_sees_results_above_threshold_only, other_owner_sees_own_results, respondent_sees_no_results, anon_sees_no_results
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - survey 1 (olly …01): 4 responses, average 4.00
+  - survey 2 (olly): only 2 responses — below the threshold
+  - survey 3 (pat …06): 3 responses, average 3.00
+  - respondents …02–…05
+
+====================================================================================================
+TASK T041 — Timesheets with locked pay periods and a service-role payroll import — tier 2 — traps: service-role-broken, negative-condition, reference-check — verified: False
+tags: membership, negative-condition, service-role, client-returning
+
+REQUIREMENT (verbatim)
+A timesheet app built with supabase-js. Employees log time with `supabase.from('time_entries').insert({...}).select()` and edit entries with `.update({...}).eq('id', id).select()`. Finance locks a pay period once payroll has run. A nightly payroll import runs on the server with the service role and may need to correct entries in any period, locked or not.
+
+R1. Users can see their own time entries, the projects they are assigned to, their own assignments and every pay period.
+R2. Users can log, edit and delete their own entries, only for projects they are assigned to.
+R3. Entries in a locked period cannot be created, changed or deleted through the app, and an entry cannot be moved into or out of a locked period.
+R4. Nobody can change projects, assignments or periods through the app.
+R5. Anonymous visitors cannot see or change anything.
+R6. The payroll import, running with the service role, can create and change any entry, including in locked periods.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_sees_own_entries → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from time_entries order by id
+  other_user_sees_only_own_entries → authenticated:02 → {"rows": [[3]]} → R1
+      select id from time_entries order by id
+  user_sees_assigned_projects → authenticated:02 → {"rows": [[2]]} → R1
+      select id from projects order by id
+  user_sees_all_periods → authenticated:02 → {"rows": [[2]]} → R1
+      select count(*) from periods
+  user_logs_time → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into time_entries (user_id, project_id, period_id, worked_on, hours, note) values ('00000000-0000-0000-0000-000000000001', 1, 2, '2030-01-12', 4, 'dev') returning *
+  user_cannot_log_to_unassigned_project → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into time_entries (user_id, project_id, period_id, worked_on, hours, note) values ('00000000-0000-0000-0000-000000000001', 3, 2, '2030-01-12', 4, 'dev')
+  user_cannot_log_for_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into time_entries (user_id, project_id, period_id, worked_on, hours, note) values ('00000000-0000-0000-0000-000000000002', 2, 2, '2030-01-12', 4, 'dev')
+  user_edits_open_entry → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update time_entries set hours = 7.5 where id = 2 returning *
+  user_cannot_move_entry_to_unassigned_project → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update time_entries set project_id = 3 where id = 2
+  user_deletes_open_entry → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from time_entries where id = 2
+  user_cannot_delete_someone_elses_entry → authenticated:01 → {"denied": true} → R2
+      [supabase-js] delete from time_entries where id = 3
+  user_cannot_log_into_locked_period → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into time_entries (user_id, project_id, period_id, worked_on, hours, note) values ('00000000-0000-0000-0000-000000000001', 1, 1, '2020-01-20', 3, 'dev')
+  user_cannot_edit_locked_entry → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update time_entries set hours = 2 where id = 1
+  user_cannot_move_entry_into_locked_period → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update time_entries set period_id = 1 where id = 2
+  user_cannot_move_entry_out_of_locked_period → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update time_entries set period_id = 2 where id = 1
+  user_cannot_delete_locked_entry → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from time_entries where id = 1
+  user_cannot_unlock_period → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update periods set is_locked = false where id = 1
+  user_cannot_assign_self_to_project → authenticated:01 → {"denied": true} → R4
+      [supabase-js] insert into assignments (project_id, user_id) values (3, '00000000-0000-0000-0000-000000000001')
+  anon_sees_no_entries → anon → {"denied": true} → R5
+      select * from time_entries
+  payroll_import_writes_into_locked_period → service_role → {"affected": 1} → R6
+      insert into time_entries (user_id, project_id, period_id, worked_on, hours, note) values ('00000000-0000-0000-0000-000000000002', 2, 1, '2020-01-31', 2, 'payroll correction') returning id
+  payroll_import_corrects_locked_entry → service_role → {"affected": 1} → R6
+      update time_entries set hours = 7 where id = 1
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_assigned(p_project_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.assignments a where a.project_id = p_project_id and a.user_id = auth.uid())
+$$;
+
+create function private.period_open(p_period_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((select not p.is_locked from public.periods p where p.id = p_period_id), false)
+$$;
+
+alter table public.projects enable row level security;
+alter table public.assignments enable row level security;
+alter table public.periods enable row level security;
+alter table public.time_entries enable row level security;
+
+create policy projects_select on public.projects
+  for select to authenticated
+  using (private.is_assigned(id));
+
+create policy assignments_select on public.assignments
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy periods_select on public.periods
+  for select to authenticated
+  using (true);
+
+create policy time_entries_select on public.time_entries
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy time_entries_insert on public.time_entries
+  for insert to authenticated
+  with check (user_id = auth.uid() and private.is_assigned(project_id) and private.period_open(period_id));
+
+create policy time_entries_update on public.time_entries
+  for update to authenticated
+  using (user_id = auth.uid() and private.period_open(period_id))
+  with check (user_id = auth.uid() and private.is_assigned(project_id) and private.period_open(period_id));
+
+create policy time_entries_delete on public.time_entries
+  for delete to authenticated
+  using (user_id = auth.uid() and private.period_open(period_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_sees_own_entries, other_user_sees_only_own_entries, user_sees_assigned_projects, user_cannot_log_to_unassigned_project, user_cannot_log_for_someone_else, user_cannot_move_entry_to_unassigned_project, user_cannot_delete_someone_elses_entry, user_cannot_log_into_locked_period, user_cannot_edit_locked_entry, user_cannot_move_entry_into_locked_period, user_cannot_move_entry_out_of_locked_period, user_cannot_delete_locked_entry, user_cannot_unlock_period, user_cannot_assign_self_to_project, anon_sees_no_entries
+  allow-all: fails on user_sees_own_entries, other_user_sees_only_own_entries, user_sees_assigned_projects, user_cannot_log_to_unassigned_project, user_cannot_log_for_someone_else, user_cannot_move_entry_to_unassigned_project, user_cannot_delete_someone_elses_entry, user_cannot_log_into_locked_period, user_cannot_edit_locked_entry, user_cannot_move_entry_into_locked_period, user_cannot_move_entry_out_of_locked_period, user_cannot_delete_locked_entry, user_cannot_unlock_period, user_cannot_assign_self_to_project, anon_sees_no_entries
+  deny-all: fails on user_sees_own_entries, other_user_sees_only_own_entries, user_sees_assigned_projects, user_sees_all_periods, user_logs_time, user_edits_open_entry, user_deletes_open_entry
+  coverage: 6 rules covered
+  traps: service-role-broken caught by payroll_import_writes_into_locked_period, payroll_import_corrects_locked_entry; negative-condition caught by user_cannot_log_into_locked_period; reference-check caught by user_cannot_log_to_unassigned_project
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - period 1 (Jan 2020) locked, period 2 (Jan 2030) open
+  - ana (…01) assigned to projects 1 and 2, ben (…02) to project 2; nobody to project 3
+  - ana's entry 1 is in the locked period
+
+====================================================================================================
+TASK T042 — Document archive where legal holds override owners and admins — tier 2 — traps: restrictive-vs-permissive, negative-condition — verified: False
+tags: restrictive-policy, admin-role, negative-condition, client-returning
+
+REQUIREMENT (verbatim)
+A company document archive built with supabase-js. Uploads use `.insert({...}).select()`, renames `.update({ name }).eq('id', id).select()`, and deletes `.delete().eq('id', id)`. The legal team places and lifts legal holds from a server tool that uses the service role.
+
+R1. Users can see their own files. Org admins (users in `org_admins`) can see every file.
+R2. Users can upload files as themselves, and rename and delete their own files. Org admins can rename and delete any file.
+R3. A file under legal hold cannot be renamed or deleted by anyone through the app, including its owner and org admins.
+R4. Nobody can place or lift a legal hold through the app.
+R5. Nobody can change `org_admins` through the app.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access, including legal holds.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  owner_sees_own_files → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from files order by id
+  admin_sees_every_file → authenticated:03 → {"rows": [[1], [2], [3]]} → R1
+      select id from files order by id
+  user_sees_only_own_files → authenticated:02 → {"rows": [[3]]} → R1
+      select id from files order by id
+  user_uploads_file → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into files (owner_id, name) values ('00000000-0000-0000-0000-000000000001', 'notes.md') returning *
+  user_cannot_upload_for_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into files (owner_id, name) values ('00000000-0000-0000-0000-000000000002', 'x')
+  owner_renames_file → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update files set name = 'q3-forecast-final.xlsx' where id = 1 returning *
+  owner_deletes_file → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from files where id = 1
+  admin_renames_any_file → authenticated:03 → {"affected": 1} → R2
+      [supabase-js] update files set name = 'offsite-2020.zip' where id = 3 returning *
+  admin_deletes_any_file → authenticated:03 → {"affected": 1} → R2
+      [supabase-js] delete from files where id = 3
+  user_cannot_rename_someone_elses_file → authenticated:02 → {"denied": true} → R2
+      [supabase-js] update files set name = 'x' where id = 1
+  owner_cannot_rename_held_file → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update files set name = 'x.pdf' where id = 2
+  owner_cannot_delete_held_file → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from files where id = 2
+  admin_cannot_rename_held_file → authenticated:03 → {"denied": true} → R3
+      [supabase-js] update files set name = 'x.pdf' where id = 2
+  admin_cannot_delete_held_file → authenticated:03 → {"denied": true} → R3
+      [supabase-js] delete from files where id = 2
+  user_cannot_upload_held_file → authenticated:01 → {"denied": true} → R4
+      [supabase-js] insert into files (owner_id, name, legal_hold) values ('00000000-0000-0000-0000-000000000001', 'x', true)
+  owner_cannot_lift_hold → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update files set legal_hold = false where id = 2
+  admin_cannot_lift_hold → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update files set legal_hold = false where id = 2
+  admin_cannot_place_hold → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update files set legal_hold = true where id = 3
+  user_cannot_become_admin → authenticated:02 → {"denied": true} → R5
+      [supabase-js] insert into org_admins (user_id) values ('00000000-0000-0000-0000-000000000002')
+  anon_sees_no_files → anon → {"denied": true} → R6
+      select * from files
+  service_role_lifts_hold → service_role → {"affected": 1} → R7
+      update files set legal_hold = false where id = 2
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_admin() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.org_admins a where a.user_id = auth.uid())
+$$;
+
+alter table public.org_admins enable row level security;
+alter table public.files enable row level security;
+
+create policy files_select on public.files
+  for select to authenticated
+  using (owner_id = auth.uid() or private.is_admin());
+
+create policy files_insert on public.files
+  for insert to authenticated
+  with check (owner_id = auth.uid() and not legal_hold);
+
+create policy files_update on public.files
+  for update to authenticated
+  using (owner_id = auth.uid() or private.is_admin())
+  with check (owner_id = auth.uid() or private.is_admin());
+
+create policy files_delete on public.files
+  for delete to authenticated
+  using (owner_id = auth.uid() or private.is_admin());
+
+create policy files_hold_blocks_update on public.files
+  as restrictive
+  for update to authenticated
+  using (not legal_hold)
+  with check (not legal_hold);
+
+create policy files_hold_blocks_delete on public.files
+  as restrictive
+  for delete to authenticated
+  using (not legal_hold);
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on owner_sees_own_files, user_sees_only_own_files, user_cannot_upload_for_someone_else, user_cannot_rename_someone_elses_file, owner_cannot_rename_held_file, owner_cannot_delete_held_file, admin_cannot_rename_held_file, admin_cannot_delete_held_file, user_cannot_upload_held_file, owner_cannot_lift_hold, admin_cannot_lift_hold, admin_cannot_place_hold, user_cannot_become_admin, anon_sees_no_files
+  allow-all: fails on owner_sees_own_files, user_sees_only_own_files, user_cannot_upload_for_someone_else, user_cannot_rename_someone_elses_file, owner_cannot_rename_held_file, owner_cannot_delete_held_file, admin_cannot_rename_held_file, admin_cannot_delete_held_file, user_cannot_upload_held_file, owner_cannot_lift_hold, admin_cannot_lift_hold, admin_cannot_place_hold, user_cannot_become_admin, anon_sees_no_files
+  deny-all: fails on owner_sees_own_files, admin_sees_every_file, user_sees_only_own_files, user_uploads_file, owner_renames_file, owner_deletes_file, admin_renames_any_file, admin_deletes_any_file
+  coverage: 7 rules covered
+  traps: restrictive-vs-permissive caught by owner_cannot_rename_held_file, owner_cannot_delete_held_file, admin_cannot_rename_held_file, admin_cannot_delete_held_file, owner_cannot_lift_hold, admin_cannot_lift_hold, admin_cannot_place_hold; negative-condition caught by owner_cannot_delete_held_file, admin_cannot_delete_held_file
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - ana's (…01) file 2 is under legal hold; file 1 is not
+  - ben's (…02) file 3
+  - org admin: adm (…03)
+
+====================================================================================================
+TASK T043 — Organization invites accepted through a token RPC — tier 3 — traps: rpc-missing-auth-check, time-window, state-transition, private-row-leak — verified: False
+tags: rpc, security-definer, invitations, jwt-claims, expiry, secret-rows
+
+REQUIREMENT (verbatim)
+A team app built with supabase-js. Admins invite people by email; the invite link contains a secret token, and the invitee joins by calling `supabase.rpc('accept_invite', { p_token })`. Implement it as `public.accept_invite(p_token text) returns bigint`, returning the organization's id. Supabase puts the account's verified email in the JWT claim `email`; users can edit their `user_metadata`. Times are compared with `now()`.
+
+R1. Members can see their organizations and every member of those organizations.
+R2. Only admins of an organization can see, create and delete its invites. An invite they create names themselves as `invited_by`, is not yet accepted and expires in the future. Nobody else can read invites, so knowing a token is the only way to use one.
+R3. `accept_invite` adds the caller to the invite's organization with the invite's role and marks the invite accepted. It must raise an error and change nothing when the caller is not signed in, the token is unknown, the invite has expired or was already accepted, or the invite's email differs from the caller's verified email (ignoring upper and lower case; `user_metadata` never counts).
+R4. Apart from `accept_invite`, nobody can add or change memberships or organizations through the app.
+R5. Anonymous visitors cannot see or change anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  member_sees_own_orgs → authenticated:02 +claims{"email": "bob@example.com"} → {"rows": [[1], [2]]} → R1
+      select id from orgs order by id
+  member_sees_org_members → authenticated:01 +claims{"email": "ada@example.com"} → {"rows": [["00000000-0000-0000-0000-000000000001"], ["00000000-0000-0000-0000-000000000002"]]} → R1
+      select user_id from org_members order by user_id
+  outsider_sees_no_orgs → authenticated:03 +claims{"email": "cal@example.com"} → {"count": 0} → R1
+      select id from orgs
+  admin_sees_org_invites → authenticated:01 +claims{"email": "ada@example.com"} → {"rows": [[4]]} → R2
+      select count(*) from invites
+  admin_of_other_org_sees_only_its_invites → authenticated:02 +claims{"email": "bob@example.com"} → {"rows": [["tok-org2"]]} → R2
+      select token from invites order by token
+  invitee_cannot_read_invites → authenticated:03 +claims{"email": "cal@example.com"} → {"denied": true} → R2
+      select token from invites
+  admin_creates_invite → authenticated:01 +claims{"email": "ada@example.com"} → {"affected": 1} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by) values ('tok-new', 1, 'eve@example.com', 'member', '2099-01-01', '00000000-0000-0000-0000-000000000001') returning *
+  admin_cannot_invite_to_other_org → authenticated:01 +claims{"email": "ada@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by) values ('tok-x1', 2, 'eve@example.com', 'member', '2099-01-01', '00000000-0000-0000-0000-000000000001')
+  member_cannot_create_invite → authenticated:02 +claims{"email": "bob@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by) values ('tok-x2', 1, 'eve@example.com', 'member', '2099-01-01', '00000000-0000-0000-0000-000000000002')
+  admin_cannot_create_accepted_invite → authenticated:01 +claims{"email": "ada@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by, accepted_at) values ('tok-x3', 1, 'eve@example.com', 'member', '2099-01-01', '00000000-0000-0000-0000-000000000001', '2020-01-01')
+  admin_cannot_create_expired_invite → authenticated:01 +claims{"email": "ada@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by) values ('tok-x4', 1, 'eve@example.com', 'member', '2020-01-01', '00000000-0000-0000-0000-000000000001')
+  admin_cannot_create_invite_as_someone_else → authenticated:01 +claims{"email": "ada@example.com"} → {"denied": true} → R2
+      [supabase-js] insert into invites (token, org_id, email, role, expires_at, invited_by) values ('tok-x5', 1, 'eve@example.com', 'member', '2099-01-01', '00000000-0000-0000-0000-000000000002')
+  admin_revokes_invite → authenticated:01 +claims{"email": "ada@example.com"} → {"affected": 1} → R2
+      [supabase-js] delete from invites where token = 'tok-dan-admin'
+  invitee_accepts_and_joins → authenticated:03 +claims{"email": "cal@example.com"} → {"rows": [[1, "member"]]} → R3
+      select public.accept_invite('tok-cal-member'); select org_id, role from org_members where user_id = '00000000-0000-0000-0000-000000000003' order by org_id
+  accept_returns_org_id → authenticated:03 +claims{"email": "cal@example.com"} → {"rows": [[2]]} → R3
+      select public.accept_invite('tok-org2')
+  expired_invite_is_refused → authenticated:03 +claims{"email": "cal@example.com"} → {"denied": true} → R3
+      select public.accept_invite('tok-cal-expired')
+  used_invite_is_refused → authenticated:04 +claims{"email": "dan@example.com"} → {"denied": true} → R3
+      select public.accept_invite('tok-dan-used')
+  invite_for_other_email_is_refused → authenticated:03 +claims{"email": "cal@example.com"} → {"denied": true} → R3
+      select public.accept_invite('tok-dan-admin')
+  user_metadata_email_does_not_count → authenticated:03 +claims{"email": "cal@example.com", "user_metadata": {"email": "dan@example.com"}} → {"denied": true} → R3
+      select public.accept_invite('tok-dan-admin')
+  unknown_token_is_refused → authenticated:03 +claims{"email": "cal@example.com"} → {"denied": true} → R3
+      select public.accept_invite('tok-guess')
+  anon_cannot_accept → anon → {"denied": true} → R3, R5
+      select public.accept_invite('tok-cal-member')
+  user_cannot_join_org_directly → authenticated:03 +claims{"email": "cal@example.com"} → {"denied": true} → R4
+      [supabase-js] insert into org_members (org_id, user_id, role) values (1, '00000000-0000-0000-0000-000000000003', 'member')
+  member_cannot_promote_self → authenticated:02 +claims{"email": "bob@example.com"} → {"denied": true} → R4
+      [supabase-js] update org_members set role = 'admin' where org_id = 1 and user_id = '00000000-0000-0000-0000-000000000002'
+  service_role_sees_all_invites → service_role → {"rows": [[5]]} → R6
+      select count(*) from invites
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_member(p_org_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.org_members m where m.org_id = p_org_id and m.user_id = auth.uid())
+$$;
+
+create function private.is_admin(p_org_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.org_members m where m.org_id = p_org_id and m.user_id = auth.uid() and m.role = 'admin')
+$$;
+
+alter table public.orgs enable row level security;
+alter table public.org_members enable row level security;
+alter table public.invites enable row level security;
+
+create policy orgs_select on public.orgs
+  for select to authenticated
+  using (private.is_member(id));
+
+create policy org_members_select on public.org_members
+  for select to authenticated
+  using (private.is_member(org_id));
+
+create policy invites_select on public.invites
+  for select to authenticated
+  using (private.is_admin(org_id));
+
+create policy invites_insert on public.invites
+  for insert to authenticated
+  with check (
+    private.is_admin(org_id)
+    and invited_by = auth.uid()
+    and accepted_at is null
+    and expires_at > now()
+  );
+
+create policy invites_delete on public.invites
+  for delete to authenticated
+  using (private.is_admin(org_id));
+
+create function public.accept_invite(p_token text) returns bigint
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_invite public.invites%rowtype;
+  v_uid uuid := auth.uid();
+  v_email text := lower(auth.jwt() ->> 'email');
+begin
+  if v_uid is null then
+    raise exception 'not signed in';
+  end if;
+  select * into v_invite from public.invites where token = p_token for update;
+  if not found then
+    raise exception 'invalid invite';
+  end if;
+  if v_invite.accepted_at is not null then
+    raise exception 'invite already used';
+  end if;
+  if v_invite.expires_at <= now() then
+    raise exception 'invite expired';
+  end if;
+  if v_email is null or lower(v_invite.email) <> v_email then
+    raise exception 'invite is for a different email address';
+  end if;
+  insert into public.org_members (org_id, user_id, role)
+  values (v_invite.org_id, v_uid, v_invite.role);
+  update public.invites set accepted_at = now() where token = p_token;
+  return v_invite.org_id;
+end
+$$;
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on member_sees_org_members, outsider_sees_no_orgs, admin_sees_org_invites, admin_of_other_org_sees_only_its_invites, invitee_cannot_read_invites, admin_cannot_invite_to_other_org, member_cannot_create_invite, admin_cannot_create_accepted_invite, admin_cannot_create_expired_invite, admin_cannot_create_invite_as_someone_else, invitee_accepts_and_joins, accept_returns_org_id, expired_invite_is_refused, used_invite_is_refused, invite_for_other_email_is_refused, user_metadata_email_does_not_count, unknown_token_is_refused, anon_cannot_accept, user_cannot_join_org_directly, member_cannot_promote_self
+  allow-all: fails on member_sees_org_members, outsider_sees_no_orgs, admin_sees_org_invites, admin_of_other_org_sees_only_its_invites, invitee_cannot_read_invites, admin_cannot_invite_to_other_org, member_cannot_create_invite, admin_cannot_create_accepted_invite, admin_cannot_create_expired_invite, admin_cannot_create_invite_as_someone_else, invitee_accepts_and_joins, accept_returns_org_id, expired_invite_is_refused, used_invite_is_refused, invite_for_other_email_is_refused, user_metadata_email_does_not_count, unknown_token_is_refused, anon_cannot_accept, user_cannot_join_org_directly, member_cannot_promote_self
+  deny-all: fails on member_sees_own_orgs, member_sees_org_members, admin_sees_org_invites, admin_of_other_org_sees_only_its_invites, admin_creates_invite, admin_revokes_invite, invitee_accepts_and_joins, accept_returns_org_id, expired_invite_is_refused, used_invite_is_refused, invite_for_other_email_is_refused, user_metadata_email_does_not_count, unknown_token_is_refused, anon_cannot_accept
+  coverage: 6 rules covered
+  traps: rpc-missing-auth-check caught by invite_for_other_email_is_refused, user_metadata_email_does_not_count; time-window caught by expired_invite_is_refused; state-transition caught by used_invite_is_refused; private-row-leak caught by admin_sees_org_invites, admin_of_other_org_sees_only_its_invites, invitee_cannot_read_invites
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - org 1 admin ada (…01), member bob (…02); org 2 admin bob
+  - cal (…03) has a valid invite stored as 'Cal@Example.com' and an expired admin invite
+  - dan (…04) has a used invite and an unused admin invite
+  - one test gives cal a user_metadata email of dan's address
+

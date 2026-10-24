@@ -1,0 +1,180 @@
+- name: anon_reads_published_articles
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [3]
+
+- name: writer_reads_own_and_published
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: editor_reads_every_article
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from articles
+  expect:
+    rows:
+    - [4]
+
+- name: writer_creates_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: articles
+    values: {author_id: 00000000-0000-0000-0000-000000000001, title: Monsoon arrives early, body: '...'}
+    returning: true
+  expect: {affected: 1}
+
+- name: writer_cannot_create_published_article
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: articles
+    values: {author_id: 00000000-0000-0000-0000-000000000001, title: Monsoon arrives early, body: '...', status: published}
+    returning: false
+  expect: {denied: true}
+
+- name: writer_edits_own_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {title: 'City budget, explained'}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: writer_submits_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {status: in_review}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: writer_cannot_edit_submitted_article
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {title: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: writer_cannot_publish_own_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {status: published, published_at: '2020-05-01'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: writer_cannot_edit_someone_elses_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {title: x}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_publishes_article
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: articles
+    values: {status: published, published_at: '2020-05-01'}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: editor_sends_article_back
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: articles
+    values: {status: draft}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: editor_cannot_edit_draft
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: articles
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: editor_cannot_change_published_article
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: articles
+    values: {title: Corrected results}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: writer_deletes_own_draft
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: articles
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: writer_cannot_delete_submitted_article
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: articles
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: writer_cannot_become_editor
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: editors
+    values: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_articles
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from articles
+  expect:
+    rows:
+    - [4]

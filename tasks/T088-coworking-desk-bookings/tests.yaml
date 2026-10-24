@@ -1,0 +1,164 @@
+- name: user_sees_all_bookings
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from bookings
+  expect:
+    rows:
+    - [5]
+
+- name: user_sees_own_membership
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select tier from memberships
+  expect:
+    rows:
+    - [standard]
+
+- name: member_books_standard_desk
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2099-03-01', user_id: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: premium_member_books_premium_desk
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 2, day: '2099-03-01', user_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: standard_member_cannot_book_premium_desk
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 2, day: '2099-03-02', user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_book_past_day
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2020-06-01', user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_book_after_membership_ends
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2100-01-05', user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: expired_member_cannot_book
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2099-04-01', user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_book_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2099-03-05', user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: member_at_cap_cannot_book_again
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: bookings
+    values: {desk_id: 1, day: '2099-01-04', user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: member_books_after_cancelling
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: delete from bookings where desk_id = 1 and day = '2099-01-01'; insert into bookings (desk_id, day, user_id) values (1, '2099-01-04', '00000000-0000-0000-0000-000000000001')
+  expect: {affected: 1}
+
+- name: member_cancels_upcoming_booking
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: bookings
+    match: {desk_id: 1, day: '2099-02-01'}
+  expect: {affected: 1}
+
+- name: member_cannot_cancel_past_booking
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: bookings
+    match: {desk_id: 1, day: '2020-01-01'}
+  expect: {denied: true}
+
+- name: member_cannot_cancel_someone_elses_booking
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: bookings
+    match: {desk_id: 1, day: '2099-01-01'}
+  expect: {denied: true}
+
+- name: member_cannot_move_booking
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: bookings
+    values: {day: '2099-02-02'}
+    match: {desk_id: 1, day: '2099-02-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_upgrade_membership
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: memberships
+    values: {tier: premium}
+    match: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_bookings
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from bookings
+  expect: {denied: true}
+
+- name: service_role_sees_all_bookings
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from bookings
+  expect:
+    rows:
+    - [5]

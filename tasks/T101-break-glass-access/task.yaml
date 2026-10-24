@@ -1,0 +1,21 @@
+id: T101
+title: Break-glass emergency access to medical records
+tier: 3
+tags:
+- rpc
+- security-definer
+- time-window
+- audit
+- input-validation
+traps:
+- time-window
+- rpc-input-validation
+- rpc-missing-auth-check
+extra_tables: []
+fixture_notes:
+- clinician doc1 (…01) is in patient 1's care team; clinician doc2 (…02) has an expired 2020 grant for patient 2
+- auditor aud (…03) is not a clinician
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

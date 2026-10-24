@@ -1,0 +1,113 @@
+- name: anon_reads_free_articles
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: active_pro_reads_everything
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: expired_pro_reads_only_free
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: free_plan_reads_only_free
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: user_without_subscription_reads_only_free
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: user_metadata_plan_grants_nothing
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000005
+    claims:
+      user_metadata: {plan: pro}
+  sql: select id from articles order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: user_reads_own_subscription
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select plan from subscriptions
+  expect:
+    rows:
+    - [pro]
+
+- name: user_cannot_read_someone_elses_subscription
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select plan from subscriptions where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {count: 0}
+
+- name: user_cannot_extend_own_subscription
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: subscriptions
+    values: {current_period_end: '2099-01-01'}
+    match: {user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_create_subscription
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: subscriptions
+    values: {user_id: 00000000-0000-0000-0000-000000000004, plan: pro, current_period_end: '2099-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_unlock_article
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: articles
+    values: {is_premium: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_subscriptions
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from subscriptions
+  expect:
+    rows:
+    - [3]

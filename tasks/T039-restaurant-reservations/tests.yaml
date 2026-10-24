@@ -1,0 +1,207 @@
+- name: user_sees_restaurants
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from restaurants
+  expect:
+    rows:
+    - [2]
+
+- name: guest_sees_own_reservations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from reservations order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: staff_sees_restaurant_reservations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from reservations order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_staff_sees_only_own_restaurant
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from reservations order by id
+  expect:
+    rows:
+    - [4]
+
+- name: guest_books_future_table
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reservations
+    values: {restaurant_id: 2, user_id: 00000000-0000-0000-0000-000000000001, reserved_for: '2099-08-15 20:00+00', party_size: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: guest_cannot_book_in_the_past
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reservations
+    values: {restaurant_id: 2, user_id: 00000000-0000-0000-0000-000000000001, reserved_for: '2020-01-01 20:00+00', party_size: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_book_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reservations
+    values: {restaurant_id: 2, user_id: 00000000-0000-0000-0000-000000000002, reserved_for: '2099-08-15 20:00+00', party_size: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_book_as_seated
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: reservations
+    values: {restaurant_id: 2, user_id: 00000000-0000-0000-0000-000000000001, reserved_for: '2099-08-15 20:00+00', party_size: 2, status: seated}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cancels_future_booking
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reservations
+    values: {status: cancelled}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: guest_cannot_cancel_past_booking
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reservations
+    values: {status: cancelled}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_cancel_someone_elses_booking
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reservations
+    values: {status: cancelled}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_move_booking_time
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reservations
+    values: {reserved_for: '2099-05-02 19:00+00'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_mark_own_booking_seated
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reservations
+    values: {status: seated}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_marks_past_booking_seated
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: reservations
+    values: {status: seated}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: staff_cannot_mark_future_booking_no_show
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: reservations
+    values: {status: no_show}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_cancel_past_booking
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: reservations
+    values: {status: cancelled}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_change_party_size
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: reservations
+    values: {party_size: 12}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: other_restaurant_staff_cannot_update
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: reservations
+    values: {status: seated}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: guest_cannot_delete_reservation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: reservations
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_reservations
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from reservations
+  expect: {denied: true}
+
+- name: service_role_sees_all_reservations
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from reservations
+  expect:
+    rows:
+    - [4]

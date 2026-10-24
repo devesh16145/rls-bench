@@ -1,0 +1,191 @@
+- name: user_sees_locations
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from locations
+  expect:
+    rows:
+    - [2]
+
+- name: staff_sees_own_location_stock
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select location_id, sku from stock order by location_id, sku
+  expect:
+    rows:
+    - [1, SKU-1]
+    - [1, SKU-2]
+
+- name: other_staff_sees_only_own_location
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select location_id, sku from stock order by location_id, sku
+  expect:
+    rows:
+    - [2, SKU-1]
+
+- name: auditor_sees_all_stock
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      app_metadata: {role: auditor}
+  sql: select count(*) from stock
+  expect:
+    rows:
+    - [3]
+
+- name: auditor_sees_all_staff_lists
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      app_metadata: {role: auditor}
+  sql: select count(*) from location_staff
+  expect:
+    rows:
+    - [2]
+
+- name: staff_updates_stock_level
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: stock
+    values: {location_id: 1, sku: SKU-1, qty: 12}
+    on_conflict: [location_id, sku]
+    returning: true
+  expect: {affected: 1}
+
+- name: staff_adds_new_sku
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: stock
+    values: {location_id: 1, sku: SKU-3, qty: 4}
+    on_conflict: [location_id, sku]
+    returning: true
+  expect: {affected: 1}
+
+- name: staff_removes_sku
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: stock
+    match: {location_id: 1, sku: SKU-2}
+  expect: {affected: 1}
+
+- name: staff_cannot_change_other_location
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: stock
+    values: {location_id: 2, sku: SKU-9, qty: 1}
+    on_conflict: [location_id, sku]
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_move_stock_to_other_location
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: stock
+    values: {location_id: 2}
+    match: {location_id: 1, sku: SKU-2}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_change_frozen_stock
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: stock
+    values: {location_id: 2, sku: SKU-1, qty: 0}
+    on_conflict: [location_id, sku]
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_add_to_frozen_location
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: stock
+    values: {location_id: 2, sku: SKU-7, qty: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_remove_frozen_stock
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: stock
+    match: {location_id: 2, sku: SKU-1}
+  expect: {denied: true}
+
+- name: auditor_cannot_change_stock
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      app_metadata: {role: auditor}
+  client:
+    op: update
+    table: stock
+    values: {qty: 0}
+    match: {location_id: 1, sku: SKU-1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_metadata_auditor_sees_nothing
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000004
+    claims:
+      user_metadata: {role: auditor}
+  sql: select sku from stock
+  expect: {count: 0}
+
+- name: staff_cannot_unfreeze_location
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: locations
+    values: {is_frozen: false}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: staff_cannot_join_other_location
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: location_staff
+    values: {location_id: 2, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_stock
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from stock
+  expect: {denied: true}
+
+- name: service_role_sees_all_stock
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from stock
+  expect:
+    rows:
+    - [3]

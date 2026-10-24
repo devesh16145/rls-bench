@@ -1,0 +1,125 @@
+- name: user_reads_builtin_and_own_categories
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from categories order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_user_reads_builtin_and_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from categories order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: user_creates_category
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: categories
+    values: {user_id: 00000000-0000-0000-0000-000000000001, name: Books, color: '#2a9d8f'}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_category_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: categories
+    values: {user_id: 00000000-0000-0000-0000-000000000002, name: x, color: '#2a9d8f'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_edits_own_category
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: categories
+    values: {name: Coffee & tea}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_category
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: categories
+    values: {name: x}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_category
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: categories
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: user_cannot_create_builtin_category
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: categories
+    values: {user_id: null, name: Crypto, color: '#2a9d8f'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_edit_builtin_category
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: categories
+    values: {name: Groceries}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_builtin_category
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: categories
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: user_cannot_turn_own_category_into_builtin
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: categories
+    values: {user_id: null}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_categories
+  covers: [R4]
+  as: {role: anon}
+  sql: select * from categories
+  expect: {denied: true}
+
+- name: service_role_sees_all_categories
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from categories
+  expect:
+    rows:
+    - [4]

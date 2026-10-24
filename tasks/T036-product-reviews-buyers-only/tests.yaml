@@ -1,0 +1,145 @@
+- name: anon_reads_reviews
+  covers: [R1]
+  as: {role: anon}
+  sql: select product_id, user_id, rating from reviews order by product_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002, 4]
+
+- name: anon_reads_products
+  covers: [R1]
+  as: {role: anon}
+  sql: select count(*) from products
+  expect:
+    rows:
+    - [2]
+
+- name: user_sees_own_purchases
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select product_id from purchases order by product_id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_without_purchases_sees_none
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select product_id from purchases
+  expect: {count: 0}
+
+- name: user_cannot_record_purchase
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: purchases
+    values: {user_id: 00000000-0000-0000-0000-000000000003, product_id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: buyer_writes_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000001, rating: 5, body: Works well}
+    on_conflict: [product_id, user_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: buyer_updates_own_featured_review
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000002, rating: 5, body: Works well}
+    on_conflict: [product_id, user_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: non_buyer_cannot_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000003, rating: 1, body: Works well}
+    on_conflict: [product_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_review_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 2, user_id: 00000000-0000-0000-0000-000000000002, rating: 1, body: Works well}
+    on_conflict: [product_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_edit_someone_elses_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: reviews
+    values: {rating: 1}
+    match: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: author_deletes_own_review
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: reviews
+    match: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: user_cannot_feature_own_new_review
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 2, user_id: 00000000-0000-0000-0000-000000000001, rating: 5, body: Works well, is_featured: true}
+    on_conflict: [product_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_unfeature_review
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: reviews
+    values: {is_featured: false}
+    match: {product_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_review
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: upsert
+    table: reviews
+    values: {product_id: 2, user_id: 00000000-0000-0000-0000-000000000001, rating: 5, body: Works well}
+    on_conflict: [product_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_purchases
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from purchases
+  expect:
+    rows:
+    - [3]

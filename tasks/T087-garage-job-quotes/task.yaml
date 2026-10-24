@@ -1,0 +1,20 @@
+id: T087
+title: 'Garage repair jobs: mechanics quote, customers approve'
+tier: 2
+tags:
+- two-roles
+- state-transition
+- old-vs-new
+- client-returning
+traps:
+- self-approval
+- privilege-escalation
+- state-transition
+extra_tables: []
+fixture_notes:
+- garage 1 mechanic mo (…01); garage 2 mechanic ned (…02); customers cal (…03) and dee (…04)
+- job 1 (garage 1, cal) quoted ₹4500; job 2 (garage 1, dee) approved; job 3 (garage 2, cal) in progress
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,157 @@
+- name: member_sees_classes
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from classes
+  expect:
+    rows:
+    - [3]
+
+- name: member_sees_own_spots
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select class_id, status from class_spots order by class_id
+  expect:
+    rows:
+    - [1, waitlisted]
+
+- name: instructor_sees_class_spots
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000006}
+  sql: select count(*) from class_spots
+  expect:
+    rows:
+    - [5]
+
+- name: member_enrolls_with_room
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: class_spots
+    values: {class_id: 2, user_id: 00000000-0000-0000-0000-000000000004, status: enrolled}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_enroll_in_full_class
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: class_spots
+    values: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000004, status: enrolled}
+    returning: false
+  expect: {denied: true}
+
+- name: member_joins_waitlist_of_full_class
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: class_spots
+    values: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000004, status: waitlisted}
+    returning: true
+  expect: {affected: 1}
+
+- name: member_cannot_join_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: class_spots
+    values: {class_id: 2, user_id: 00000000-0000-0000-0000-000000000003, status: waitlisted}
+    returning: false
+  expect: {denied: true}
+
+- name: waitlisted_member_moves_up_when_room
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: class_spots
+    values: {status: enrolled}
+    match: {class_id: 2, user_id: 00000000-0000-0000-0000-000000000005}
+    returning: true
+  expect: {affected: 1}
+
+- name: waitlisted_member_cannot_jump_full_class
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: class_spots
+    values: {status: enrolled}
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: member_leaves_class
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: class_spots
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+  expect: {affected: 1}
+
+- name: member_cannot_remove_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: class_spots
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: member_cannot_move_spot_to_other_class
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: class_spots
+    values: {class_id: 2}
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: instructor_removes_spot
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000006}
+  client:
+    op: delete
+    table: class_spots
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: other_instructor_cannot_remove_spot
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000007}
+  client:
+    op: delete
+    table: class_spots
+    match: {class_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: member_cannot_raise_capacity
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: classes
+    values: {capacity: 99}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_spots
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from class_spots
+  expect: {denied: true}
+
+- name: service_role_sees_all_spots
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from class_spots
+  expect:
+    rows:
+    - [5]

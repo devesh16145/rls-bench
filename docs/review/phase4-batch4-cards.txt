@@ -1,0 +1,1134 @@
+====================================================================================================
+TASK T044 — Public status page with draft incidents and updates — tier 1 — traps: child-leak, private-row-leak, anon-vs-authenticated — verified: False
+tags: public-read, parent-child, read-only, anon-read
+
+REQUIREMENT (verbatim)
+A public status page built with supabase-js. Visitors load incidents with `supabase.from('incidents').select('*, incident_updates(*)')`. The on-call team writes incidents and updates from an internal tool that uses the service role; drafts stay unpublished until reviewed.
+
+R1. Anyone, including anonymous visitors, can read published incidents.
+R2. Anyone, including anonymous visitors, can read updates that are published and belong to a published incident.
+R3. Unpublished incidents and updates are visible only to server-side code.
+R4. Nobody can create, change or delete incidents or updates through the app.
+R5. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_published_incidents → anon → {"rows": [[1]]} → R1
+      select id from incidents order by id
+  signed_in_user_reads_published_incidents → authenticated:01 → {"rows": [[1]]} → R1
+      select id from incidents order by id
+  anon_reads_published_updates → anon → {"rows": [[1]]} → R2
+      select id from incident_updates order by id
+  published_update_of_draft_incident_stays_hidden → authenticated:01 → {"count": 0} → R2, R3
+      select id from incident_updates where id = 3
+  draft_incident_is_hidden → authenticated:01 → {"count": 0} → R3
+      select id from incidents where id = 2
+  draft_update_is_hidden → anon → {"count": 0} → R3
+      select id from incident_updates where id = 2
+  anon_cannot_create_incident → anon → {"denied": true} → R4
+      [supabase-js] insert into incidents (id, title, severity, is_published) values (3, 'Fake outage', 'major', true)
+  user_cannot_resolve_incident → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update incidents set status = 'resolved' where id = 2
+  user_cannot_publish_draft_update → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update incident_updates set is_published = true where id = 2
+  user_cannot_delete_update → authenticated:01 → {"denied": true} → R4
+      [supabase-js] delete from incident_updates where id = 1
+  service_role_sees_all_updates → service_role → {"rows": [[3]]} → R5
+      select count(*) from incident_updates
+
+SOLUTION (verbatim)
+alter table public.incidents enable row level security;
+alter table public.incident_updates enable row level security;
+
+create policy incidents_select on public.incidents
+  for select to anon, authenticated
+  using (is_published);
+
+create policy incident_updates_select on public.incident_updates
+  for select to anon, authenticated
+  using (
+    is_published
+    and exists (select 1 from public.incidents i where i.id = incident_updates.incident_id and i.is_published)
+  );
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on anon_reads_published_incidents, signed_in_user_reads_published_incidents, anon_reads_published_updates, published_update_of_draft_incident_stays_hidden, draft_incident_is_hidden, draft_update_is_hidden, anon_cannot_create_incident, user_cannot_resolve_incident, user_cannot_publish_draft_update, user_cannot_delete_update
+  allow-all: fails on anon_reads_published_incidents, signed_in_user_reads_published_incidents, anon_reads_published_updates, published_update_of_draft_incident_stays_hidden, draft_incident_is_hidden, draft_update_is_hidden, anon_cannot_create_incident, user_cannot_resolve_incident, user_cannot_publish_draft_update, user_cannot_delete_update
+  deny-all: fails on anon_reads_published_incidents, signed_in_user_reads_published_incidents, anon_reads_published_updates
+  coverage: 5 rules covered
+  traps: child-leak caught by anon_reads_published_updates, published_update_of_draft_incident_stays_hidden; private-row-leak caught by anon_reads_published_incidents, signed_in_user_reads_published_incidents, draft_incident_is_hidden; anon-vs-authenticated caught by anon_reads_published_incidents, anon_reads_published_updates
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - draft incident 2 carries a published update (id 3)
+  - published incident 1 has a draft update (id 2)
+
+====================================================================================================
+TASK T045 — Budget categories with shared built-in rows — tier 1 — traps: over-broad-for-all, null-owner — verified: False
+tags: single-owner, nullable-owner, shared-defaults, client-returning
+
+REQUIREMENT (verbatim)
+A budgeting app built with supabase-js. Built-in categories have no `user_id` and are shared by everyone. Users add their own with `supabase.from('categories').insert({ user_id, name, color }).select()` and edit them with `.update({...}).eq('id', id).select()`.
+
+R1. Signed-in users can read the built-in categories and their own categories.
+R2. Users can create categories only for themselves, and can edit and delete only their own categories.
+R3. Built-in categories cannot be created, changed or deleted through the app, and a user's category can never be turned into a built-in one.
+R4. Anonymous visitors cannot see or change any categories.
+R5. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_reads_builtin_and_own_categories → authenticated:01 → {"rows": [[1], [2], [3]]} → R1
+      select id from categories order by id
+  other_user_reads_builtin_and_own → authenticated:02 → {"rows": [[1], [2], [4]]} → R1
+      select id from categories order by id
+  user_creates_category → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into categories (user_id, name, color) values ('00000000-0000-0000-0000-000000000001', 'Books', '#2a9d8f') returning *
+  user_cannot_create_category_for_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into categories (user_id, name, color) values ('00000000-0000-0000-0000-000000000002', 'x', '#2a9d8f')
+  user_edits_own_category → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update categories set name = 'Coffee & tea' where id = 3 returning *
+  user_cannot_edit_someone_elses_category → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update categories set name = 'x' where id = 4
+  user_deletes_own_category → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from categories where id = 3
+  user_cannot_create_builtin_category → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into categories (user_id, name, color) values (null, 'Crypto', '#2a9d8f')
+  user_cannot_edit_builtin_category → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update categories set name = 'Groceries' where id = 1
+  user_cannot_delete_builtin_category → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from categories where id = 2
+  user_cannot_turn_own_category_into_builtin → authenticated:01 → {"denied": true} → R3
+      [supabase-js] update categories set user_id = null where id = 3
+  anon_sees_no_categories → anon → {"denied": true} → R4
+      select * from categories
+  service_role_sees_all_categories → service_role → {"rows": [[4]]} → R5
+      select count(*) from categories
+
+SOLUTION (verbatim)
+alter table public.categories enable row level security;
+
+create policy categories_select on public.categories
+  for select to authenticated
+  using (user_id is null or user_id = auth.uid());
+
+create policy categories_insert on public.categories
+  for insert to authenticated
+  with check (user_id = auth.uid());
+
+create policy categories_update on public.categories
+  for update to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create policy categories_delete on public.categories
+  for delete to authenticated
+  using (user_id = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_reads_builtin_and_own_categories, other_user_reads_builtin_and_own, user_cannot_create_category_for_someone_else, user_cannot_edit_someone_elses_category, user_cannot_create_builtin_category, user_cannot_edit_builtin_category, user_cannot_delete_builtin_category, user_cannot_turn_own_category_into_builtin, anon_sees_no_categories
+  allow-all: fails on user_reads_builtin_and_own_categories, other_user_reads_builtin_and_own, user_cannot_create_category_for_someone_else, user_cannot_edit_someone_elses_category, user_cannot_create_builtin_category, user_cannot_edit_builtin_category, user_cannot_delete_builtin_category, user_cannot_turn_own_category_into_builtin, anon_sees_no_categories
+  deny-all: fails on user_reads_builtin_and_own_categories, other_user_reads_builtin_and_own, user_creates_category, user_edits_own_category, user_deletes_own_category
+  coverage: 5 rules covered
+  traps: over-broad-for-all caught by user_cannot_delete_builtin_category; null-owner caught by user_cannot_create_builtin_category, user_cannot_turn_own_category_into_builtin
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - built-in categories with NULL user_id: ids 1 and 2
+  - ana's (…01) category 3, ben's (…02) category 4
+
+====================================================================================================
+TASK T046 — Avatar bucket where users write only their own file name — tier 1 — traps: storage-path, bucket-scope — verified: False
+tags: storage-paths, public-bucket, single-owner
+
+REQUIREMENT (verbatim)
+A community app built with supabase-js and Supabase Storage. Each user's profile picture is stored in the bucket `avatars` at the top level, named `<user id>.png` or `<user id>.jpg`. The app uploads with `supabase.storage.from('avatars').upload(name, file, { upsert: true })`, which inserts or updates the object row and reads it back. The bucket `docs` is used only by server jobs.
+
+R1. Anyone, including anonymous visitors, can read objects in `avatars`.
+R2. Signed-in users can upload, replace and delete only the objects in `avatars` named exactly `<their user id>.png` or `<their user id>.jpg` (no folders), with `owner` set to themselves.
+R3. Objects in other buckets cannot be read or written through the app.
+R4. Anonymous visitors cannot upload, change or delete anything.
+R5. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_avatars → anon → {"rows": [["00000000-0000-0000-0000-000000000001.png"], ["00000000-0000-0000-0000-000000000002.jpg"]]} → R1
+      select name from storage.objects where bucket_id = 'avatars' order by name
+  user_cannot_read_private_bucket → authenticated:01 → {"count": 0} → R3
+      select name from storage.objects where bucket_id = 'docs'
+  user_uploads_own_jpg → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001.jpg', '00000000-0000-0000-0000-000000000001') returning *
+  user_replaces_own_avatar → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update storage.objects set created_at = '2020-02-01' where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-000000000001.png' returning *
+  user_cannot_upload_someone_elses_name → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000002.png', '00000000-0000-0000-0000-000000000001')
+  user_cannot_upload_extra_extension → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001.png.html', '00000000-0000-0000-0000-000000000001')
+  user_cannot_upload_into_folder → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001/evil.png', '00000000-0000-0000-0000-000000000001')
+  user_cannot_upload_other_file_type → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001.gif', '00000000-0000-0000-0000-000000000001')
+  user_cannot_upload_with_other_owner → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001.jpg', '00000000-0000-0000-0000-000000000002')
+  user_cannot_replace_someone_elses_avatar → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update storage.objects set owner = '00000000-0000-0000-0000-000000000001' where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-000000000002.jpg'
+  user_cannot_rename_own_avatar_to_someone_elses_name → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update storage.objects set name = '00000000-0000-0000-0000-000000000002.png' where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-000000000001.png'
+  user_deletes_own_avatar → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from storage.objects where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-000000000001.png'
+  user_cannot_delete_someone_elses_avatar → authenticated:01 → {"denied": true} → R2
+      [supabase-js] delete from storage.objects where bucket_id = 'avatars' and name = '00000000-0000-0000-0000-000000000002.jpg'
+  user_cannot_upload_into_private_bucket → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('docs', '00000000-0000-0000-0000-000000000001.png', '00000000-0000-0000-0000-000000000001')
+  anon_cannot_upload_avatar → anon → {"denied": true} → R4
+      [supabase-js] insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001.jpg', null)
+  service_role_sees_all_objects → service_role → {"rows": [[3]]} → R5
+      select count(*) from storage.objects
+
+SOLUTION (verbatim)
+create policy avatars_select on storage.objects
+  for select to anon, authenticated
+  using (bucket_id = 'avatars');
+
+create policy avatars_insert on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'avatars'
+    and name in (auth.uid()::text || '.png', auth.uid()::text || '.jpg')
+    and owner = auth.uid()
+  );
+
+create policy avatars_update on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and name in (auth.uid()::text || '.png', auth.uid()::text || '.jpg'))
+  with check (
+    bucket_id = 'avatars'
+    and name in (auth.uid()::text || '.png', auth.uid()::text || '.jpg')
+    and owner = auth.uid()
+  );
+
+create policy avatars_delete on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and name in (auth.uid()::text || '.png', auth.uid()::text || '.jpg'));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on anon_reads_avatars, user_uploads_own_jpg, user_replaces_own_avatar, user_deletes_own_avatar
+  allow-all: fails on user_cannot_read_private_bucket, user_cannot_upload_someone_elses_name, user_cannot_upload_extra_extension, user_cannot_upload_into_folder, user_cannot_upload_other_file_type, user_cannot_upload_with_other_owner, user_cannot_replace_someone_elses_avatar, user_cannot_rename_own_avatar_to_someone_elses_name, user_cannot_delete_someone_elses_avatar, user_cannot_upload_into_private_bucket, anon_cannot_upload_avatar
+  deny-all: fails on anon_reads_avatars, user_uploads_own_jpg, user_replaces_own_avatar, user_deletes_own_avatar
+  coverage: 5 rules covered
+  traps: storage-path caught by user_cannot_upload_extra_extension, user_cannot_upload_into_folder, user_cannot_upload_other_file_type; bucket-scope caught by user_cannot_upload_into_private_bucket
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - ana's (…01) '<id>.png' and ben's (…02) '<id>.jpg' in avatars
+  - private bucket 'docs' with 'secret.pdf'
+
+====================================================================================================
+TASK T047 — Poll voting with option checks and a closing time — tier 2 — traps: reference-check, time-window, upsert-needs-update — verified: False
+tags: reference-check, time-window, upsert, private-rows
+
+REQUIREMENT (verbatim)
+A polling app built with supabase-js. Users vote, or change their vote, with `supabase.from('votes').upsert({ poll_id, user_id, option_id }).select()`, and withdraw with `.delete()`. Results are computed on the server. A poll is open while `closes_at` is in the future (compared with `now()`).
+
+R1. Signed-in users can read every poll and every option.
+R2. Users can see only their own votes.
+R3. Users can vote once per poll, as themselves, only for an option that belongs to that poll, and only while the poll is open.
+R4. While a poll is open, users can change their vote (again only to an option of that poll) or withdraw it. Votes on closed polls can no longer change.
+R5. Nobody can change polls or options through the app.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_reads_polls → authenticated:03 → {"rows": [[2]]} → R1
+      select count(*) from polls
+  user_reads_options → authenticated:03 → {"rows": [[4]]} → R1
+      select count(*) from poll_options
+  user_sees_own_vote → authenticated:01 → {"rows": [[1, 1]]} → R2
+      select poll_id, option_id from votes order by poll_id
+  user_without_votes_sees_none → authenticated:03 → {"count": 0} → R2
+      select poll_id from votes
+  user_votes_in_open_poll → authenticated:03 → {"affected": 1} → R3
+      [supabase-js] insert into votes (poll_id, user_id, option_id) values (1, '00000000-0000-0000-0000-000000000003', 2) on conflict (poll_id, user_id) do update set option_id = excluded.option_id returning *
+  cannot_vote_for_option_of_other_poll → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into votes (poll_id, user_id, option_id) values (1, '00000000-0000-0000-0000-000000000003', 3) on conflict (poll_id, user_id) do update set option_id = excluded.option_id
+  cannot_vote_in_closed_poll → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into votes (poll_id, user_id, option_id) values (2, '00000000-0000-0000-0000-000000000003', 4) on conflict (poll_id, user_id) do update set option_id = excluded.option_id
+  cannot_vote_for_someone_else → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into votes (poll_id, user_id, option_id) values (1, '00000000-0000-0000-0000-000000000003', 1) on conflict (poll_id, user_id) do update set option_id = excluded.option_id
+  user_changes_vote_in_open_poll → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] insert into votes (poll_id, user_id, option_id) values (1, '00000000-0000-0000-0000-000000000001', 2) on conflict (poll_id, user_id) do update set option_id = excluded.option_id returning *
+  cannot_change_vote_to_option_of_other_poll → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update votes set option_id = 4 where poll_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  cannot_change_vote_in_closed_poll → authenticated:02 → {"denied": true} → R4
+      [supabase-js] update votes set option_id = 4 where poll_id = 2 and user_id = '00000000-0000-0000-0000-000000000002'
+  user_withdraws_vote_in_open_poll → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] delete from votes where poll_id = 1 and user_id = '00000000-0000-0000-0000-000000000001'
+  cannot_withdraw_vote_in_closed_poll → authenticated:02 → {"denied": true} → R4
+      [supabase-js] delete from votes where poll_id = 2 and user_id = '00000000-0000-0000-0000-000000000002'
+  user_cannot_add_option → authenticated:01 → {"denied": true} → R5
+      [supabase-js] insert into poll_options (id, poll_id, label) values (9, 1, 'Moon')
+  user_cannot_reopen_poll → authenticated:02 → {"denied": true} → R5
+      [supabase-js] update polls set closes_at = '2099-01-01' where id = 2
+  anon_sees_no_polls → anon → {"denied": true} → R6
+      select * from polls
+  service_role_sees_all_votes → service_role → {"rows": [[2]]} → R7
+      select count(*) from votes
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.poll_open(p_poll_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((select p.closes_at > now() from public.polls p where p.id = p_poll_id), false)
+$$;
+
+create function private.option_in_poll(p_option_id bigint, p_poll_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.poll_options o where o.id = p_option_id and o.poll_id = p_poll_id)
+$$;
+
+alter table public.polls enable row level security;
+alter table public.poll_options enable row level security;
+alter table public.votes enable row level security;
+
+create policy polls_select on public.polls
+  for select to authenticated
+  using (true);
+
+create policy poll_options_select on public.poll_options
+  for select to authenticated
+  using (true);
+
+create policy votes_select on public.votes
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy votes_insert on public.votes
+  for insert to authenticated
+  with check (user_id = auth.uid() and private.poll_open(poll_id) and private.option_in_poll(option_id, poll_id));
+
+create policy votes_update on public.votes
+  for update to authenticated
+  using (user_id = auth.uid() and private.poll_open(poll_id))
+  with check (user_id = auth.uid() and private.poll_open(poll_id) and private.option_in_poll(option_id, poll_id));
+
+create policy votes_delete on public.votes
+  for delete to authenticated
+  using (user_id = auth.uid() and private.poll_open(poll_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_sees_own_vote, user_without_votes_sees_none, cannot_vote_for_option_of_other_poll, cannot_vote_in_closed_poll, cannot_vote_for_someone_else, cannot_change_vote_to_option_of_other_poll, cannot_change_vote_in_closed_poll, cannot_withdraw_vote_in_closed_poll, user_cannot_add_option, user_cannot_reopen_poll, anon_sees_no_polls
+  allow-all: fails on user_sees_own_vote, user_without_votes_sees_none, cannot_vote_for_option_of_other_poll, cannot_vote_in_closed_poll, cannot_vote_for_someone_else, cannot_change_vote_to_option_of_other_poll, cannot_change_vote_in_closed_poll, cannot_withdraw_vote_in_closed_poll, user_cannot_add_option, user_cannot_reopen_poll, anon_sees_no_polls
+  deny-all: fails on user_reads_polls, user_reads_options, user_sees_own_vote, user_votes_in_open_poll, user_changes_vote_in_open_poll, user_withdraws_vote_in_open_poll
+  coverage: 7 rules covered
+  traps: reference-check caught by cannot_vote_for_option_of_other_poll; time-window caught by cannot_vote_in_closed_poll; upsert-needs-update caught by user_changes_vote_in_open_poll
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - poll 1 open until 2099 (options 1, 2); poll 2 closed in 2020 (options 3, 4)
+  - ana (…01) voted option 1 on poll 1; ben (…02) voted option 3 on poll 2; cy (…03) has not voted
+
+====================================================================================================
+TASK T048 — Car-pool seat requests confirmed by the driver within seat limits — tier 2 — traps: aggregate-limit, state-transition, time-window — verified: False
+tags: aggregate-limit, time-window, state-transition, column-restriction, client-returning
+
+REQUIREMENT (verbatim)
+A car-pooling app built with supabase-js. Passengers request a seat with `supabase.from('ride_bookings').insert({ ride_id, passenger_id }).select()` and withdraw with `.delete()`. Drivers answer with `.update({ status }).match({ ride_id, passenger_id }).select()`. Departure times are compared with `now()`.
+
+R1. Signed-in users can see every ride. Drivers can create rides as themselves and edit and delete their own rides.
+R2. Passengers can see their own bookings; drivers can see every booking on their rides.
+R3. Signed-in users can request a seat, as themselves, on rides that have not departed and that they are not driving. New requests are always `requested`. Passengers can withdraw their own bookings before departure.
+R4. Only the driver can confirm or decline requests on their ride, and only before departure. A request can be confirmed only while the ride has fewer confirmed bookings than seats. Nothing else about a booking can change.
+R5. Anonymous visitors cannot see or change anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_sees_all_rides → authenticated:04 → {"rows": [[3]]} → R1
+      select count(*) from rides
+  user_offers_ride → authenticated:04 → {"affected": 1} → R1
+      [supabase-js] insert into rides (id, driver_id, from_city, to_city, departs_at, seats) values (4, '00000000-0000-0000-0000-000000000004', 'Goa', 'Pune', '2099-05-01 06:00+00', 3) returning *
+  user_cannot_edit_someone_elses_ride → authenticated:04 → {"denied": true} → R1
+      [supabase-js] update rides set seats = 9 where id = 1
+  passenger_sees_own_bookings → authenticated:03 → {"rows": [[1], [3]]} → R2
+      select ride_id from ride_bookings order by ride_id
+  driver_sees_bookings_on_own_rides → authenticated:01 → {"rows": [[1, "00000000-0000-0000-0000-000000000002"], [1, "00000000-0000-0000-0000-000000000003"]]} → R2
+      select ride_id, passenger_id from ride_bookings order by ride_id, passenger_id
+  passenger_requests_seat → authenticated:04 → {"affected": 1} → R3
+      [supabase-js] insert into ride_bookings (ride_id, passenger_id) values (1, '00000000-0000-0000-0000-000000000004') returning *
+  cannot_request_seat_on_departed_ride → authenticated:04 → {"denied": true} → R3
+      [supabase-js] insert into ride_bookings (ride_id, passenger_id) values (2, '00000000-0000-0000-0000-000000000004')
+  driver_cannot_book_own_ride → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into ride_bookings (ride_id, passenger_id) values (1, '00000000-0000-0000-0000-000000000001')
+  cannot_request_seat_for_someone_else → authenticated:04 → {"denied": true} → R3
+      [supabase-js] insert into ride_bookings (ride_id, passenger_id) values (1, '00000000-0000-0000-0000-000000000005')
+  cannot_create_confirmed_booking → authenticated:04 → {"denied": true} → R3
+      [supabase-js] insert into ride_bookings (ride_id, passenger_id, status) values (1, '00000000-0000-0000-0000-000000000004', 'confirmed')
+  passenger_withdraws_request → authenticated:03 → {"affected": 1} → R3
+      [supabase-js] delete from ride_bookings where ride_id = 1 and passenger_id = '00000000-0000-0000-0000-000000000003'
+  passenger_cannot_withdraw_someone_elses_booking → authenticated:02 → {"denied": true} → R3
+      [supabase-js] delete from ride_bookings where ride_id = 1 and passenger_id = '00000000-0000-0000-0000-000000000003'
+  driver_confirms_request_with_seat_left → authenticated:01 → {"affected": 1} → R4
+      [supabase-js] update ride_bookings set status = 'confirmed' where ride_id = 1 and passenger_id = '00000000-0000-0000-0000-000000000003' returning *
+  driver_cannot_confirm_when_full → authenticated:05 → {"denied": true} → R4
+      [supabase-js] update ride_bookings set status = 'confirmed' where ride_id = 3 and passenger_id = '00000000-0000-0000-0000-000000000003'
+  driver_declines_request → authenticated:05 → {"affected": 1} → R4
+      [supabase-js] update ride_bookings set status = 'declined' where ride_id = 3 and passenger_id = '00000000-0000-0000-0000-000000000003' returning *
+  passenger_cannot_confirm_own_request → authenticated:03 → {"denied": true} → R4
+      [supabase-js] update ride_bookings set status = 'confirmed' where ride_id = 1 and passenger_id = '00000000-0000-0000-0000-000000000003'
+  driver_cannot_swap_passenger → authenticated:01 → {"denied": true} → R4
+      [supabase-js] update ride_bookings set passenger_id = '00000000-0000-0000-0000-000000000004' where ride_id = 1 and passenger_id = '00000000-0000-0000-0000-000000000003'
+  anon_sees_no_bookings → anon → {"denied": true} → R5
+      select * from ride_bookings
+  service_role_sees_all_bookings → service_role → {"rows": [[4]]} → R6
+      select count(*) from ride_bookings
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_driver(p_ride_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.rides r where r.id = p_ride_id and r.driver_id = auth.uid())
+$$;
+
+create function private.ride_upcoming(p_ride_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((select r.departs_at > now() from public.rides r where r.id = p_ride_id), false)
+$$;
+
+create function private.seats_left(p_ride_id bigint) returns integer
+language sql stable security definer set search_path = ''
+as $$
+  select r.seats - (select count(*)::integer from public.ride_bookings b where b.ride_id = r.id and b.status = 'confirmed') from public.rides r where r.id = p_ride_id
+$$;
+
+alter table public.rides enable row level security;
+alter table public.ride_bookings enable row level security;
+
+revoke update on public.ride_bookings from anon, authenticated;
+grant update (status) on public.ride_bookings to authenticated;
+
+create policy rides_select on public.rides
+  for select to authenticated
+  using (true);
+
+create policy rides_insert on public.rides
+  for insert to authenticated
+  with check (driver_id = auth.uid());
+
+create policy rides_update on public.rides
+  for update to authenticated
+  using (driver_id = auth.uid())
+  with check (driver_id = auth.uid());
+
+create policy rides_delete on public.rides
+  for delete to authenticated
+  using (driver_id = auth.uid());
+
+create policy bookings_select on public.ride_bookings
+  for select to authenticated
+  using (passenger_id = auth.uid() or private.is_driver(ride_id));
+
+create policy bookings_insert on public.ride_bookings
+  for insert to authenticated
+  with check (
+    passenger_id = auth.uid()
+    and status = 'requested'
+    and private.ride_upcoming(ride_id)
+    and not private.is_driver(ride_id)
+  );
+
+create policy bookings_update on public.ride_bookings
+  for update to authenticated
+  using (private.is_driver(ride_id) and private.ride_upcoming(ride_id))
+  with check (
+    private.is_driver(ride_id)
+    and (status <> 'confirmed' or coalesce(private.seats_left(ride_id), 0) > 0)
+  );
+
+create policy bookings_delete on public.ride_bookings
+  for delete to authenticated
+  using (passenger_id = auth.uid() and private.ride_upcoming(ride_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_cannot_edit_someone_elses_ride, passenger_sees_own_bookings, driver_sees_bookings_on_own_rides, cannot_request_seat_on_departed_ride, driver_cannot_book_own_ride, cannot_request_seat_for_someone_else, cannot_create_confirmed_booking, passenger_cannot_withdraw_someone_elses_booking, driver_cannot_confirm_when_full, passenger_cannot_confirm_own_request, driver_cannot_swap_passenger, anon_sees_no_bookings
+  allow-all: fails on user_cannot_edit_someone_elses_ride, passenger_sees_own_bookings, driver_sees_bookings_on_own_rides, cannot_request_seat_on_departed_ride, driver_cannot_book_own_ride, cannot_request_seat_for_someone_else, cannot_create_confirmed_booking, passenger_cannot_withdraw_someone_elses_booking, driver_cannot_confirm_when_full, passenger_cannot_confirm_own_request, driver_cannot_swap_passenger, anon_sees_no_bookings
+  deny-all: fails on user_sees_all_rides, user_offers_ride, passenger_sees_own_bookings, driver_sees_bookings_on_own_rides, passenger_requests_seat, passenger_withdraws_request, driver_confirms_request_with_seat_left, driver_declines_request
+  coverage: 6 rules covered
+  traps: aggregate-limit caught by driver_cannot_confirm_when_full; state-transition caught by passenger_cannot_confirm_own_request; time-window caught by cannot_request_seat_on_departed_ride
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - ride 1 (dev …01, 2 seats, 2099): pia confirmed, quinn requested — one seat left
+  - ride 2 (dev, 2020) is in the past
+  - ride 3 (sana …05, 1 seat, 2099): raj confirmed (full), quinn requested
+
+====================================================================================================
+TASK T049 — Purchase orders with approval limits and no self-approval — tier 2 — traps: self-approval, approval-limit, negative-condition — verified: False
+tags: segregation-of-duties, approval-limit, append-only, client-returning
+
+REQUIREMENT (verbatim)
+A procurement app built with supabase-js. Requesters create purchase orders with `supabase.from('purchase_orders').insert({...}).select()`. An approver records a decision by inserting into `po_approvals` with `.insert({ po_id, approver_id, decision }).select()`; a PO is decided once it has an approval row. Approvers and their spending limits are listed in `approvers`.
+
+R1. Requesters can see their own purchase orders. Approvers can see every purchase order.
+R2. Users can create purchase orders as themselves, and can edit and delete their own purchase orders until they are decided.
+R3. An approver can record a decision on a purchase order, as themselves, only if its amount is within their limit and they did not request it themselves.
+R4. Decisions can never be changed or deleted. Requesters can see the decisions on their own purchase orders; approvers can see every decision.
+R5. Users can see their own row in `approvers`. Nobody can change `approvers` through the app.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  requester_sees_own_pos → authenticated:01 → {"rows": [[1], [2], [3], [5]]} → R1
+      select id from purchase_orders order by id
+  approver_sees_every_po → authenticated:02 → {"rows": [[5]]} → R1
+      select count(*) from purchase_orders
+  requester_creates_po → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into purchase_orders (requester_id, vendor, amount) values ('00000000-0000-0000-0000-000000000001', 'Printer ink', 120) returning *
+  cannot_create_po_for_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into purchase_orders (requester_id, vendor, amount) values ('00000000-0000-0000-0000-000000000002', 'x', 1)
+  requester_edits_undecided_po → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update purchase_orders set amount = 850 where id = 2 returning *
+  requester_cannot_edit_decided_po → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update purchase_orders set amount = 9000 where id = 5
+  requester_deletes_undecided_po → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from purchase_orders where id = 1
+  requester_cannot_delete_decided_po → authenticated:01 → {"denied": true} → R2
+      [supabase-js] delete from purchase_orders where id = 5
+  approver_approves_within_limit → authenticated:02 → {"affected": 1} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (2, '00000000-0000-0000-0000-000000000002', 'approve') returning *
+  approver_cannot_approve_above_limit → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (3, '00000000-0000-0000-0000-000000000002', 'approve')
+  senior_approver_approves_large_po → authenticated:03 → {"affected": 1} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (3, '00000000-0000-0000-0000-000000000003', 'approve') returning *
+  approver_cannot_approve_own_po → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (4, '00000000-0000-0000-0000-000000000003', 'approve')
+  non_approver_cannot_decide → authenticated:01 → {"denied": true} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (4, '00000000-0000-0000-0000-000000000001', 'reject')
+  cannot_decide_as_someone_else → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into po_approvals (po_id, approver_id, decision) values (2, '00000000-0000-0000-0000-000000000003', 'approve')
+  approver_cannot_change_decision → authenticated:02 → {"denied": true} → R4
+      [supabase-js] update po_approvals set decision = 'reject' where po_id = 5
+  approver_cannot_delete_decision → authenticated:02 → {"denied": true} → R4
+      [supabase-js] delete from po_approvals where po_id = 5
+  requester_sees_decisions_on_own_pos → authenticated:01 → {"rows": [[5, "approve"]]} → R4
+      select po_id, decision from po_approvals order by po_id
+  approver_sees_own_limit_row → authenticated:02 → {"rows": [["00000000-0000-0000-0000-000000000002"]]} → R5
+      select user_id from approvers order by user_id
+  user_cannot_become_approver → authenticated:01 → {"denied": true} → R5
+      [supabase-js] insert into approvers (user_id, limit_amount) values ('00000000-0000-0000-0000-000000000001', 1000000)
+  approver_cannot_raise_own_limit → authenticated:02 → {"denied": true} → R5
+      [supabase-js] update approvers set limit_amount = 1000000 where user_id = '00000000-0000-0000-0000-000000000002'
+  anon_sees_no_pos → anon → {"denied": true} → R6
+      select * from purchase_orders
+  service_role_sees_all_decisions → service_role → {"rows": [[1]]} → R7
+      select count(*) from po_approvals
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.approver_limit() returns numeric
+language sql stable security definer set search_path = ''
+as $$
+  select a.limit_amount from public.approvers a where a.user_id = auth.uid()
+$$;
+
+create function private.po_decided(p_po_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.po_approvals d where d.po_id = p_po_id)
+$$;
+
+create function private.can_decide(p_po_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.purchase_orders po
+    where po.id = p_po_id
+      and po.requester_id <> auth.uid()
+      and po.amount <= coalesce((select a.limit_amount from public.approvers a where a.user_id = auth.uid()), -1)
+  )
+$$;
+
+alter table public.approvers enable row level security;
+alter table public.purchase_orders enable row level security;
+alter table public.po_approvals enable row level security;
+
+create policy approvers_select on public.approvers
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy po_select on public.purchase_orders
+  for select to authenticated
+  using (requester_id = auth.uid() or private.approver_limit() is not null);
+
+create policy po_insert on public.purchase_orders
+  for insert to authenticated
+  with check (requester_id = auth.uid());
+
+create policy po_update on public.purchase_orders
+  for update to authenticated
+  using (requester_id = auth.uid() and not private.po_decided(id))
+  with check (requester_id = auth.uid());
+
+create policy po_delete on public.purchase_orders
+  for delete to authenticated
+  using (requester_id = auth.uid() and not private.po_decided(id));
+
+create policy po_approvals_select on public.po_approvals
+  for select to authenticated
+  using (
+    private.approver_limit() is not null
+    or exists (select 1 from public.purchase_orders po where po.id = po_id and po.requester_id = auth.uid())
+  );
+
+create policy po_approvals_insert on public.po_approvals
+  for insert to authenticated
+  with check (approver_id = auth.uid() and private.can_decide(po_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on requester_sees_own_pos, cannot_create_po_for_someone_else, requester_cannot_edit_decided_po, requester_cannot_delete_decided_po, approver_cannot_approve_above_limit, approver_cannot_approve_own_po, non_approver_cannot_decide, cannot_decide_as_someone_else, approver_cannot_change_decision, approver_cannot_delete_decision, approver_sees_own_limit_row, user_cannot_become_approver, approver_cannot_raise_own_limit, anon_sees_no_pos
+  allow-all: fails on requester_sees_own_pos, cannot_create_po_for_someone_else, requester_cannot_edit_decided_po, requester_cannot_delete_decided_po, approver_cannot_approve_above_limit, approver_cannot_approve_own_po, non_approver_cannot_decide, cannot_decide_as_someone_else, approver_cannot_change_decision, approver_cannot_delete_decision, approver_sees_own_limit_row, user_cannot_become_approver, approver_cannot_raise_own_limit, anon_sees_no_pos
+  deny-all: fails on requester_sees_own_pos, approver_sees_every_po, requester_creates_po, requester_edits_undecided_po, requester_deletes_undecided_po, approver_approves_within_limit, senior_approver_approves_large_po, requester_sees_decisions_on_own_pos, approver_sees_own_limit_row
+  coverage: 7 rules covered
+  traps: self-approval caught by approver_cannot_approve_own_po; approval-limit caught by approver_cannot_approve_above_limit; negative-condition caught by requester_cannot_edit_decided_po
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - approvers: abe (…02) limit 1,000; bea (…03) limit 50,000 — bea also requested PO 4
+  - rita (…01): PO 1 (500), 2 (800), 3 (20,000), 5 (900, already approved by abe)
+
+====================================================================================================
+TASK T050 — School grades visible to students, guardians and their teachers — tier 2 — traps: private-row-leak, reference-check, privilege-escalation — verified: False
+tags: roles-by-table, delegated-access, reference-check, client-returning
+
+REQUIREMENT (verbatim)
+A school app built with supabase-js. Teachers record grades with `supabase.from('grades').insert({...}).select()` and correct them with `.update({...}).eq('id', id).select()`. `guardians` links parents to their children.
+
+R1. Students can read their own grades. Guardians can read the grades of the students they are guardians of. Teachers can read every grade in the classes they teach.
+R2. Teachers can add, change and delete grades in the classes they teach, only for students enrolled in that class, with themselves as `graded_by`.
+R3. Students and guardians cannot add, change or delete grades.
+R4. Signed-in users can see the class list. Students can see their own enrollments and teachers the rosters of their classes; users can see the guardian links that involve them. Nobody can change classes, enrollments or guardian links through the app.
+R5. Anonymous visitors cannot see or change anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  student_reads_own_grades → authenticated:03 → {"rows": [[1], [3]]} → R1
+      select id from grades order by id
+  classmate_reads_only_own_grades → authenticated:04 → {"rows": [[2]]} → R1
+      select id from grades order by id
+  guardian_reads_childs_grades → authenticated:05 → {"rows": [[1], [3]]} → R1
+      select id from grades order by id
+  teacher_reads_class_grades → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from grades order by id
+  other_teacher_reads_only_own_class → authenticated:02 → {"rows": [[3]]} → R1
+      select id from grades order by id
+  teacher_adds_grade → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into grades (class_id, student_id, assignment, score, graded_by) values (1, '00000000-0000-0000-0000-000000000004', 'Quiz 2', 95, '00000000-0000-0000-0000-000000000001') returning *
+  teacher_cannot_grade_in_other_class → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into grades (class_id, student_id, assignment, score, graded_by) values (2, '00000000-0000-0000-0000-000000000003', 'Quiz 2', 50, '00000000-0000-0000-0000-000000000001')
+  teacher_cannot_grade_unenrolled_student → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into grades (class_id, student_id, assignment, score, graded_by) values (1, '00000000-0000-0000-0000-000000000006', 'Quiz 2', 50, '00000000-0000-0000-0000-000000000001')
+  teacher_cannot_grade_as_someone_else → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into grades (class_id, student_id, assignment, score, graded_by) values (1, '00000000-0000-0000-0000-000000000004', 'Quiz 2', 50, '00000000-0000-0000-0000-000000000002')
+  teacher_corrects_grade → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] update grades set score = 90 where id = 1 returning *
+  other_teacher_cannot_change_grade → authenticated:02 → {"denied": true} → R2
+      [supabase-js] update grades set score = 10 where id = 1
+  teacher_deletes_grade → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from grades where id = 2
+  student_cannot_change_own_grade → authenticated:03 → {"denied": true} → R3
+      [supabase-js] update grades set score = 100 where id = 1
+  guardian_cannot_change_grade → authenticated:05 → {"denied": true} → R3
+      [supabase-js] update grades set score = 100 where id = 1
+  student_cannot_add_grade → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into grades (class_id, student_id, assignment, score, graded_by) values (1, '00000000-0000-0000-0000-000000000003', 'Quiz 2', 100, '00000000-0000-0000-0000-000000000003')
+  student_sees_own_enrollments → authenticated:03 → {"rows": [[1], [2]]} → R4
+      select class_id from class_students order by class_id
+  teacher_sees_class_roster → authenticated:01 → {"rows": [["00000000-0000-0000-0000-000000000003"], ["00000000-0000-0000-0000-000000000004"]]} → R4
+      select student_id from class_students order by student_id
+  student_cannot_enroll → authenticated:06 → {"denied": true} → R4
+      [supabase-js] insert into class_students (class_id, student_id) values (1, '00000000-0000-0000-0000-000000000006')
+  user_cannot_become_guardian → authenticated:05 → {"denied": true} → R4
+      [supabase-js] insert into guardians (guardian_id, student_id) values ('00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000004')
+  anon_sees_no_grades → anon → {"denied": true} → R5
+      select * from grades
+  service_role_sees_all_grades → service_role → {"rows": [[3]]} → R6
+      select count(*) from grades
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.teaches(p_class_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.classes c where c.id = p_class_id and c.teacher_id = auth.uid())
+$$;
+
+create function private.is_enrolled(p_class_id bigint, p_student_id uuid) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.class_students s where s.class_id = p_class_id and s.student_id = p_student_id)
+$$;
+
+create function private.guards(p_student_id uuid) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.guardians g where g.student_id = p_student_id and g.guardian_id = auth.uid())
+$$;
+
+alter table public.classes enable row level security;
+alter table public.class_students enable row level security;
+alter table public.guardians enable row level security;
+alter table public.grades enable row level security;
+
+create policy classes_select on public.classes
+  for select to authenticated
+  using (true);
+
+create policy class_students_select on public.class_students
+  for select to authenticated
+  using (student_id = auth.uid() or private.teaches(class_id));
+
+create policy guardians_select on public.guardians
+  for select to authenticated
+  using (guardian_id = auth.uid() or student_id = auth.uid());
+
+create policy grades_select on public.grades
+  for select to authenticated
+  using (student_id = auth.uid() or private.guards(student_id) or private.teaches(class_id));
+
+create policy grades_insert on public.grades
+  for insert to authenticated
+  with check (graded_by = auth.uid() and private.teaches(class_id) and private.is_enrolled(class_id, student_id));
+
+create policy grades_update on public.grades
+  for update to authenticated
+  using (private.teaches(class_id))
+  with check (graded_by = auth.uid() and private.teaches(class_id) and private.is_enrolled(class_id, student_id));
+
+create policy grades_delete on public.grades
+  for delete to authenticated
+  using (private.teaches(class_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on student_reads_own_grades, classmate_reads_only_own_grades, guardian_reads_childs_grades, teacher_reads_class_grades, other_teacher_reads_only_own_class, teacher_cannot_grade_in_other_class, teacher_cannot_grade_unenrolled_student, teacher_cannot_grade_as_someone_else, other_teacher_cannot_change_grade, student_cannot_change_own_grade, guardian_cannot_change_grade, student_cannot_add_grade, student_sees_own_enrollments, teacher_sees_class_roster, student_cannot_enroll, user_cannot_become_guardian, anon_sees_no_grades
+  allow-all: fails on student_reads_own_grades, classmate_reads_only_own_grades, guardian_reads_childs_grades, teacher_reads_class_grades, other_teacher_reads_only_own_class, teacher_cannot_grade_in_other_class, teacher_cannot_grade_unenrolled_student, teacher_cannot_grade_as_someone_else, other_teacher_cannot_change_grade, student_cannot_change_own_grade, guardian_cannot_change_grade, student_cannot_add_grade, student_sees_own_enrollments, teacher_sees_class_roster, student_cannot_enroll, user_cannot_become_guardian, anon_sees_no_grades
+  deny-all: fails on student_reads_own_grades, classmate_reads_only_own_grades, guardian_reads_childs_grades, teacher_reads_class_grades, other_teacher_reads_only_own_class, teacher_adds_grade, teacher_corrects_grade, teacher_deletes_grade, student_sees_own_enrollments, teacher_sees_class_roster
+  coverage: 6 rules covered
+  traps: private-row-leak caught by student_reads_own_grades, classmate_reads_only_own_grades; reference-check caught by teacher_cannot_grade_unenrolled_student; privilege-escalation caught by guardian_cannot_change_grade
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - teacher tina (…01) class 1; teacher tom (…02) class 2
+  - sid (…03) in classes 1 and 2; sue (…04) in class 1; sam (…06) only in class 2
+  - guardian gus (…05) of sid
+
+====================================================================================================
+TASK T051 — Warehouse stock with location staff, auditors and stock-count freezes — tier 2 — traps: claim-trust, negative-condition, privilege-escalation — verified: False
+tags: location-scoping, jwt-claims, negative-condition, upsert
+
+REQUIREMENT (verbatim)
+An inventory app built with supabase-js. Staff set stock levels with `supabase.from('stock').upsert({ location_id, sku, qty }).select()` and remove items with `.delete()`. The server marks auditors with `app_metadata.role = 'auditor'` in their JWT; users can edit their own `user_metadata`. During a stock count a location is frozen.
+
+R1. Signed-in users can see the list of locations. Staff can see the stock and staff list of their own locations. Auditors can see all stock and all staff lists.
+R2. Staff can add, change and remove stock rows at their own locations only, and stock can never be moved to a location where they are not staff.
+R3. While a location is frozen, nobody can add, change or remove its stock through the app.
+R4. Auditors can never change stock. Auditor status comes only from `app_metadata.role`; `user_metadata` never counts.
+R5. Nobody can change locations or staff lists through the app.
+R6. Anonymous visitors cannot see or change anything.
+R7. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  user_sees_locations → authenticated:04 → {"rows": [[2]]} → R1
+      select count(*) from locations
+  staff_sees_own_location_stock → authenticated:01 → {"rows": [[1, "SKU-1"], [1, "SKU-2"]]} → R1
+      select location_id, sku from stock order by location_id, sku
+  other_staff_sees_only_own_location → authenticated:02 → {"rows": [[2, "SKU-1"]]} → R1
+      select location_id, sku from stock order by location_id, sku
+  auditor_sees_all_stock → authenticated:03 +claims{"app_metadata": {"role": "auditor"}} → {"rows": [[3]]} → R1
+      select count(*) from stock
+  auditor_sees_all_staff_lists → authenticated:03 +claims{"app_metadata": {"role": "auditor"}} → {"rows": [[2]]} → R1
+      select count(*) from location_staff
+  staff_updates_stock_level → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into stock (location_id, sku, qty) values (1, 'SKU-1', 12) on conflict (location_id, sku) do update set qty = excluded.qty returning *
+  staff_adds_new_sku → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] insert into stock (location_id, sku, qty) values (1, 'SKU-3', 4) on conflict (location_id, sku) do update set qty = excluded.qty returning *
+  staff_removes_sku → authenticated:01 → {"affected": 1} → R2
+      [supabase-js] delete from stock where location_id = 1 and sku = 'SKU-2'
+  staff_cannot_change_other_location → authenticated:01 → {"denied": true} → R2
+      [supabase-js] insert into stock (location_id, sku, qty) values (2, 'SKU-9', 1) on conflict (location_id, sku) do update set qty = excluded.qty
+  staff_cannot_move_stock_to_other_location → authenticated:01 → {"denied": true} → R2
+      [supabase-js] update stock set location_id = 2 where location_id = 1 and sku = 'SKU-2'
+  staff_cannot_change_frozen_stock → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into stock (location_id, sku, qty) values (2, 'SKU-1', 0) on conflict (location_id, sku) do update set qty = excluded.qty
+  staff_cannot_add_to_frozen_location → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into stock (location_id, sku, qty) values (2, 'SKU-7', 3)
+  staff_cannot_remove_frozen_stock → authenticated:02 → {"denied": true} → R3
+      [supabase-js] delete from stock where location_id = 2 and sku = 'SKU-1'
+  auditor_cannot_change_stock → authenticated:03 +claims{"app_metadata": {"role": "auditor"}} → {"denied": true} → R4
+      [supabase-js] update stock set qty = 0 where location_id = 1 and sku = 'SKU-1'
+  user_metadata_auditor_sees_nothing → authenticated:04 +claims{"user_metadata": {"role": "auditor"}} → {"count": 0} → R4
+      select sku from stock
+  staff_cannot_unfreeze_location → authenticated:02 → {"denied": true} → R5
+      [supabase-js] update locations set is_frozen = false where id = 2
+  staff_cannot_join_other_location → authenticated:01 → {"denied": true} → R5
+      [supabase-js] insert into location_staff (location_id, user_id) values (2, '00000000-0000-0000-0000-000000000001')
+  anon_sees_no_stock → anon → {"denied": true} → R6
+      select * from stock
+  service_role_sees_all_stock → service_role → {"rows": [[3]]} → R7
+      select count(*) from stock
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_staff(p_location_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.location_staff s where s.location_id = p_location_id and s.user_id = auth.uid())
+$$;
+
+create function private.location_frozen(p_location_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((select l.is_frozen from public.locations l where l.id = p_location_id), true)
+$$;
+
+create function private.is_auditor() returns boolean
+language sql stable
+as $$
+  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role' = 'auditor', false)
+$$;
+
+alter table public.locations enable row level security;
+alter table public.location_staff enable row level security;
+alter table public.stock enable row level security;
+
+create policy locations_select on public.locations
+  for select to authenticated
+  using (true);
+
+create policy location_staff_select on public.location_staff
+  for select to authenticated
+  using (private.is_staff(location_id) or private.is_auditor());
+
+create policy stock_select on public.stock
+  for select to authenticated
+  using (private.is_staff(location_id) or private.is_auditor());
+
+create policy stock_insert on public.stock
+  for insert to authenticated
+  with check (private.is_staff(location_id) and not private.location_frozen(location_id));
+
+create policy stock_update on public.stock
+  for update to authenticated
+  using (private.is_staff(location_id) and not private.location_frozen(location_id))
+  with check (private.is_staff(location_id) and not private.location_frozen(location_id));
+
+create policy stock_delete on public.stock
+  for delete to authenticated
+  using (private.is_staff(location_id) and not private.location_frozen(location_id));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on staff_sees_own_location_stock, other_staff_sees_only_own_location, staff_cannot_change_other_location, staff_cannot_move_stock_to_other_location, staff_cannot_change_frozen_stock, staff_cannot_add_to_frozen_location, staff_cannot_remove_frozen_stock, auditor_cannot_change_stock, user_metadata_auditor_sees_nothing, staff_cannot_unfreeze_location, staff_cannot_join_other_location, anon_sees_no_stock
+  allow-all: fails on staff_sees_own_location_stock, other_staff_sees_only_own_location, staff_cannot_change_other_location, staff_cannot_move_stock_to_other_location, staff_cannot_change_frozen_stock, staff_cannot_add_to_frozen_location, staff_cannot_remove_frozen_stock, auditor_cannot_change_stock, user_metadata_auditor_sees_nothing, staff_cannot_unfreeze_location, staff_cannot_join_other_location, anon_sees_no_stock
+  deny-all: fails on user_sees_locations, staff_sees_own_location_stock, other_staff_sees_only_own_location, auditor_sees_all_stock, auditor_sees_all_staff_lists, staff_updates_stock_level, staff_adds_new_sku, staff_removes_sku
+  coverage: 7 rules covered
+  traps: claim-trust caught by user_metadata_auditor_sees_nothing; negative-condition caught by staff_cannot_change_frozen_stock, staff_cannot_add_to_frozen_location, staff_cannot_remove_frozen_stock; privilege-escalation caught by auditor_cannot_change_stock
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - location 2 is frozen (stock count in progress)
+  - staff: sam (…01) at location 1, sue (…02) at location 2
+  - auditor aud (…03) via app_metadata; eve (…04) claims auditor in user_metadata
+
+====================================================================================================
+TASK T052 — Folder tree where grants inherit to every subfolder — tier 3 — traps: inheritance-missing, recursive-policy, reference-check — verified: False
+tags: hierarchy, recursive-cte, security-definer-helper, inheritance, client-returning
+
+REQUIREMENT (verbatim)
+A document-management app built with supabase-js. Folders form a tree through `parent_id`. Access is given on a folder through `folder_grants` (read, or edit when `can_edit`), and owning or being granted a folder applies to every folder below it. Writes read the row back with `.select()`.
+
+R1. Users can read a folder and the documents in it if they own that folder or any folder above it, or hold a grant on that folder or any folder above it.
+R2. Users can create, edit and delete documents in a folder if they own that folder or a folder above it, or hold an editing grant on it or on a folder above it. A document can only be moved to a folder where the user can edit.
+R3. Users can create top-level folders as their owner. Only owners of a folder (or of a folder above it) can create subfolders in it, as their owner, and add or remove grants on it.
+R4. Users can see the grants given to them and the grants on folders they own (directly or through a folder above).
+R5. Anonymous visitors cannot see or change anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  owner_reads_whole_tree → authenticated:01 → {"rows": [[1], [2], [3], [4], [6]]} → R1
+      select id from folders order by id
+  read_grant_inherits_to_subfolder → authenticated:03 → {"rows": [[2], [3]]} → R1
+      select id from folders order by id
+  grant_reader_reads_documents_below → authenticated:03 → {"rows": [[2], [3]]} → R1
+      select id from documents order by id
+  grant_does_not_reach_parent_folder → authenticated:03 → {"count": 0} → R1
+      select id from documents where id = 1
+  deep_grant_sees_only_its_subtree → authenticated:05 → {"rows": [[3]]} → R1
+      select id from documents order by id
+  other_owner_sees_only_own_tree → authenticated:02 → {"rows": [[5]]} → R1
+      select id from documents order by id
+  editor_adds_document → authenticated:04 → {"affected": 1} → R2
+      [supabase-js] insert into documents (folder_id, title) values (4, 'Q3 campaign') returning *
+  edit_grant_inherits_to_subfolder → authenticated:04 → {"affected": 1} → R2
+      [supabase-js] insert into documents (folder_id, title) values (6, 'Diwali sale') returning *
+  reader_cannot_add_document → authenticated:03 → {"denied": true} → R2
+      [supabase-js] insert into documents (folder_id, title) values (2, 'x')
+  reader_cannot_edit_inherited_document → authenticated:03 → {"denied": true} → R2
+      [supabase-js] update documents set title = 'x' where id = 3
+  editor_cannot_move_document_into_read_only_folder → authenticated:04 → {"denied": true} → R2
+      [supabase-js] update documents set folder_id = 2 where id = 4
+  editor_deletes_document → authenticated:04 → {"affected": 1} → R2
+      [supabase-js] delete from documents where id = 4
+  owner_creates_subfolder → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] insert into folders (parent_id, owner_id, name) values (2, '00000000-0000-0000-0000-000000000001', 'Contracts') returning *
+  user_creates_top_level_folder → authenticated:03 → {"affected": 1} → R3
+      [supabase-js] insert into folders (parent_id, owner_id, name) values (null, '00000000-0000-0000-0000-000000000003', 'Hal private') returning *
+  editor_cannot_create_subfolder → authenticated:04 → {"denied": true} → R3
+      [supabase-js] insert into folders (parent_id, owner_id, name) values (4, '00000000-0000-0000-0000-000000000004', 'x')
+  owner_grants_access → authenticated:01 → {"affected": 1} → R3
+      [supabase-js] insert into folder_grants (folder_id, user_id, can_edit) values (4, '00000000-0000-0000-0000-000000000003', false) returning *
+  reader_cannot_grant_access → authenticated:03 → {"denied": true} → R3
+      [supabase-js] insert into folder_grants (folder_id, user_id, can_edit) values (2, '00000000-0000-0000-0000-000000000005', true)
+  user_sees_own_grants → authenticated:05 → {"rows": [[3, "00000000-0000-0000-0000-000000000005"]]} → R4
+      select folder_id, user_id from folder_grants order by folder_id
+  owner_sees_grants_on_own_tree → authenticated:01 → {"rows": [[4]]} → R4
+      select count(*) from folder_grants
+  anon_sees_no_documents → anon → {"denied": true} → R5
+      select * from documents
+  service_role_sees_all_documents → service_role → {"rows": [[5]]} → R6
+      select count(*) from documents
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.folder_access(p_folder_id bigint) returns text
+language sql stable security definer set search_path = ''
+as $$
+  with recursive chain as (
+    select f.id, f.parent_id, f.owner_id from public.folders f where f.id = p_folder_id
+    union all
+    select f.id, f.parent_id, f.owner_id from public.folders f join chain c on f.id = c.parent_id
+  )
+  select case
+    when exists (select 1 from chain where owner_id = auth.uid()) then 'owner'
+    when exists (select 1 from chain join public.folder_grants g on g.folder_id = chain.id where g.user_id = auth.uid() and g.can_edit) then 'edit'
+    when exists (select 1 from chain join public.folder_grants g on g.folder_id = chain.id where g.user_id = auth.uid()) then 'read'
+  end
+$$;
+
+alter table public.folders enable row level security;
+alter table public.folder_grants enable row level security;
+alter table public.documents enable row level security;
+
+create policy folders_select on public.folders
+  for select to authenticated
+  using (owner_id = auth.uid() or private.folder_access(id) is not null);
+
+create policy folders_insert on public.folders
+  for insert to authenticated
+  with check (owner_id = auth.uid() and (parent_id is null or private.folder_access(parent_id) = 'owner'));
+
+create policy folder_grants_select on public.folder_grants
+  for select to authenticated
+  using (user_id = auth.uid() or private.folder_access(folder_id) = 'owner');
+
+create policy folder_grants_insert on public.folder_grants
+  for insert to authenticated
+  with check (private.folder_access(folder_id) = 'owner');
+
+create policy folder_grants_delete on public.folder_grants
+  for delete to authenticated
+  using (private.folder_access(folder_id) = 'owner');
+
+create policy documents_select on public.documents
+  for select to authenticated
+  using (private.folder_access(folder_id) is not null);
+
+create policy documents_insert on public.documents
+  for insert to authenticated
+  with check (private.folder_access(folder_id) in ('owner', 'edit'));
+
+create policy documents_update on public.documents
+  for update to authenticated
+  using (private.folder_access(folder_id) in ('owner', 'edit'))
+  with check (private.folder_access(folder_id) in ('owner', 'edit'));
+
+create policy documents_delete on public.documents
+  for delete to authenticated
+  using (private.folder_access(folder_id) in ('owner', 'edit'));
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on owner_reads_whole_tree, read_grant_inherits_to_subfolder, grant_reader_reads_documents_below, grant_does_not_reach_parent_folder, deep_grant_sees_only_its_subtree, other_owner_sees_only_own_tree, reader_cannot_add_document, reader_cannot_edit_inherited_document, editor_cannot_move_document_into_read_only_folder, editor_cannot_create_subfolder, reader_cannot_grant_access, user_sees_own_grants, anon_sees_no_documents
+  allow-all: fails on owner_reads_whole_tree, read_grant_inherits_to_subfolder, grant_reader_reads_documents_below, grant_does_not_reach_parent_folder, deep_grant_sees_only_its_subtree, other_owner_sees_only_own_tree, reader_cannot_add_document, reader_cannot_edit_inherited_document, editor_cannot_move_document_into_read_only_folder, editor_cannot_create_subfolder, reader_cannot_grant_access, user_sees_own_grants, anon_sees_no_documents
+  deny-all: fails on owner_reads_whole_tree, read_grant_inherits_to_subfolder, grant_reader_reads_documents_below, deep_grant_sees_only_its_subtree, other_owner_sees_only_own_tree, editor_adds_document, edit_grant_inherits_to_subfolder, editor_deletes_document, owner_creates_subfolder, user_creates_top_level_folder, owner_grants_access, user_sees_own_grants, owner_sees_grants_on_own_tree
+  coverage: 6 rules covered
+  traps: inheritance-missing caught by read_grant_inherits_to_subfolder, grant_reader_reads_documents_below, edit_grant_inherits_to_subfolder; recursive-policy caught by owner_reads_whole_tree, read_grant_inherits_to_subfolder, owner_creates_subfolder, user_creates_top_level_folder; reference-check caught by editor_cannot_move_document_into_read_only_folder
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - tree: 1 Company → 2 HR → 3 Payroll; 1 → 4 Marketing → 6 Campaigns (all owned by ana …01); 5 is ben's (…02) own root
+  - grants: hal (…03) read on HR (inherits to Payroll), mia (…04) edit on Marketing (inherits to Campaigns) and read on HR, pat (…05) read on Payroll only
+
+====================================================================================================
+TASK T053 — Production access granted only after two different ops approvals — tier 3 — traps: self-approval, duplicate-approval, state-transition — verified: False
+tags: rpc, security-definer, four-eyes, state-transition, client-returning
+
+REQUIREMENT (verbatim)
+An internal tool built with supabase-js for requesting production access. Requests are created with `supabase.from('access_requests').insert({ resource, reason }).select()`. Ops team members approve with `supabase.rpc('approve_access', { p_request_id })`. Implement it as `public.approve_access(p_request_id bigint) returns text`, returning the request's status after the call. A request is granted once two different ops team members have approved it.
+
+R1. Requesters can see their own requests and the approvals on them. Ops team members can see every request and every approval. Signed-in users can see who is on the ops team.
+R2. Signed-in users can create requests as themselves; new requests are always `pending`. Requesters can withdraw (delete) their own pending requests.
+R3. Nobody can change requests, or create, change or delete approvals, except through `approve_access`.
+R4. `approve_access` records an approval by the caller and, once two different ops team members have approved, sets the request to `granted`. It must raise an error and change nothing when the caller is not on the ops team, the request does not exist or is not pending, the caller made the request, or the caller has already approved it.
+R5. Anonymous visitors cannot see or change anything.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  requester_sees_own_requests → authenticated:04 → {"rows": [[1], [4]]} → R1
+      select id from access_requests order by id
+  ops_sees_every_request → authenticated:03 → {"rows": [[4]]} → R1
+      select count(*) from access_requests
+  requester_sees_approvals_on_own_requests → authenticated:04 → {"rows": [[3]]} → R1
+      select count(*) from access_approvals
+  other_requester_sees_no_approvals → authenticated:05 → {"count": 0} → R1
+      select id from access_approvals
+  user_sees_ops_team → authenticated:05 → {"rows": [[3]]} → R1
+      select count(*) from ops_team
+  user_creates_request → authenticated:05 → {"affected": 1} → R2
+      [supabase-js] insert into access_requests (resource, reason) values ('prod-db', 'Data fix') returning *
+  cannot_create_granted_request → authenticated:05 → {"denied": true} → R2
+      [supabase-js] insert into access_requests (resource, reason, status) values ('prod-db', 'x', 'granted')
+  cannot_create_request_for_someone_else → authenticated:05 → {"denied": true} → R2
+      [supabase-js] insert into access_requests (requester_id, resource, reason) values ('00000000-0000-0000-0000-000000000004', 'x', 'x')
+  requester_withdraws_pending_request → authenticated:04 → {"affected": 1} → R2
+      [supabase-js] delete from access_requests where id = 1
+  requester_cannot_withdraw_granted_request → authenticated:04 → {"denied": true} → R2
+      [supabase-js] delete from access_requests where id = 4
+  requester_cannot_grant_own_request → authenticated:04 → {"denied": true} → R3
+      [supabase-js] update access_requests set status = 'granted' where id = 1
+  ops_cannot_insert_approval_directly → authenticated:02 → {"denied": true} → R3
+      [supabase-js] insert into access_approvals (request_id, approver_id) values (2, '00000000-0000-0000-0000-000000000002')
+  ops_cannot_delete_approval → authenticated:01 → {"denied": true} → R3
+      [supabase-js] delete from access_approvals where id = 1
+  second_approval_grants_request → authenticated:02 → {"rows": [["granted"]]} → R4
+      select public.approve_access(1)
+  first_approval_keeps_request_pending → authenticated:03 → {"rows": [["pending"]]} → R4
+      select public.approve_access(2)
+  granted_status_is_stored → authenticated:02 → {"rows": [["granted"]]} → R4
+      select public.approve_access(1); select status from access_requests where id = 1
+  ops_member_cannot_approve_twice → authenticated:01 → {"denied": true} → R4
+      select public.approve_access(1)
+  ops_member_cannot_approve_own_request → authenticated:01 → {"denied": true} → R4
+      select public.approve_access(3)
+  non_ops_user_cannot_approve → authenticated:05 → {"denied": true} → R4
+      select public.approve_access(1)
+  cannot_approve_granted_request → authenticated:03 → {"denied": true} → R4
+      select public.approve_access(4)
+  cannot_approve_unknown_request → authenticated:03 → {"denied": true} → R4
+      select public.approve_access(99)
+  anon_cannot_approve → anon → {"denied": true} → R4, R5
+      select public.approve_access(2)
+  anon_sees_no_requests → anon → {"denied": true} → R5
+      select * from access_requests
+  service_role_sees_all_approvals → service_role → {"rows": [[4]]} → R6
+      select count(*) from access_approvals
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_ops() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.ops_team o where o.user_id = auth.uid())
+$$;
+
+alter table public.ops_team enable row level security;
+alter table public.access_requests enable row level security;
+alter table public.access_approvals enable row level security;
+
+create policy ops_team_select on public.ops_team
+  for select to authenticated
+  using (true);
+
+create policy requests_select on public.access_requests
+  for select to authenticated
+  using (requester_id = auth.uid() or private.is_ops());
+
+create policy requests_insert on public.access_requests
+  for insert to authenticated
+  with check (requester_id = auth.uid() and status = 'pending');
+
+create policy requests_delete on public.access_requests
+  for delete to authenticated
+  using (requester_id = auth.uid() and status = 'pending');
+
+create policy approvals_select on public.access_approvals
+  for select to authenticated
+  using (
+    private.is_ops()
+    or exists (select 1 from public.access_requests r where r.id = request_id and r.requester_id = auth.uid())
+  );
+
+create function public.approve_access(p_request_id bigint) returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_request public.access_requests%rowtype;
+  v_approvers integer;
+begin
+  if v_uid is null or not exists (select 1 from public.ops_team o where o.user_id = v_uid) then
+    raise exception 'only ops team members can approve';
+  end if;
+  select * into v_request from public.access_requests where id = p_request_id for update;
+  if not found then
+    raise exception 'unknown request';
+  end if;
+  if v_request.status <> 'pending' then
+    raise exception 'request is not pending';
+  end if;
+  if v_request.requester_id = v_uid then
+    raise exception 'cannot approve your own request';
+  end if;
+  if exists (select 1 from public.access_approvals a where a.request_id = p_request_id and a.approver_id = v_uid) then
+    raise exception 'already approved';
+  end if;
+  insert into public.access_approvals (request_id, approver_id) values (p_request_id, v_uid);
+  select count(distinct a.approver_id) into v_approvers from public.access_approvals a where a.request_id = p_request_id;
+  if v_approvers >= 2 then
+    update public.access_requests set status = 'granted' where id = p_request_id;
+    return 'granted';
+  end if;
+  return 'pending';
+end
+$$;
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on requester_sees_own_requests, requester_sees_approvals_on_own_requests, other_requester_sees_no_approvals, cannot_create_granted_request, cannot_create_request_for_someone_else, requester_cannot_withdraw_granted_request, requester_cannot_grant_own_request, ops_cannot_insert_approval_directly, ops_cannot_delete_approval, second_approval_grants_request, first_approval_keeps_request_pending, granted_status_is_stored, ops_member_cannot_approve_twice, ops_member_cannot_approve_own_request, non_ops_user_cannot_approve, cannot_approve_granted_request, cannot_approve_unknown_request, anon_cannot_approve, anon_sees_no_requests
+  allow-all: fails on requester_sees_own_requests, requester_sees_approvals_on_own_requests, other_requester_sees_no_approvals, cannot_create_granted_request, cannot_create_request_for_someone_else, requester_cannot_withdraw_granted_request, requester_cannot_grant_own_request, ops_cannot_insert_approval_directly, ops_cannot_delete_approval, second_approval_grants_request, first_approval_keeps_request_pending, granted_status_is_stored, ops_member_cannot_approve_twice, ops_member_cannot_approve_own_request, non_ops_user_cannot_approve, cannot_approve_granted_request, cannot_approve_unknown_request, anon_cannot_approve, anon_sees_no_requests
+  deny-all: fails on requester_sees_own_requests, ops_sees_every_request, requester_sees_approvals_on_own_requests, user_sees_ops_team, user_creates_request, requester_withdraws_pending_request, second_approval_grants_request, first_approval_keeps_request_pending, granted_status_is_stored, ops_member_cannot_approve_twice, ops_member_cannot_approve_own_request, non_ops_user_cannot_approve, cannot_approve_granted_request, cannot_approve_unknown_request, anon_cannot_approve
+  coverage: 6 rules covered
+  traps: self-approval caught by ops_member_cannot_approve_own_request; duplicate-approval caught by ops_member_cannot_approve_twice; state-transition caught by cannot_approve_granted_request
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - ops team: oli (…01), opa (…02), ozz (…03); requesters rhea (…04), sam (…05)
+  - request 1 (rhea) has one approval (oli); request 3 is oli's own with one approval (opa); request 4 already granted
+  - access_approvals has no unique constraint, so the function must refuse repeat approvals itself
+

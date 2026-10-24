@@ -1,0 +1,240 @@
+- name: member_sees_all_org_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select user_id, role from org_members order by user_id
+  expect: {rows: [["00000000-0000-0000-0000-000000000001", admin], ["00000000-0000-0000-0000-000000000002", member], ["00000000-0000-0000-0000-000000000004", member]]}
+
+- name: member_sees_nothing_of_other_org_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select user_id from org_members where org_id = 2
+  expect: {count: 0}
+
+- name: two_org_member_sees_both_orgs_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000004"}
+  sql: select count(*) from org_members
+  expect: {rows: [[5]]}
+
+- name: user_without_org_sees_no_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select user_id from org_members
+  expect: {count: 0}
+
+- name: member_sees_org_projects
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from projects order by id
+  expect: {rows: [[10], [11]]}
+
+- name: other_org_admin_sees_only_own_projects
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from projects order by id
+  expect: {rows: [[20]]}
+
+- name: member_sees_own_org
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from orgs order by id
+  expect: {rows: [[1]]}
+
+- name: admin_creates_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into projects (id, org_id, name) values (12, 1, 'API')
+  expect: {affected: 1}
+
+- name: member_cannot_create_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into projects (id, org_id, name) values (13, 1, 'Side project')
+  expect: {denied: true}
+
+- name: admin_cannot_create_project_in_other_org
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into projects (id, org_id, name) values (21, 2, 'Takeover')
+  expect: {denied: true}
+
+- name: admin_claim_in_user_metadata_grants_nothing
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002", claims: {user_metadata: {role: admin}}}
+  sql: insert into projects (id, org_id, name) values (14, 1, 'Claimed')
+  expect: {denied: true}
+
+- name: admin_renames_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update projects set name = 'Marketing site' where id = 10
+  expect: {affected: 1}
+
+- name: member_cannot_rename_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update projects set name = 'x' where id = 10
+  expect: {affected: 0}
+
+- name: admin_cannot_move_project_to_other_org
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update projects set org_id = 2 where id = 10
+  expect: {denied: true}
+
+- name: admin_deletes_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: delete from projects where id = 20
+  expect: {affected: 1}
+
+- name: admin_cannot_delete_other_org_project
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from projects where id = 20
+  expect: {affected: 0}
+
+- name: member_reads_org_project_files
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select name from storage.objects where bucket_id = 'project-files' order by name
+  expect: {rows: [["10/spec.pdf"], ["11/plan.md"]]}
+
+- name: other_org_admin_reads_only_own_files
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select name from storage.objects where bucket_id = 'project-files' order by name
+  expect: {rows: [["20/budget.xlsx"]]}
+
+- name: user_without_org_reads_no_project_files
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select name from storage.objects where bucket_id = 'project-files'
+  expect: {count: 0}
+
+- name: admin_uploads_project_file
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('project-files', '10/notes.txt', '00000000-0000-0000-0000-000000000001')
+  expect: {affected: 1}
+
+- name: member_cannot_upload_project_file
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('project-files', '10/x.txt', '00000000-0000-0000-0000-000000000002')
+  expect: {denied: true}
+
+- name: admin_cannot_upload_into_other_org_project
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('project-files', '20/x.txt', '00000000-0000-0000-0000-000000000001')
+  expect: {denied: true}
+
+- name: admin_deletes_project_file
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from storage.objects where bucket_id = 'project-files' and name = '11/plan.md'
+  expect: {affected: 1}
+
+- name: member_cannot_delete_project_file
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from storage.objects where bucket_id = 'project-files' and name = '11/plan.md'
+  expect: {affected: 0}
+
+- name: anon_views_avatars
+  covers: [R5]
+  as: {role: anon}
+  sql: select name from storage.objects where bucket_id = 'avatars' order by name
+  expect: {rows: [["00000000-0000-0000-0000-000000000001/me.png"], ["00000000-0000-0000-0000-000000000003/me.png"]]}
+
+- name: user_uploads_own_avatar
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000005/me.png', '00000000-0000-0000-0000-000000000005')
+  expect: {affected: 1}
+
+- name: user_cannot_upload_into_other_users_avatar_folder
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('avatars', '00000000-0000-0000-0000-000000000001/fake.png', '00000000-0000-0000-0000-000000000005')
+  expect: {denied: true}
+
+- name: anon_cannot_upload_avatar
+  covers: [R5, R7]
+  as: {role: anon}
+  sql: insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-000000000001/anon.png')
+  expect: {denied: true}
+
+- name: member_cannot_promote_self
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update org_members set role = 'admin' where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {denied: true}
+
+- name: user_cannot_join_other_org
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into org_members (org_id, user_id, role) values (2, '00000000-0000-0000-0000-000000000002', 'admin')
+  expect: {denied: true}
+
+- name: anon_sees_no_projects
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from projects
+  expect: {denied: true}
+
+- name: anon_sees_no_memberships
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from org_members
+  expect: {denied: true}
+
+- name: anon_sees_no_project_files
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from storage.objects where bucket_id = 'project-files'
+  expect: {denied: true}
+
+- name: service_role_sees_all_files
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from storage.objects
+  expect: {rows: [[6]]}
+
+- name: service_role_sees_all_projects
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from projects
+  expect: {rows: [[3]]}
+
+- name: client_admin_creates_project_and_reads_it_back
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: projects
+    values: {id: 12, org_id: 1, name: API}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_admin_upserts_existing_project
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: projects
+    values: {id: 10, org_id: 1, name: Site}
+    on_conflict: [id]
+    returning: true
+  expect: {affected: 1}
+
+- name: client_member_cannot_upsert_project
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: projects
+    values: {id: 10, org_id: 1, name: Mine}
+    on_conflict: [id]
+  expect: {denied: true}

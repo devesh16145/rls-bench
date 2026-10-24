@@ -1,0 +1,153 @@
+- name: anon_reads_approved_entries
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from guestbook_entries order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: author_also_reads_own_unapproved_entry
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from guestbook_entries order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: anon_signs_guestbook
+  covers: [R2]
+  as: {role: anon}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Visitor, message: Lovely site!}
+    returning: false
+  expect: {affected: 1}
+
+- name: signed_in_visitor_signs_guestbook
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Ana, message: Lovely site!}
+    returning: false
+  expect: {affected: 1}
+
+- name: anon_cannot_post_approved_entry
+  covers: [R2, R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Visitor, message: Lovely site!, is_approved: true}
+    returning: false
+  expect: {denied: true}
+
+- name: visitor_cannot_sign_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Visitor, message: Lovely site!, author_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_claim_an_author
+  covers: [R2]
+  as: {role: anon}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Visitor, message: Lovely site!, author_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: signed_in_visitor_cannot_post_anonymously
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: guestbook_entries
+    values: {display_name: Visitor, message: Lovely site!, author_id: null}
+    returning: false
+  expect: {denied: true}
+
+- name: author_deletes_own_entry
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: guestbook_entries
+    match: {id: 4}
+  expect: {affected: 1}
+
+- name: visitor_cannot_delete_someone_elses_entry
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: guestbook_entries
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: anon_cannot_delete_anonymous_entry
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: delete
+    table: guestbook_entries
+    match: {id: 3}
+  expect: {denied: true}
+
+- name: anon_cannot_delete_approved_anonymous_entry
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: delete
+    table: guestbook_entries
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: signed_in_visitor_cannot_delete_anonymous_entry
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: guestbook_entries
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: author_cannot_edit_own_entry
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: guestbook_entries
+    values: {message: edited}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: author_cannot_approve_own_entry
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: guestbook_entries
+    values: {is_approved: true}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_entries
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from guestbook_entries
+  expect:
+    rows:
+    - [4]

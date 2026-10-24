@@ -1,0 +1,233 @@
+- name: friend_reads_friends_posts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+    - [6]
+
+- name: author_reads_all_own_posts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+    - [6]
+
+- name: pending_request_grants_no_friends_posts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [1]
+    - [5]
+    - [6]
+
+- name: anon_reads_public_posts
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from posts order by id
+  expect:
+    rows:
+    - [1]
+    - [6]
+
+- name: friend_cannot_read_only_me_post
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from posts where id = 3
+  expect: {count: 0}
+
+- name: user_writes_post
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: posts
+    values: {author_id: 00000000-0000-0000-0000-000000000001, body: Hi friends, audience: friends}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_post_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: posts
+    values: {author_id: 00000000-0000-0000-0000-000000000002, body: spoof, audience: public}
+    returning: false
+  expect: {denied: true}
+
+- name: user_edits_own_post
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {body: Hello again}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_friends_post
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {body: x}
+    match: {id: 4}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_give_post_to_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: posts
+    values: {author_id: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_post
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: posts
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: user_sends_friend_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: friendships
+    values: {requester_id: 00000000-0000-0000-0000-000000000002, addressee_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_send_request_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: friendships
+    values: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_create_accepted_friendship
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: friendships
+    values: {requester_id: 00000000-0000-0000-0000-000000000002, addressee_id: 00000000-0000-0000-0000-000000000003, status: accepted}
+    returning: false
+  expect: {denied: true}
+
+- name: addressee_accepts_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: friendships
+    values: {status: accepted}
+    match: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: requester_cannot_accept_own_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: friendships
+    values: {status: accepted}
+    match: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: addressee_cannot_rewire_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: friendships
+    values: {requester_id: 00000000-0000-0000-0000-000000000004, status: accepted}
+    match: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: outsider_cannot_accept_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: friendships
+    values: {status: accepted}
+    match: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_unfriends
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: friendships
+    match: {requester_id: 00000000-0000-0000-0000-000000000001, addressee_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: requester_cancels_request
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: friendships
+    match: {requester_id: 00000000-0000-0000-0000-000000000003, addressee_id: 00000000-0000-0000-0000-000000000001}
+  expect: {affected: 1}
+
+- name: outsider_cannot_delete_friendship
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: friendships
+    match: {requester_id: 00000000-0000-0000-0000-000000000004, addressee_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: user_sees_own_friendships
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select requester_id, addressee_id from friendships order by requester_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000002]
+    - [00000000-0000-0000-0000-000000000003, 00000000-0000-0000-0000-000000000001]
+
+- name: anon_sees_no_friendships
+  covers: [R1, R5]
+  as: {role: anon}
+  sql: select * from friendships
+  expect: {denied: true}
+
+- name: service_role_sees_all_posts
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from posts
+  expect:
+    rows:
+    - [6]

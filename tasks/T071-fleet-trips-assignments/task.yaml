@@ -1,0 +1,20 @@
+id: T071
+title: Fleet trips allowed only within the driver's assignment dates
+tier: 2
+tags:
+- date-ranges
+- reference-check
+- manager-role
+- client-returning
+traps:
+- reference-check
+- date-boundary
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- dia (…02) drives vehicle 1 from 2020-01-01 to 2020-01-31 (inclusive); eli (…03) drives vehicle 1 in February 2020 and vehicle 2 all of 2020
+- fleet manager mo (…01)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

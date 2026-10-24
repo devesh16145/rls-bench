@@ -1,0 +1,122 @@
+- name: care_team_clinician_reads_records
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from medical_records order by id
+  expect:
+    rows:
+    - [1]
+
+- name: expired_grant_gives_no_access
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from medical_records
+  expect: {count: 0}
+
+- name: clinician_cannot_read_other_patients
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from medical_records where patient_id = 2
+  expect: {count: 0}
+
+- name: break_glass_grants_access
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.break_glass(2, 'Unconscious patient in ER'); select id from medical_records order by id
+  expect:
+    rows:
+    - [2]
+
+- name: break_glass_expires_in_the_future
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.break_glass(2, 'Unconscious patient in ER') > now()
+  expect:
+    rows:
+    - [true]
+
+- name: short_reason_is_refused
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.break_glass(2, 'help')
+  expect: {denied: true}
+
+- name: padded_short_reason_is_refused
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.break_glass(2, '     help     ')
+  expect: {denied: true}
+
+- name: non_clinician_cannot_break_glass
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.break_glass(2, 'Auditing a complaint')
+  expect: {denied: true}
+
+- name: unknown_patient_is_refused
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select public.break_glass(99, 'Unconscious patient in ER')
+  expect: {denied: true}
+
+- name: anon_cannot_break_glass
+  covers: [R3, R5]
+  as: {role: anon}
+  sql: select public.break_glass(2, 'Unconscious patient in ER')
+  expect: {denied: true}
+
+- name: clinician_cannot_create_grant_directly
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: break_glass_grants
+    values: {patient_id: 2, clinician_id: 00000000-0000-0000-0000-000000000002, reason: Testing access, expires_at: '2099-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: clinician_cannot_extend_grant
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: break_glass_grants
+    values: {expires_at: '2099-01-01'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: clinician_sees_own_grants
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from break_glass_grants order by id
+  expect:
+    rows:
+    - [1]
+
+- name: other_clinician_sees_no_grants
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from break_glass_grants
+  expect: {count: 0}
+
+- name: auditor_sees_every_grant
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from break_glass_grants
+  expect:
+    rows:
+    - [1]
+
+- name: anon_sees_no_records
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from medical_records
+  expect: {denied: true}
+
+- name: service_role_sees_all_grants
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from break_glass_grants
+  expect:
+    rows:
+    - [1]

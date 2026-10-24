@@ -1,0 +1,237 @@
+- name: owner_reads_own_files
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from files order by id
+  expect: {rows: [[1], [2]]}
+
+- name: owner_creates_file
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into files (id, owner_id, name) values (4, '00000000-0000-0000-0000-000000000001', 'plan.md')
+  expect: {affected: 1}
+
+- name: user_cannot_create_file_for_someone_else
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into files (id, owner_id, name) values (5, '00000000-0000-0000-0000-000000000002', 'gift.md')
+  expect: {denied: true}
+
+- name: owner_renames_own_file
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update files set name = 'budget-2026.xlsx' where id = 2
+  expect: {affected: 1}
+
+- name: owner_cannot_transfer_ownership
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update files set owner_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  expect: {denied: true}
+
+- name: owner_deletes_own_file
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from files where id = 2
+  expect: {affected: 1}
+
+- name: editor_reads_shared_file
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from files order by id
+  expect: {rows: [[1]]}
+
+- name: editor_renames_shared_file
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update files set name = 'roadmap-v2.pdf' where id = 1
+  expect: {affected: 1}
+
+- name: editor_cannot_take_ownership
+  covers: [R1, R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update files set owner_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  expect: {denied: true}
+
+- name: editor_cannot_delete_shared_file
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: delete from files where id = 1
+  expect: {denied: true}
+
+- name: reader_with_future_expiry_reads_file
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000004"}
+  sql: select id from files order by id
+  expect: {rows: [[2]]}
+
+- name: reader_cannot_rename_read_only_share
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000004"}
+  sql: update files set name = 'x' where id = 2
+  expect: {denied: true}
+
+- name: expired_share_grants_no_read
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: select id from files
+  expect: {count: 0}
+
+- name: expired_share_grants_no_rename
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update files set name = 'x' where id = 1
+  expect: {denied: true}
+
+- name: owner_sees_all_shares_of_own_files
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select file_id, shared_with from file_shares order by file_id, shared_with
+  expect: {rows: [[1, "00000000-0000-0000-0000-000000000002"], [1, "00000000-0000-0000-0000-000000000003"], [1, "00000000-0000-0000-0000-000000000005"], [2, "00000000-0000-0000-0000-000000000004"]]}
+
+- name: recipient_sees_only_own_share
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select file_id, can_edit from file_shares order by file_id
+  expect: {rows: [[1, true]]}
+
+- name: owner_creates_share
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: insert into file_shares (file_id, shared_with, can_edit) values (2, '00000000-0000-0000-0000-000000000002', false)
+  expect: {affected: 1}
+
+- name: editor_cannot_reshare_file
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into file_shares (file_id, shared_with, can_edit) values (1, '00000000-0000-0000-0000-000000000004', true)
+  expect: {denied: true}
+
+- name: recipient_cannot_extend_own_expired_share
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000003"}
+  sql: update file_shares set expires_at = null where file_id = 1 and shared_with = '00000000-0000-0000-0000-000000000003'
+  expect: {denied: true}
+
+- name: owner_revokes_share
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from file_shares where file_id = 1 and shared_with = '00000000-0000-0000-0000-000000000003'
+  expect: {affected: 1}
+
+- name: suspended_user_sees_no_files
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select id from files
+  expect: {count: 0}
+
+- name: suspended_user_sees_no_shares
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select count(*) from file_shares
+  expect: {rows: [[0]]}
+
+- name: suspended_user_cannot_create_file
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: insert into files (id, owner_id, name) values (6, '00000000-0000-0000-0000-000000000005', 'new.txt')
+  expect: {denied: true}
+
+- name: suspended_user_cannot_delete_own_file
+  covers: [R5]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: delete from files where id = 3
+  expect: {denied: true}
+
+- name: suspended_user_reads_own_account
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: select suspended from accounts
+  expect: {rows: [[true]]}
+
+- name: suspended_user_cannot_unsuspend
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000005"}
+  sql: update accounts set suspended = false where user_id = '00000000-0000-0000-0000-000000000005'
+  expect: {denied: true}
+
+- name: user_sees_only_own_account
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select user_id from accounts order by user_id
+  expect: {rows: [["00000000-0000-0000-0000-000000000002"]]}
+
+- name: anon_sees_no_files
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from files
+  expect: {denied: true}
+
+- name: anon_sees_no_shares
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from file_shares
+  expect: {denied: true}
+
+- name: service_role_sees_all_files
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from files
+  expect: {rows: [[3]]}
+
+- name: service_role_sees_all_shares
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from file_shares
+  expect: {rows: [[4]]}
+
+- name: client_owner_creates_file_and_reads_it_back
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: files
+    values: {id: 4, owner_id: 00000000-0000-0000-0000-000000000001, name: plan.md}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_owner_shares_file_and_reads_share_back
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: file_shares
+    values: {file_id: 2, shared_with: 00000000-0000-0000-0000-000000000002, can_edit: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_owner_upserts_existing_share
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: file_shares
+    values: {file_id: 1, shared_with: 00000000-0000-0000-0000-000000000002, can_edit: false}
+    on_conflict: [file_id, shared_with]
+    returning: true
+  expect: {affected: 1}
+
+- name: client_editor_renames_and_reads_file_back
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: files
+    values: {name: roadmap-v2.pdf}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_recipient_cannot_upsert_own_share
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: upsert
+    table: file_shares
+    values: {file_id: 2, shared_with: 00000000-0000-0000-0000-000000000004, can_edit: true}
+    on_conflict: [file_id, shared_with]
+  expect: {denied: true}

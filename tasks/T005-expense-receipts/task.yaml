@@ -1,0 +1,14 @@
+id: T005
+title: Expense receipts with bank-imported rows
+tier: 1
+tags: [single-owner, nullable-owner, anon-vs-authenticated]
+traps: [null-owner]
+extra_tables: []
+fixture_notes:
+  - "imported receipts with NULL uploaded_by: receipts.id=4 and 5"
+  - "user with no receipts: cy (…03)"
+  - "numeric amounts with trailing zeros (12.50) to exercise value normalisation"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

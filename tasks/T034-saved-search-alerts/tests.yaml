@@ -1,0 +1,169 @@
+- name: user_reads_own_searches
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  sql: select id from saved_searches order by id
+  expect:
+    rows:
+    - [1]
+
+- name: other_user_reads_only_own_searches
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {email: ben@example.com}
+  sql: select id from saved_searches order by id
+  expect:
+    rows:
+    - [2]
+
+- name: user_saves_search_with_own_email
+  covers: [R1, R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000001, query: Villa in Goa, notify_email: ana@example.com, frequency: weekly}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_saves_search_without_alerts
+  covers: [R1, R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000001, query: Plot in Nashik, notify_email: null, frequency: 'off'}
+    returning: true
+  expect: {affected: 1}
+
+- name: own_email_in_other_case_is_accepted
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000001, query: Flat in Kochi, notify_email: ANA@Example.com, frequency: weekly}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_send_alerts_to_someone_else
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000001, query: x, notify_email: ben@example.com, frequency: weekly}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_redirect_existing_alerts
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: update
+    table: saved_searches
+    values: {notify_email: victim@example.org}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_metadata_email_does_not_count
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      email: ana@example.com
+      user_metadata: {email: victim@example.org}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000001, query: x, notify_email: victim@example.org, frequency: weekly}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_save_search_for_someone_else
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: insert
+    table: saved_searches
+    values: {user_id: 00000000-0000-0000-0000-000000000002, query: x, notify_email: null, frequency: weekly}
+    returning: false
+  expect: {denied: true}
+
+- name: user_edits_own_search
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: update
+    table: saved_searches
+    values: {query: 3BHK in Pune}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_search
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: update
+    table: saved_searches
+    values: {query: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_search
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: delete
+    table: saved_searches
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: anon_sees_no_searches
+  covers: [R3]
+  as: {role: anon}
+  sql: select * from saved_searches
+  expect: {denied: true}
+
+- name: service_role_sees_all_searches
+  covers: [R4]
+  as: {role: service_role}
+  sql: select count(*) from saved_searches
+  expect:
+    rows:
+    - [2]

@@ -1,0 +1,20 @@
+id: T088
+title: Co-working desk bookings limited by tier, membership and a booking cap
+tier: 2
+tags:
+- aggregate-limit
+- time-window
+- reference-check
+- membership-tier
+traps:
+- reference-check
+- aggregate-limit
+- time-window
+extra_tables: []
+fixture_notes:
+- pia (…01) premium, already holds 3 upcoming bookings (the cap); sam (…02) standard; exp (…03) standard membership ended 2020; pre (…04) premium with no bookings
+- desk 1 standard, desk 2 premium; sam has one past booking (2020) and one upcoming
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

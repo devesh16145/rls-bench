@@ -1,0 +1,21 @@
+id: T052
+title: Folder tree where grants inherit to every subfolder
+tier: 3
+tags:
+- hierarchy
+- recursive-cte
+- security-definer-helper
+- inheritance
+- client-returning
+traps:
+- inheritance-missing
+- recursive-policy
+- reference-check
+extra_tables: []
+fixture_notes:
+- 'tree: 1 Company → 2 HR → 3 Payroll; 1 → 4 Marketing → 6 Campaigns (all owned by ana …01); 5 is ben''s (…02) own root'
+- 'grants: hal (…03) read on HR (inherits to Payroll), mia (…04) edit on Marketing (inherits to Campaigns) and read on HR, pat (…05) read on Payroll only'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

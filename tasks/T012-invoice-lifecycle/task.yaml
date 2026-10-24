@@ -1,0 +1,14 @@
+id: T012
+title: Invoice lifecycle with fields that lock once sent
+tier: 3
+tags: [state-machine, old-vs-new, trigger, finance-role, client-full-row-update]
+traps: [old-vs-new, state-transition, column-grant-blocks-client, ownership-change]
+extra_tables: []
+fixture_notes:
+  - "draft, sent, paid and a second sent invoice: ids 1 (ana draft), 2 (ana sent), 3 (ben paid), 4 (ben sent)"
+  - "finance staff member: fin (…03), in finance_staff"
+  - "user with no invoices: dee (…04)"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

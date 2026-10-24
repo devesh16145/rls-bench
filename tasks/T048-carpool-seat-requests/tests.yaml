@@ -1,0 +1,183 @@
+- name: user_sees_all_rides
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from rides
+  expect:
+    rows:
+    - [3]
+
+- name: user_offers_ride
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: rides
+    values: {id: 4, driver_id: 00000000-0000-0000-0000-000000000004, from_city: Goa, to_city: Pune, departs_at: '2099-05-01 06:00+00', seats: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_ride
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: rides
+    values: {seats: 9}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: passenger_sees_own_bookings
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select ride_id from ride_bookings order by ride_id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: driver_sees_bookings_on_own_rides
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select ride_id, passenger_id from ride_bookings order by ride_id, passenger_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002]
+    - [1, 00000000-0000-0000-0000-000000000003]
+
+- name: passenger_requests_seat
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: ride_bookings
+    values: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000004}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_request_seat_on_departed_ride
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: ride_bookings
+    values: {ride_id: 2, passenger_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_book_own_ride
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: ride_bookings
+    values: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_request_seat_for_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: ride_bookings
+    values: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000005}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_create_confirmed_booking
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: ride_bookings
+    values: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000004, status: confirmed}
+    returning: false
+  expect: {denied: true}
+
+- name: passenger_withdraws_request
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: ride_bookings
+    match: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: passenger_cannot_withdraw_someone_elses_booking
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: ride_bookings
+    match: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000003}
+  expect: {denied: true}
+
+- name: driver_confirms_request_with_seat_left
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: ride_bookings
+    values: {status: confirmed}
+    match: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: driver_cannot_confirm_when_full
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: ride_bookings
+    values: {status: confirmed}
+    match: {ride_id: 3, passenger_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_declines_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: update
+    table: ride_bookings
+    values: {status: declined}
+    match: {ride_id: 3, passenger_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: passenger_cannot_confirm_own_request
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: ride_bookings
+    values: {status: confirmed}
+    match: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: driver_cannot_swap_passenger
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: ride_bookings
+    values: {passenger_id: 00000000-0000-0000-0000-000000000004}
+    match: {ride_id: 1, passenger_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_bookings
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from ride_bookings
+  expect: {denied: true}
+
+- name: service_role_sees_all_bookings
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from ride_bookings
+  expect:
+    rows:
+    - [4]

@@ -1,0 +1,135 @@
+- name: translator_sees_own_language_segments
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from segments order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: other_language_translator_sees_only_own
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from segments order by id
+  expect:
+    rows:
+    - [3]
+
+- name: translator_sees_project
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from projects order by id
+  expect:
+    rows:
+    - [1]
+
+- name: translator_translates_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {target_text: "\u0905\u092D\u0940 \u092D\u0941\u0917\u0924\u093E\u0928 \u0915\u0930\u0947\u0902", translated_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: translator_cannot_credit_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {target_text: x, translated_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: translator_cannot_edit_other_language
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {target_text: x, translated_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_approves_draft
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: segments
+    values: {status: reviewed}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: translator_cannot_approve
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {status: reviewed, translated_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: translator_cannot_edit_reviewed_segment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {target_text: x, translated_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: reviewer_cannot_reopen_reviewed_segment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: segments
+    values: {status: draft}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: translator_cannot_change_source_text
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: segments
+    values: {source_text: Pay later}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: translator_cannot_delete_segment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: segments
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_segments
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from segments
+  expect: {denied: true}
+
+- name: service_role_sees_all_segments
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from segments
+  expect:
+    rows:
+    - [3]

@@ -1,0 +1,19 @@
+id: T046
+title: Avatar bucket where users write only their own file name
+tier: 1
+tags:
+- storage-paths
+- public-bucket
+- single-owner
+traps:
+- storage-path
+- bucket-scope
+extra_tables:
+- storage.objects
+fixture_notes:
+- ana's (…01) '<id>.png' and ben's (…02) '<id>.jpg' in avatars
+- private bucket 'docs' with 'secret.pdf'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

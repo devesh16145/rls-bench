@@ -1,0 +1,20 @@
+id: T016
+title: Shopping cart that only accepts active products
+tier: 1
+tags:
+- single-owner
+- public-read
+- upsert
+- reference-check
+traps:
+- reference-check
+- upsert-needs-update
+- soft-delete-leak
+extra_tables: []
+fixture_notes:
+- 'inactive product: products.id=3'
+- ana (…01) already has product 1 in her cart; ben (…02) has product 2
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

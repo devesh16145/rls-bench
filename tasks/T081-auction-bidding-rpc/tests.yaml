@@ -1,0 +1,124 @@
+- name: user_sees_all_auctions
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from auctions
+  expect:
+    rows:
+    - [3]
+
+- name: bidder_sees_own_bids
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from bids order by id
+  expect:
+    rows:
+    - [1]
+
+- name: other_bidder_sees_no_bids
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from bids
+  expect: {count: 0}
+
+- name: seller_sees_bids_on_own_auctions
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from bids order by id
+  expect:
+    rows:
+    - [1]
+
+- name: user_cannot_set_highest_bid_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: auctions
+    values: {highest_bid: 1, highest_bidder: 00000000-0000-0000-0000-000000000003}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_insert_bid_directly
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: bids
+    values: {auction_id: 1, bidder_id: 00000000-0000-0000-0000-000000000003, amount: 999}
+    returning: false
+  expect: {denied: true}
+
+- name: bidder_outbids_with_increment
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(1, 160)
+  expect:
+    rows:
+    - [160]
+
+- name: winning_bid_is_stored
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(1, 160); select highest_bid, highest_bidder from auctions where id = 1
+  expect:
+    rows:
+    - [160, 00000000-0000-0000-0000-000000000003]
+
+- name: first_bid_at_starting_price
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(3, 200)
+  expect:
+    rows:
+    - [200]
+
+- name: bid_below_increment_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(1, 155)
+  expect: {denied: true}
+
+- name: first_bid_below_starting_price_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(3, 199)
+  expect: {denied: true}
+
+- name: bid_on_ended_auction_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(2, 500)
+  expect: {denied: true}
+
+- name: seller_cannot_bid_on_own_auction
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.place_bid(1, 500)
+  expect: {denied: true}
+
+- name: bid_on_unknown_auction_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select public.place_bid(99, 500)
+  expect: {denied: true}
+
+- name: anon_cannot_bid
+  covers: [R4, R5]
+  as: {role: anon}
+  sql: select public.place_bid(1, 500)
+  expect: {denied: true}
+
+- name: anon_sees_no_auctions
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from auctions
+  expect: {denied: true}
+
+- name: service_role_sees_all_bids
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from bids
+  expect:
+    rows:
+    - [1]

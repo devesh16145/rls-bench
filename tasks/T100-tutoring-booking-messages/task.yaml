@@ -1,0 +1,19 @@
+id: T100
+title: Tutoring messages allowed only on confirmed bookings
+tier: 2
+tags:
+- parent-child
+- negative-condition
+- participants
+- client-returning
+traps:
+- negative-condition
+- reference-check
+- child-leak
+extra_tables: []
+fixture_notes:
+- booking 1 (stu1 …01 with tutor tut1 …03) confirmed; booking 2 (stu2 …02 with tut1) cancelled; booking 3 (stu1 with tut1) still requested
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

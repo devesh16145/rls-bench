@@ -1,0 +1,21 @@
+id: T051
+title: Warehouse stock with location staff, auditors and stock-count freezes
+tier: 2
+tags:
+- location-scoping
+- jwt-claims
+- negative-condition
+- upsert
+traps:
+- claim-trust
+- negative-condition
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- location 2 is frozen (stock count in progress)
+- 'staff: sam (…01) at location 1, sue (…02) at location 2'
+- auditor aud (…03) via app_metadata; eve (…04) claims auditor in user_metadata
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

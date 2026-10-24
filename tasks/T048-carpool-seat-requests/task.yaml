@@ -1,0 +1,22 @@
+id: T048
+title: Car-pool seat requests confirmed by the driver within seat limits
+tier: 2
+tags:
+- aggregate-limit
+- time-window
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- aggregate-limit
+- state-transition
+- time-window
+extra_tables: []
+fixture_notes:
+- 'ride 1 (dev …01, 2 seats, 2099): pia confirmed, quinn requested — one seat left'
+- ride 2 (dev, 2020) is in the past
+- 'ride 3 (sana …05, 1 seat, 2099): raj confirmed (full), quinn requested'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

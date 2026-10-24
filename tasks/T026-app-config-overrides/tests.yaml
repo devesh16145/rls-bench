@@ -1,0 +1,123 @@
+- name: anon_reads_public_config
+  covers: [R1]
+  as: {role: anon}
+  sql: select key from app_config order by key
+  expect:
+    rows:
+    - [beta_editor]
+    - [max_upload_mb]
+    - [theme]
+
+- name: user_cannot_read_private_config
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select key from app_config where key = 'stripe_webhook_secret'
+  expect: {count: 0}
+
+- name: user_cannot_change_config
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: app_config
+    values: {value: '500'}
+    match: {key: max_upload_mb}
+    returning: false
+  expect: {denied: true}
+
+- name: user_reads_own_overrides
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select key, value from user_flag_overrides order by key
+  expect:
+    rows:
+    - [theme, dark]
+
+- name: other_user_sees_no_overrides
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select key from user_flag_overrides
+  expect: {count: 0}
+
+- name: user_changes_existing_override
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000001, key: theme, value: '"light"'}
+    on_conflict: [user_id, key]
+    returning: true
+  expect: {affected: 1}
+
+- name: user_adds_override
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000001, key: beta_editor, value: 'true'}
+    on_conflict: [user_id, key]
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_override_locked_key
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000001, key: max_upload_mb, value: '500'}
+    on_conflict: [user_id, key]
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_override_private_key
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000001, key: stripe_webhook_secret, value: '"mine"'}
+    on_conflict: [user_id, key]
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_write_someone_elses_override
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000002, key: theme, value: '"dark"'}
+    on_conflict: [user_id, key]
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_override
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: user_flag_overrides
+    match: {user_id: 00000000-0000-0000-0000-000000000001, key: theme}
+  expect: {affected: 1}
+
+- name: anon_cannot_save_override
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: upsert
+    table: user_flag_overrides
+    values: {user_id: 00000000-0000-0000-0000-000000000001, key: theme, value: '"dark"'}
+    on_conflict: [user_id, key]
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_reads_private_config
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from app_config
+  expect:
+    rows:
+    - [4]

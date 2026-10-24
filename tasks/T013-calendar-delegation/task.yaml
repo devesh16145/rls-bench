@@ -1,0 +1,16 @@
+id: T013
+title: Calendar delegation with private events and a busy-time view
+tier: 3
+tags: [delegation, expiry, private-rows, view, ownership, client-returning]
+traps: [private-row-leak, time-window, ownership-change, view-bypass, transitive-delegation]
+extra_tables: []
+fixture_notes:
+  - "edit delegation without expiry: ana → ben (…02)"
+  - "read-only delegation expiring 2099: ana → cy (…03)"
+  - "expired edit delegation: ana → dee (…04), expired 2020-01-01"
+  - "private events: ana's event 2, ben's own event 4"
+  - "user with no delegations: eli (…05)"
+verified: true
+author: owner
+created: 2026-10-24
+canary: "RLSBENCH-CANARY-f9002c750838f00b"

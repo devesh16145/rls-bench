@@ -1,0 +1,21 @@
+id: T102
+title: Stock transfers between warehouses through a checked RPC
+tier: 3
+tags:
+- rpc
+- security-definer
+- input-validation
+- staff-role
+- read-only-tables
+traps:
+- overdraft
+- rpc-input-validation
+- reference-check
+extra_tables: []
+fixture_notes:
+- warehouse 1 (staff sam …01) holds 10 × SKU-1; warehouse 2 (staff sue …02) holds 3; warehouse 3 has no stock row yet
+- stock has no check constraint on qty, so the function must refuse overdrafts itself
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

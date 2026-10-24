@@ -1,0 +1,20 @@
+id: T103
+title: Role-management RPC and an internal function only the server may call
+tier: 3
+tags:
+- rpc
+- security-definer
+- function-privileges
+- role-management
+traps:
+- rpc-exposed
+- rpc-missing-auth-check
+- self-approval
+extra_tables: []
+fixture_notes:
+- 'org 1: owner own (…01), admin adm (…02), member mem (…03); org 2: admin oz (…04) and member zed (…05)'
+- the shim's default privileges let anon and authenticated execute new public functions unless revoked
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,118 @@
+- name: anon_reads_visible_links
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from bio_links order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: owner_reads_own_hidden_link
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from bio_links order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: user_adds_https_link
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: bio_links
+    values: {user_id: 00000000-0000-0000-0000-000000000001, title: My shop, url: 'https://ana.example.com/blog', position: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_add_link_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: bio_links
+    values: {user_id: 00000000-0000-0000-0000-000000000002, title: My shop, url: 'https://x.example.com', position: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_hides_link
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bio_links
+    values: {is_visible: false}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_edit_someone_elses_link
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: bio_links
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_deletes_link
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: bio_links
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: cannot_add_javascript_url
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: bio_links
+    values: {user_id: 00000000-0000-0000-0000-000000000001, title: My shop, url: 'javascript:alert(document.cookie)', position: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_add_plain_http_url
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: bio_links
+    values: {user_id: 00000000-0000-0000-0000-000000000001, title: My shop, url: 'http://ana.example.com', position: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_edit_link_to_javascript_url
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bio_links
+    values: {url: 'javascript:alert(1)'}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_add_link
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: bio_links
+    values: {user_id: 00000000-0000-0000-0000-000000000001, title: My shop, url: 'https://x.example.com', position: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_links
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from bio_links
+  expect:
+    rows:
+    - [3]

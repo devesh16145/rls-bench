@@ -1,0 +1,176 @@
+- name: member_reads_own_expenses
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from expenses order by id
+  expect: {rows: [[1], [4]]}
+
+- name: manager_reads_department_expenses
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select id from expenses order by id
+  expect: {rows: [[1], [2], [3], [4]]}
+
+- name: other_manager_reads_only_own_department
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000004"}
+  sql: select id from expenses order by id
+  expect: {rows: [[5]]}
+
+- name: member_cannot_read_colleague_expense
+  covers: [R1]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select id from expenses where id = 3
+  expect: {count: 0}
+
+- name: member_submits_expense
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into expenses (department_id, submitted_by, amount) values (1, '00000000-0000-0000-0000-000000000002', 9.99)
+  expect: {affected: 1}
+
+- name: member_cannot_submit_for_colleague
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into expenses (department_id, submitted_by, amount) values (1, '00000000-0000-0000-0000-000000000003', 9.99)
+  expect: {denied: true}
+
+- name: member_cannot_submit_to_other_department
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into expenses (department_id, submitted_by, amount) values (2, '00000000-0000-0000-0000-000000000002', 9.99)
+  expect: {denied: true}
+
+- name: member_cannot_submit_preapproved_expense
+  covers: [R2]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: insert into expenses (department_id, submitted_by, amount, status) values (1, '00000000-0000-0000-0000-000000000002', 9.99, 'approved')
+  expect: {denied: true}
+
+- name: submitter_edits_pending_amount
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update expenses set amount = 45.00 where id = 1
+  expect: {affected: 1}
+
+- name: submitter_cannot_edit_approved_expense
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update expenses set amount = 600.00 where id = 4
+  expect: {denied: true}
+
+- name: submitter_cannot_approve_directly
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update expenses set status = 'approved' where id = 1
+  expect: {denied: true}
+
+- name: manager_cannot_approve_directly
+  covers: [R3]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: update expenses set status = 'approved', decided_by = '00000000-0000-0000-0000-000000000001' where id = 1
+  expect: {denied: true}
+
+- name: manager_approves_through_function
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select public.decide_expense(1, true); select status, decided_by from expenses where id = 1
+  expect: {rows: [[approved, "00000000-0000-0000-0000-000000000001"]]}
+
+- name: manager_rejects_through_function
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select public.decide_expense(3, false); select status from expenses where id = 3
+  expect: {rows: [[rejected]]}
+
+- name: member_cannot_decide
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select public.decide_expense(1, true)
+  expect: {denied: true}
+
+- name: manager_cannot_decide_own_expense
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select public.decide_expense(2, true)
+  expect: {denied: true}
+
+- name: manager_cannot_decide_other_department
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000004"}
+  sql: select public.decide_expense(1, true)
+  expect: {denied: true}
+
+- name: manager_cannot_decide_twice
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: select public.decide_expense(4, false)
+  expect: {denied: true}
+
+- name: user_without_department_cannot_decide
+  covers: [R4]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000006"}
+  sql: select public.decide_expense(5, true)
+  expect: {denied: true}
+
+- name: service_role_decides_through_function
+  covers: [R5]
+  as: {role: service_role}
+  sql: select public.decide_expense(5, false); select status, decided_by from expenses where id = 5
+  expect: {rows: [[rejected, null]]}
+
+- name: member_sees_own_membership
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: select department_id, is_manager from department_members order by department_id
+  expect: {rows: [[1, false]]}
+
+- name: member_cannot_promote_self
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000002"}
+  sql: update department_members set is_manager = true where user_id = '00000000-0000-0000-0000-000000000002'
+  expect: {denied: true}
+
+- name: manager_cannot_delete_expense
+  covers: [R6]
+  as: {role: authenticated, sub: "00000000-0000-0000-0000-000000000001"}
+  sql: delete from expenses where id = 1
+  expect: {denied: true}
+
+- name: anon_sees_no_expenses
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from expenses
+  expect: {denied: true}
+
+- name: anon_cannot_decide
+  covers: [R7]
+  as: {role: anon}
+  sql: select public.decide_expense(5, true)
+  expect: {denied: true}
+
+- name: service_role_sees_all_expenses
+  covers: [R8]
+  as: {role: service_role}
+  sql: select count(*) from expenses
+  expect: {rows: [[5]]}
+
+- name: client_submits_expense_and_reads_it_back
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: expenses
+    values: {department_id: 1, submitted_by: 00000000-0000-0000-0000-000000000002, amount: 9.99}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_edits_pending_amount_and_reads_it_back
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: expenses
+    values: {amount: 45}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}

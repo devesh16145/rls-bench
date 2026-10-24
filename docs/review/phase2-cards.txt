@@ -1,0 +1,840 @@
+====================================================================================================
+TASK T004 — Public user profiles — tier 1 — traps: ownership-change, over-broad-for-all — verified: False
+tags: single-owner, public-read, anon-read, no-delete
+
+REQUIREMENT (verbatim)
+A community site. Each user can have one public profile; a profile's `id` is the id of the user it belongs to.
+
+R1. Anyone, including anonymous visitors, can read every profile.
+R2. Signed-in users can create a profile only for themselves.
+R3. Users can edit only their own profile, and cannot move it to another user's account.
+R4. Profiles cannot be deleted through the app, not even by their owner.
+R5. Anonymous visitors cannot create or change profiles.
+R6. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_all_profiles → anon → {"rows": [["ana"], ["ben"]]} → R1
+      select username from profiles order by username
+  user_without_profile_reads_all_profiles → authenticated:03 → {"rows": [["ana", "Designer"], ["ben", null]]} → R1
+      select username, bio from profiles order by username
+  user_creates_own_profile → authenticated:03 → {"affected": 1} → R2
+      insert into profiles (id, username) values ('00000000-0000-0000-0000-000000000003', 'cy')
+  user_cannot_create_profile_for_someone_else → authenticated:03 → {"denied": true} → R2
+      insert into profiles (id, username) values ('00000000-0000-0000-0000-000000000004', 'dee')
+  user_edits_own_profile → authenticated:01 → {"affected": 1} → R3
+      update profiles set bio = 'Lead designer' where id = '00000000-0000-0000-0000-000000000001'
+  user_cannot_edit_other_profile → authenticated:01 → {"denied": true} → R3
+      update profiles set bio = 'hacked' where id = '00000000-0000-0000-0000-000000000002'
+  user_cannot_move_profile_to_other_account → authenticated:01 → {"denied": true} → R3
+      update profiles set id = '00000000-0000-0000-0000-000000000003' where id = '00000000-0000-0000-0000-000000000001'
+  owner_cannot_delete_own_profile → authenticated:01 → {"denied": true} → R4
+      delete from profiles where id = '00000000-0000-0000-0000-000000000001'
+  user_cannot_delete_other_profile → authenticated:01 → {"denied": true} → R4
+      delete from profiles where id = '00000000-0000-0000-0000-000000000002'
+  anon_cannot_create_profile → anon → {"denied": true} → R5
+      insert into profiles (id, username) values ('00000000-0000-0000-0000-000000000003', 'cy')
+  anon_cannot_edit_profiles → anon → {"denied": true} → R5
+      update profiles set bio = 'anon'
+  service_role_sees_all_profiles → service_role → {"rows": [[2]]} → R6
+      select count(*) from profiles
+
+SOLUTION (verbatim)
+alter table public.profiles enable row level security;
+
+create policy profiles_select on public.profiles
+  for select to anon, authenticated
+  using (true);
+
+create policy profiles_insert on public.profiles
+  for insert to authenticated
+  with check (id = auth.uid());
+
+create policy profiles_update on public.profiles
+  for update to authenticated
+  using (id = auth.uid())
+  with check (id = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on user_cannot_create_profile_for_someone_else, user_cannot_edit_other_profile, user_cannot_move_profile_to_other_account, owner_cannot_delete_own_profile, user_cannot_delete_other_profile, anon_cannot_create_profile, anon_cannot_edit_profiles
+  allow-all: fails on user_cannot_create_profile_for_someone_else, user_cannot_edit_other_profile, user_cannot_move_profile_to_other_account, owner_cannot_delete_own_profile, user_cannot_delete_other_profile, anon_cannot_create_profile, anon_cannot_edit_profiles
+  deny-all: fails on anon_reads_all_profiles, user_without_profile_reads_all_profiles, user_creates_own_profile, user_edits_own_profile
+  coverage: 6 rules covered
+  traps: ownership-change caught by user_cannot_move_profile_to_other_account; over-broad-for-all caught by owner_cannot_delete_own_profile, user_cannot_delete_other_profile
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - users with no profile yet: cy (…03) and dee (…04) — moving a profile onto cy has no primary-key conflict
+
+====================================================================================================
+TASK T005 — Expense receipts with bank-imported rows — tier 1 — traps: null-owner — verified: False
+tags: single-owner, nullable-owner, anon-vs-authenticated
+
+REQUIREMENT (verbatim)
+An expense app. Users upload receipts; `uploaded_by` records who uploaded each one. A nightly job imports receipts from the bank feed, and those rows have no uploader (`uploaded_by` is null).
+
+R1. Users can read, edit and delete the receipts they uploaded.
+R2. Users can add receipts only as themselves.
+R3. Imported receipts are visible only to server-side code. App users can neither read them nor claim them, and cannot turn their own receipts into imported ones.
+R4. Anonymous visitors cannot read or change any receipts.
+R5. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  ana_reads_own_receipts → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from receipts order by id
+  ana_reads_amounts → authenticated:01 → {"rows": [["Taxi", 12.5]]} → R1
+      select merchant, amount from receipts where id = 1
+  ben_reads_only_own_receipt → authenticated:02 → {"rows": [[3]]} → R1, R3
+      select id from receipts order by id
+  user_without_receipts_reads_none → authenticated:03 → {"count": 0} → R1, R3
+      select id from receipts
+  anon_reads_nothing → anon → {"count": 0} → R3, R4
+      select id from receipts
+  ana_adds_receipt → authenticated:01 → {"affected": 1} → R2
+      insert into receipts (uploaded_by, merchant, amount) values ('00000000-0000-0000-0000-000000000001', 'Cafe', 4.50)
+  ana_cannot_add_receipt_as_ben → authenticated:01 → {"denied": true} → R2
+      insert into receipts (uploaded_by, merchant, amount) values ('00000000-0000-0000-0000-000000000002', 'Cafe', 4.50)
+  ana_cannot_add_imported_receipt → authenticated:01 → {"denied": true} → R2, R3
+      insert into receipts (uploaded_by, merchant, amount) values (null, 'Fake import', 1.00)
+  ana_edits_own_receipt → authenticated:01 → {"affected": 1} → R1
+      update receipts set amount = 13.00 where id = 1
+  ana_cannot_edit_bens_receipt → authenticated:01 → {"denied": true} → R1
+      update receipts set amount = 0 where id = 3
+  ana_cannot_claim_imported_receipt → authenticated:01 → {"denied": true} → R3
+      update receipts set uploaded_by = '00000000-0000-0000-0000-000000000001' where id = 4
+  ana_cannot_turn_receipt_into_import → authenticated:01 → {"denied": true} → R3
+      update receipts set uploaded_by = null where id = 1
+  ana_deletes_own_receipt → authenticated:01 → {"affected": 1} → R1
+      delete from receipts where id = 2
+  ana_cannot_delete_imported_receipt → authenticated:01 → {"denied": true} → R3
+      delete from receipts where id = 4
+  anon_cannot_add_imported_receipt → anon → {"denied": true} → R4
+      insert into receipts (uploaded_by, merchant, amount) values (null, 'Anon', 1.00)
+  anon_cannot_delete_receipts → anon → {"denied": true} → R4
+      delete from receipts
+  service_role_sees_all_receipts → service_role → {"rows": [[5]]} → R5
+      select count(*) from receipts
+
+SOLUTION (verbatim)
+alter table public.receipts enable row level security;
+
+create policy receipts_select on public.receipts
+  for select to authenticated
+  using (uploaded_by = auth.uid());
+
+create policy receipts_insert on public.receipts
+  for insert to authenticated
+  with check (uploaded_by = auth.uid());
+
+create policy receipts_update on public.receipts
+  for update to authenticated
+  using (uploaded_by = auth.uid())
+  with check (uploaded_by = auth.uid());
+
+create policy receipts_delete on public.receipts
+  for delete to authenticated
+  using (uploaded_by = auth.uid());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on ana_reads_own_receipts, ben_reads_only_own_receipt, user_without_receipts_reads_none, anon_reads_nothing, ana_cannot_add_receipt_as_ben, ana_cannot_add_imported_receipt, ana_cannot_edit_bens_receipt, ana_cannot_claim_imported_receipt, ana_cannot_turn_receipt_into_import, ana_cannot_delete_imported_receipt, anon_cannot_add_imported_receipt, anon_cannot_delete_receipts
+  allow-all: fails on ana_reads_own_receipts, ben_reads_only_own_receipt, user_without_receipts_reads_none, anon_reads_nothing, ana_cannot_add_receipt_as_ben, ana_cannot_add_imported_receipt, ana_cannot_edit_bens_receipt, ana_cannot_claim_imported_receipt, ana_cannot_turn_receipt_into_import, ana_cannot_delete_imported_receipt, anon_cannot_add_imported_receipt, anon_cannot_delete_receipts
+  deny-all: fails on ana_reads_own_receipts, ana_reads_amounts, ben_reads_only_own_receipt, ana_adds_receipt, ana_edits_own_receipt, ana_deletes_own_receipt
+  coverage: 5 rules covered
+  traps: null-owner caught by anon_reads_nothing, anon_cannot_add_imported_receipt, anon_cannot_delete_receipts
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - imported receipts with NULL uploaded_by: receipts.id=4 and 5
+  - user with no receipts: cy (…03)
+  - numeric amounts with trailing zeros (12.50) to exercise value normalisation
+
+====================================================================================================
+TASK T006 — Blog posts with publish windows and inherited comment visibility — tier 2 — traps: child-leak, time-window, ownership-change — verified: False
+tags: publish-window, parent-child, anon-read, ownership
+
+REQUIREMENT (verbatim)
+A blog. A post is live when `published_at` is set and in the past, and `unpublish_at` is either unset or in the future. Comments belong to a post.
+
+R1. Anyone, including anonymous visitors, can read live posts.
+R2. Authors can read all of their own posts, live or not.
+R3. Signed-in users can write posts only as themselves, and can edit and delete only their own posts, without handing a post to another author.
+R4. A comment is visible to exactly the people who can read the post it belongs to.
+R5. Signed-in users can comment, as themselves, on posts they can read.
+R6. Comment authors can delete their own comments, and post authors can delete any comment on their posts. Nobody can edit a comment.
+R7. Anonymous visitors cannot write anything.
+R8. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  anon_reads_live_posts → anon → {"rows": [[1], [5]]} → R1
+      select id from posts order by id
+  reader_reads_live_posts → authenticated:03 → {"rows": [[1], [5]]} → R1
+      select id from posts order by id
+  author_reads_own_drafts_and_scheduled → authenticated:01 → {"rows": [[1], [2], [3], [5]]} → R2
+      select id from posts order by id
+  author_reads_own_expired_post → authenticated:02 → {"rows": [[1], [4], [5]]} → R2
+      select id from posts order by id
+  author_writes_post → authenticated:01 → {"affected": 1} → R3
+      insert into posts (id, author_id, title) values (6, '00000000-0000-0000-0000-000000000001', 'New')
+  author_cannot_write_as_someone_else → authenticated:01 → {"denied": true} → R3
+      insert into posts (id, author_id, title) values (7, '00000000-0000-0000-0000-000000000002', 'Spoof')
+  author_edits_own_draft → authenticated:01 → {"affected": 1} → R3
+      update posts set title = 'Better ideas' where id = 2
+  author_cannot_edit_other_authors_live_post → authenticated:01 → {"denied": true} → R3
+      update posts set title = 'x' where id = 5
+  author_cannot_hand_live_post_to_other_author → authenticated:01 → {"denied": true} → R3
+      update posts set author_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  author_deletes_own_scheduled_post → authenticated:01 → {"affected": 1} → R3
+      delete from posts where id = 3
+  author_cannot_delete_other_authors_post → authenticated:01 → {"denied": true} → R3
+      delete from posts where id = 5
+  anon_reads_comments_on_live_posts → anon → {"rows": [[1], [2], [5]]} → R4
+      select id from comments order by id
+  author_reads_comments_on_own_draft → authenticated:01 → {"rows": [[1], [2], [3], [5]]} → R4
+      select id from comments order by id
+  commenter_cannot_read_own_comment_on_expired_post → authenticated:03 → {"count": 0} → R4
+      select id from comments where post_id = 4
+  post_author_reads_comments_on_expired_post → authenticated:02 → {"rows": [[4]]} → R4
+      select id from comments where post_id = 4 order by id
+  reader_comments_on_live_post → authenticated:03 → {"affected": 1} → R5
+      insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000003', 'Agreed')
+  reader_cannot_comment_on_draft → authenticated:03 → {"denied": true} → R5
+      insert into comments (post_id, author_id, body) values (2, '00000000-0000-0000-0000-000000000003', 'Sneaky')
+  reader_cannot_comment_as_someone_else → authenticated:03 → {"denied": true} → R5
+      insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000002', 'Spoof')
+  author_comments_on_own_draft → authenticated:01 → {"affected": 1} → R5
+      insert into comments (post_id, author_id, body) values (2, '00000000-0000-0000-0000-000000000001', 'Todo')
+  commenter_deletes_own_comment → authenticated:03 → {"affected": 1} → R6
+      delete from comments where id = 2
+  post_author_deletes_comment_on_own_post → authenticated:02 → {"affected": 1} → R6
+      delete from comments where id = 5
+  reader_cannot_delete_others_comment → authenticated:03 → {"denied": true} → R6
+      delete from comments where id = 1
+  commenter_cannot_edit_own_comment → authenticated:02 → {"denied": true} → R6
+      update comments set body = 'edited' where id = 1
+  anon_cannot_comment → anon → {"denied": true} → R7
+      insert into comments (post_id, author_id, body) values (1, '00000000-0000-0000-0000-000000000001', 'anon')
+  anon_cannot_write_post → anon → {"denied": true} → R7
+      insert into posts (id, author_id, title) values (8, '00000000-0000-0000-0000-000000000001', 'anon')
+  service_role_sees_all_posts → service_role → {"rows": [[5]]} → R8
+      select count(*) from posts
+  service_role_sees_all_comments → service_role → {"rows": [[5]]} → R8
+      select count(*) from comments
+
+SOLUTION (verbatim)
+alter table public.posts enable row level security;
+alter table public.comments enable row level security;
+
+create policy posts_select on public.posts
+  for select to anon, authenticated
+  using (
+    (published_at <= now() and (unpublish_at is null or unpublish_at > now()))
+    or author_id = auth.uid()
+  );
+
+create policy posts_insert on public.posts
+  for insert to authenticated
+  with check (author_id = auth.uid());
+
+create policy posts_update on public.posts
+  for update to authenticated
+  using (author_id = auth.uid())
+  with check (author_id = auth.uid());
+
+create policy posts_delete on public.posts
+  for delete to authenticated
+  using (author_id = auth.uid());
+
+create policy comments_select on public.comments
+  for select to anon, authenticated
+  using (exists (select 1 from public.posts p where p.id = comments.post_id));
+
+create policy comments_insert on public.comments
+  for insert to authenticated
+  with check (
+    author_id = auth.uid()
+    and exists (select 1 from public.posts p where p.id = comments.post_id)
+  );
+
+create policy comments_delete on public.comments
+  for delete to authenticated
+  using (
+    author_id = auth.uid()
+    or exists (select 1 from public.posts p where p.id = comments.post_id and p.author_id = auth.uid())
+  );
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on anon_reads_live_posts, reader_reads_live_posts, author_reads_own_drafts_and_scheduled, author_reads_own_expired_post, author_cannot_write_as_someone_else, author_cannot_edit_other_authors_live_post, author_cannot_hand_live_post_to_other_author, author_cannot_delete_other_authors_post, anon_reads_comments_on_live_posts, author_reads_comments_on_own_draft, commenter_cannot_read_own_comment_on_expired_post, reader_cannot_comment_on_draft, reader_cannot_comment_as_someone_else, reader_cannot_delete_others_comment, commenter_cannot_edit_own_comment, anon_cannot_comment, anon_cannot_write_post
+  allow-all: fails on anon_reads_live_posts, reader_reads_live_posts, author_reads_own_drafts_and_scheduled, author_reads_own_expired_post, author_cannot_write_as_someone_else, author_cannot_edit_other_authors_live_post, author_cannot_hand_live_post_to_other_author, author_cannot_delete_other_authors_post, anon_reads_comments_on_live_posts, author_reads_comments_on_own_draft, commenter_cannot_read_own_comment_on_expired_post, reader_cannot_comment_on_draft, reader_cannot_comment_as_someone_else, reader_cannot_delete_others_comment, commenter_cannot_edit_own_comment, anon_cannot_comment, anon_cannot_write_post
+  deny-all: fails on anon_reads_live_posts, reader_reads_live_posts, author_reads_own_drafts_and_scheduled, author_reads_own_expired_post, author_writes_post, author_edits_own_draft, author_deletes_own_scheduled_post, anon_reads_comments_on_live_posts, author_reads_comments_on_own_draft, post_author_reads_comments_on_expired_post, reader_comments_on_live_post, author_comments_on_own_draft, commenter_deletes_own_comment, post_author_deletes_comment_on_own_post
+  coverage: 8 rules covered
+  traps: child-leak caught by anon_reads_comments_on_live_posts, author_reads_comments_on_own_draft, commenter_cannot_read_own_comment_on_expired_post; time-window caught by anon_reads_live_posts, reader_reads_live_posts, author_reads_own_drafts_and_scheduled, author_reads_own_expired_post, anon_reads_comments_on_live_posts, author_reads_comments_on_own_draft, commenter_cannot_read_own_comment_on_expired_post; ownership-change caught by author_cannot_hand_live_post_to_other_author
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - draft post (published_at null): posts.id=2
+  - scheduled post (published_at 2099): posts.id=3
+  - expired post (unpublish_at 2021): posts.id=4, with a comment by cy (comments.id=4)
+  - live post with future unpublish_at (2099): posts.id=5
+  - comment on a draft: comments.id=3
+
+====================================================================================================
+TASK T007 — Helpdesk tickets with support agents from a profiles table — tier 2 — traps: privilege-escalation, claim-trust, recursive-policy — verified: False
+tags: admin-via-profiles, column-restriction, insert-defaults, no-delete
+
+REQUIREMENT (verbatim)
+A helpdesk. Every user has a profile. Support agents are the users whose profile has `is_agent = true`. Customers open tickets; agents work on them.
+
+R1. Users can read their own profile, and agents can read every profile.
+R2. Users can change their own display name. Nobody can change agent status through the app, including agents themselves.
+R3. Customers can read their own tickets; agents can read every ticket.
+R4. Signed-in users can open tickets only as themselves, only with status `open`, and without an assigned agent.
+R5. Agents can update any ticket. Customers cannot update tickets, not even their own.
+R6. Nobody can delete tickets through the app.
+R7. Agent status comes only from the profile; nothing in the user's token or user metadata grants it.
+R8. Anonymous visitors cannot see or change anything.
+R9. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  customer_reads_own_profile_only → authenticated:01 → {"rows": [["00000000-0000-0000-0000-000000000001"]]} → R1
+      select id from profiles order by id
+  agent_reads_every_profile → authenticated:03 → {"rows": [[3]]} → R1
+      select count(*) from profiles
+  customer_renames_self → authenticated:01 → {"affected": 1} → R2
+      update profiles set display_name = 'Ana B.' where id = '00000000-0000-0000-0000-000000000001'
+  customer_cannot_make_self_agent → authenticated:01 → {"denied": true} → R2
+      update profiles set is_agent = true where id = '00000000-0000-0000-0000-000000000001'
+  customer_cannot_rename_someone_else → authenticated:01 → {"denied": true} → R2
+      update profiles set display_name = 'x' where id = '00000000-0000-0000-0000-000000000002'
+  agent_cannot_change_own_agent_status → authenticated:03 → {"denied": true} → R2
+      update profiles set is_agent = false where id = '00000000-0000-0000-0000-000000000003'
+  customer_reads_own_tickets → authenticated:01 → {"rows": [[1], [2]]} → R3
+      select id from tickets order by id
+  other_customer_reads_only_own_ticket → authenticated:02 → {"rows": [[3]]} → R3
+      select id from tickets order by id
+  agent_reads_every_ticket → authenticated:03 → {"rows": [[1], [2], [3]]} → R3
+      select id from tickets order by id
+  customer_opens_ticket → authenticated:01 → {"affected": 1} → R4
+      insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000001', 'Help')
+  customer_cannot_open_ticket_for_someone_else → authenticated:01 → {"denied": true} → R4
+      insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000002', 'Spoof')
+  customer_cannot_open_preassigned_ticket → authenticated:01 → {"denied": true} → R4
+      insert into tickets (requester_id, subject, assigned_agent) values ('00000000-0000-0000-0000-000000000001', 'VIP', '00000000-0000-0000-0000-000000000003')
+  customer_cannot_open_closed_ticket → authenticated:01 → {"denied": true} → R4
+      insert into tickets (requester_id, subject, status) values ('00000000-0000-0000-0000-000000000001', 'Done', 'closed')
+  agent_closes_ticket → authenticated:03 → {"affected": 1} → R5
+      update tickets set status = 'closed' where id = 3
+  customer_cannot_update_own_ticket → authenticated:01 → {"denied": true} → R5
+      update tickets set status = 'closed' where id = 1
+  agent_cannot_delete_ticket → authenticated:03 → {"denied": true} → R6
+      delete from tickets where id = 2
+  customer_cannot_delete_own_ticket → authenticated:01 → {"denied": true} → R6
+      delete from tickets where id = 1
+  agent_claim_in_user_metadata_grants_nothing → authenticated:01 +claims{"user_metadata": {"is_agent": true}} → {"rows": [[1], [2]]} → R7
+      select id from tickets order by id
+  agent_claim_cannot_update_tickets → authenticated:01 +claims{"user_metadata": {"is_agent": true}} → {"denied": true} → R7
+      update tickets set status = 'closed' where id = 3
+  anon_sees_no_tickets → anon → {"rows": [[0]]} → R8
+      select count(*) from tickets
+  anon_sees_no_profiles → anon → {"rows": [[0]]} → R8
+      select count(*) from profiles
+  anon_cannot_open_ticket → anon → {"denied": true} → R8
+      insert into tickets (requester_id, subject) values ('00000000-0000-0000-0000-000000000001', 'anon')
+  service_role_sees_all_tickets → service_role → {"rows": [[3]]} → R9
+      select count(*) from tickets
+  service_role_can_change_agent_status → service_role → {"affected": 1} → R9
+      update profiles set is_agent = true where id = '00000000-0000-0000-0000-000000000002'
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_agent() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce(
+    (select p.is_agent from public.profiles p where p.id = auth.uid()),
+    false
+  )
+$$;
+
+alter table public.profiles enable row level security;
+alter table public.tickets enable row level security;
+
+revoke update on public.profiles from anon, authenticated;
+grant update (display_name) on public.profiles to authenticated;
+
+create policy profiles_select on public.profiles
+  for select to authenticated
+  using (id = auth.uid() or private.is_agent());
+
+create policy profiles_update on public.profiles
+  for update to authenticated
+  using (id = auth.uid())
+  with check (id = auth.uid());
+
+create policy tickets_select on public.tickets
+  for select to authenticated
+  using (requester_id = auth.uid() or private.is_agent());
+
+create policy tickets_insert on public.tickets
+  for insert to authenticated
+  with check (
+    requester_id = auth.uid()
+    and status = 'open'
+    and assigned_agent is null
+  );
+
+create policy tickets_update on public.tickets
+  for update to authenticated
+  using (private.is_agent())
+  with check (private.is_agent());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on customer_reads_own_profile_only, customer_cannot_make_self_agent, customer_cannot_rename_someone_else, agent_cannot_change_own_agent_status, customer_reads_own_tickets, other_customer_reads_only_own_ticket, customer_cannot_open_ticket_for_someone_else, customer_cannot_open_preassigned_ticket, customer_cannot_open_closed_ticket, customer_cannot_update_own_ticket, agent_cannot_delete_ticket, customer_cannot_delete_own_ticket, agent_claim_in_user_metadata_grants_nothing, agent_claim_cannot_update_tickets, anon_sees_no_tickets, anon_sees_no_profiles, anon_cannot_open_ticket
+  allow-all: fails on customer_reads_own_profile_only, customer_cannot_make_self_agent, customer_cannot_rename_someone_else, agent_cannot_change_own_agent_status, customer_reads_own_tickets, other_customer_reads_only_own_ticket, customer_cannot_open_ticket_for_someone_else, customer_cannot_open_preassigned_ticket, customer_cannot_open_closed_ticket, customer_cannot_update_own_ticket, agent_cannot_delete_ticket, customer_cannot_delete_own_ticket, agent_claim_in_user_metadata_grants_nothing, agent_claim_cannot_update_tickets, anon_sees_no_tickets, anon_sees_no_profiles, anon_cannot_open_ticket
+  deny-all: fails on customer_reads_own_profile_only, agent_reads_every_profile, customer_renames_self, customer_reads_own_tickets, other_customer_reads_only_own_ticket, agent_reads_every_ticket, customer_opens_ticket, agent_closes_ticket, agent_claim_in_user_metadata_grants_nothing
+  coverage: 9 rules covered
+  traps: privilege-escalation caught by customer_cannot_make_self_agent, agent_cannot_change_own_agent_status; claim-trust caught by agent_claim_in_user_metadata_grants_nothing, agent_claim_cannot_update_tickets; recursive-policy caught by customer_reads_own_profile_only, agent_reads_every_profile, customer_renames_self, customer_cannot_make_self_agent, customer_cannot_rename_someone_else, agent_cannot_change_own_agent_status
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - agent: sam (…03) has profiles.is_agent = true
+  - requester with two tickets, one closed and assigned: ana (…01), tickets 1 and 2
+  - requester ben (…02) with a pending ticket assigned to sam: ticket 3
+
+====================================================================================================
+TASK T008 — Employee directory view that hides salaries — tier 2 — traps: view-bypass, privilege-escalation — verified: False
+tags: column-restriction, view, hr-role, privilege-escalation
+
+REQUIREMENT (verbatim)
+An internal company app. Each employee has one row in `employees`, linked to their login by `user_id`. Employees in the department `HR` handle pay.
+
+R1. Provide a view `public.employee_directory` with exactly the columns `id`, `full_name` and `department`. Every signed-in user who is an employee can see every employee in it. Signed-in users who are not employees see no rows in it.
+R2. Employees can read their own full row in `employees`, including their salary.
+R3. HR employees can read every employee's full row and can update any employee row.
+R4. Employees outside HR cannot see anyone else's salary in any way.
+R5. Employees outside HR cannot change any employee row, including their own.
+R6. Anonymous visitors cannot see the directory or any employee data.
+R7. Server-side code using the service role keeps full access, including to the directory.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  employee_sees_full_directory → authenticated:02 → {"rows": [[1, "Ana Alves", "HR"], [2, "Ben Brooks", "Engineering"], [3, "Cy Chen", "Engineering"], [4, "Dee Diaz", "Sales"]]} → R1
+      select id, full_name, department from employee_directory order by id
+  directory_has_exactly_three_columns → authenticated:02 → {"rows": [["id"], ["full_name"], ["department"]]} → R1, R4
+      select column_name from information_schema.columns where table_schema = 'public' and table_name = 'employee_directory' order by ordinal_position
+  non_employee_sees_empty_directory → authenticated:05 → {"denied": true} → R1
+      select full_name from employee_directory
+  employee_reads_own_salary → authenticated:02 → {"rows": [[2, 85000]]} → R2
+      select id, salary from employees order by id
+  employee_cannot_read_colleague_salary → authenticated:02 → {"count": 0} → R4
+      select salary from employees where id = 3
+  hr_reads_every_salary → authenticated:01 → {"rows": [[1, 95000], [2, 85000], [3, 80000], [4, 70000]]} → R3
+      select id, salary from employees order by id
+  hr_updates_salary → authenticated:01 → {"affected": 1} → R3
+      update employees set salary = 90000 where id = 2
+  employee_cannot_raise_own_salary → authenticated:02 → {"denied": true} → R5
+      update employees set salary = 999999 where id = 2
+  employee_cannot_move_self_into_hr → authenticated:02 → {"denied": true} → R5
+      update employees set department = 'HR' where id = 2
+  employee_cannot_edit_colleague → authenticated:02 → {"denied": true} → R5
+      update employees set full_name = 'x' where id = 3
+  anon_cannot_see_directory → anon → {"denied": true} → R6
+      select full_name from employee_directory
+  anon_sees_no_employees → anon → {"rows": [[0]]} → R6
+      select count(*) from employees
+  service_role_reads_directory → service_role → {"rows": [[4]]} → R7
+      select count(*) from employee_directory
+  service_role_reads_all_salaries → service_role → {"rows": [[330000]]} → R7
+      select sum(salary) from employees
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to anon, authenticated;
+
+create function private.is_employee() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.employees e where e.user_id = auth.uid())
+$$;
+
+create function private.is_hr() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.employees e where e.user_id = auth.uid() and e.department = 'HR')
+$$;
+
+alter table public.employees enable row level security;
+
+create policy employees_select on public.employees
+  for select to authenticated
+  using (user_id = auth.uid() or private.is_hr());
+
+create policy employees_update on public.employees
+  for update to authenticated
+  using (private.is_hr())
+  with check (private.is_hr());
+
+create view public.employee_directory as
+  select id, full_name, department
+  from public.employees
+  where private.is_employee() or auth.role() = 'service_role';
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on employee_sees_full_directory, directory_has_exactly_three_columns, non_employee_sees_empty_directory, employee_reads_own_salary, employee_cannot_read_colleague_salary, employee_cannot_raise_own_salary, employee_cannot_move_self_into_hr, employee_cannot_edit_colleague, anon_cannot_see_directory, anon_sees_no_employees, service_role_reads_directory
+  allow-all: fails on employee_sees_full_directory, directory_has_exactly_three_columns, non_employee_sees_empty_directory, employee_reads_own_salary, employee_cannot_read_colleague_salary, employee_cannot_raise_own_salary, employee_cannot_move_self_into_hr, employee_cannot_edit_colleague, anon_cannot_see_directory, anon_sees_no_employees, service_role_reads_directory
+  deny-all: fails on employee_sees_full_directory, directory_has_exactly_three_columns, non_employee_sees_empty_directory, employee_reads_own_salary, hr_reads_every_salary, hr_updates_salary, anon_cannot_see_directory, service_role_reads_directory
+  coverage: 7 rules covered
+  traps: view-bypass caught by non_employee_sees_empty_directory, anon_cannot_see_directory; privilege-escalation caught by employee_cannot_raise_own_salary, employee_cannot_move_self_into_hr
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - HR employee: ana (…01), department 'HR'
+  - signed-in user with no employee record: eli (…05)
+  - salaries differ per employee so a leak is visible
+
+====================================================================================================
+TASK T009 — File sharing with expiring shares and account suspension — tier 3 — traps: recursive-policy, restrictive-vs-permissive, ownership-change, time-window — verified: False
+tags: share-links, expiry, restrictive-policy, security-definer-helper, ownership
+
+REQUIREMENT (verbatim)
+A file-sharing app. Every file has one owner. Owners share files with other users through `file_shares`; a share may allow editing and may expire at `expires_at` (no value means it never expires). Accounts can be suspended by staff.
+
+R1. Owners can create files as themselves and can read, rename and delete their own files. A file's owner can never be changed through the app.
+R2. A user can read a file shared with them while the share has not expired. If the share allows editing, they can also rename the file.
+R3. Users a file is shared with can never delete it.
+R4. Owners can see, create, change and remove the shares of their own files. Users can see the shares addressed to them, but not shares addressed to anyone else.
+R5. Suspended accounts lose all access to files and shares, including their own files.
+R6. Users can read their own account row. Nobody can change accounts through the app.
+R7. Anonymous visitors cannot see or change anything.
+R8. Server-side code using the service role keeps full access.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  owner_reads_own_files → authenticated:01 → {"rows": [[1], [2]]} → R1
+      select id from files order by id
+  owner_creates_file → authenticated:01 → {"affected": 1} → R1
+      insert into files (id, owner_id, name) values (4, '00000000-0000-0000-0000-000000000001', 'plan.md')
+  user_cannot_create_file_for_someone_else → authenticated:01 → {"denied": true} → R1
+      insert into files (id, owner_id, name) values (5, '00000000-0000-0000-0000-000000000002', 'gift.md')
+  owner_renames_own_file → authenticated:01 → {"affected": 1} → R1
+      update files set name = 'budget-2026.xlsx' where id = 2
+  owner_cannot_transfer_ownership → authenticated:01 → {"denied": true} → R1
+      update files set owner_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  owner_deletes_own_file → authenticated:01 → {"affected": 1} → R1
+      delete from files where id = 2
+  editor_reads_shared_file → authenticated:02 → {"rows": [[1]]} → R2
+      select id from files order by id
+  editor_renames_shared_file → authenticated:02 → {"affected": 1} → R2
+      update files set name = 'roadmap-v2.pdf' where id = 1
+  editor_cannot_take_ownership → authenticated:02 → {"denied": true} → R1, R3
+      update files set owner_id = '00000000-0000-0000-0000-000000000002' where id = 1
+  editor_cannot_delete_shared_file → authenticated:02 → {"denied": true} → R3
+      delete from files where id = 1
+  reader_with_future_expiry_reads_file → authenticated:04 → {"rows": [[2]]} → R2
+      select id from files order by id
+  reader_cannot_rename_read_only_share → authenticated:04 → {"denied": true} → R2
+      update files set name = 'x' where id = 2
+  expired_share_grants_no_read → authenticated:03 → {"count": 0} → R2
+      select id from files
+  expired_share_grants_no_rename → authenticated:03 → {"denied": true} → R2
+      update files set name = 'x' where id = 1
+  owner_sees_all_shares_of_own_files → authenticated:01 → {"rows": [[1, "00000000-0000-0000-0000-000000000002"], [1, "00000000-0000-0000-0000-000000000003"], [1, "00000000-0000-0000-0000-000000000005"], [2, "00000000-0000-0000-0000-000000000004"]]} → R4
+      select file_id, shared_with from file_shares order by file_id, shared_with
+  recipient_sees_only_own_share → authenticated:02 → {"rows": [[1, true]]} → R4
+      select file_id, can_edit from file_shares order by file_id
+  owner_creates_share → authenticated:01 → {"affected": 1} → R4
+      insert into file_shares (file_id, shared_with, can_edit) values (2, '00000000-0000-0000-0000-000000000002', false)
+  editor_cannot_reshare_file → authenticated:02 → {"denied": true} → R4
+      insert into file_shares (file_id, shared_with, can_edit) values (1, '00000000-0000-0000-0000-000000000004', true)
+  recipient_cannot_extend_own_expired_share → authenticated:03 → {"denied": true} → R4
+      update file_shares set expires_at = null where file_id = 1 and shared_with = '00000000-0000-0000-0000-000000000003'
+  owner_revokes_share → authenticated:01 → {"affected": 1} → R4
+      delete from file_shares where file_id = 1 and shared_with = '00000000-0000-0000-0000-000000000003'
+  suspended_user_sees_no_files → authenticated:05 → {"count": 0} → R5
+      select id from files
+  suspended_user_sees_no_shares → authenticated:05 → {"rows": [[0]]} → R5
+      select count(*) from file_shares
+  suspended_user_cannot_create_file → authenticated:05 → {"denied": true} → R5
+      insert into files (id, owner_id, name) values (6, '00000000-0000-0000-0000-000000000005', 'new.txt')
+  suspended_user_cannot_delete_own_file → authenticated:05 → {"denied": true} → R5
+      delete from files where id = 3
+  suspended_user_reads_own_account → authenticated:05 → {"rows": [[true]]} → R6
+      select suspended from accounts
+  suspended_user_cannot_unsuspend → authenticated:05 → {"denied": true} → R6
+      update accounts set suspended = false where user_id = '00000000-0000-0000-0000-000000000005'
+  user_sees_only_own_account → authenticated:02 → {"rows": [["00000000-0000-0000-0000-000000000002"]]} → R6
+      select user_id from accounts order by user_id
+  anon_sees_no_files → anon → {"rows": [[0]]} → R7
+      select count(*) from files
+  anon_sees_no_shares → anon → {"rows": [[0]]} → R7
+      select count(*) from file_shares
+  service_role_sees_all_files → service_role → {"rows": [[3]]} → R8
+      select count(*) from files
+  service_role_sees_all_shares → service_role → {"rows": [[4]]} → R8
+      select count(*) from file_shares
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_suspended() returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.accounts a where a.user_id = auth.uid() and a.suspended)
+$$;
+
+create function private.file_owner(p_file_id bigint) returns uuid
+language sql stable security definer set search_path = ''
+as $$
+  select f.owner_id from public.files f where f.id = p_file_id
+$$;
+
+create function private.has_share(p_file_id bigint, p_edit boolean) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.file_shares s
+    where s.file_id = p_file_id
+      and s.shared_with = auth.uid()
+      and (s.expires_at is null or s.expires_at > now())
+      and (s.can_edit or not p_edit)
+  )
+$$;
+
+alter table public.accounts enable row level security;
+alter table public.files enable row level security;
+alter table public.file_shares enable row level security;
+
+create policy accounts_select on public.accounts
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy files_select on public.files
+  for select to authenticated
+  using (owner_id = auth.uid() or private.has_share(id, false));
+
+create policy files_insert on public.files
+  for insert to authenticated
+  with check (owner_id = auth.uid());
+
+create policy files_update on public.files
+  for update to authenticated
+  using (owner_id = auth.uid() or private.has_share(id, true))
+  with check (
+    owner_id = private.file_owner(id)
+    and (owner_id = auth.uid() or private.has_share(id, true))
+  );
+
+create policy files_delete on public.files
+  for delete to authenticated
+  using (owner_id = auth.uid());
+
+create policy files_not_suspended on public.files
+  as restrictive
+  for all to authenticated
+  using (not private.is_suspended())
+  with check (not private.is_suspended());
+
+create policy file_shares_select on public.file_shares
+  for select to authenticated
+  using (shared_with = auth.uid() or private.file_owner(file_id) = auth.uid());
+
+create policy file_shares_insert on public.file_shares
+  for insert to authenticated
+  with check (private.file_owner(file_id) = auth.uid());
+
+create policy file_shares_update on public.file_shares
+  for update to authenticated
+  using (private.file_owner(file_id) = auth.uid())
+  with check (private.file_owner(file_id) = auth.uid());
+
+create policy file_shares_delete on public.file_shares
+  for delete to authenticated
+  using (private.file_owner(file_id) = auth.uid());
+
+create policy file_shares_not_suspended on public.file_shares
+  as restrictive
+  for all to authenticated
+  using (not private.is_suspended())
+  with check (not private.is_suspended());
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on owner_reads_own_files, user_cannot_create_file_for_someone_else, owner_cannot_transfer_ownership, editor_reads_shared_file, editor_cannot_take_ownership, editor_cannot_delete_shared_file, reader_with_future_expiry_reads_file, reader_cannot_rename_read_only_share, expired_share_grants_no_read, expired_share_grants_no_rename, recipient_sees_only_own_share, editor_cannot_reshare_file, recipient_cannot_extend_own_expired_share, suspended_user_sees_no_files, suspended_user_sees_no_shares, suspended_user_cannot_create_file, suspended_user_cannot_delete_own_file, suspended_user_reads_own_account, suspended_user_cannot_unsuspend, user_sees_only_own_account, anon_sees_no_files, anon_sees_no_shares
+  allow-all: fails on owner_reads_own_files, user_cannot_create_file_for_someone_else, owner_cannot_transfer_ownership, editor_reads_shared_file, editor_cannot_take_ownership, editor_cannot_delete_shared_file, reader_with_future_expiry_reads_file, reader_cannot_rename_read_only_share, expired_share_grants_no_read, expired_share_grants_no_rename, recipient_sees_only_own_share, editor_cannot_reshare_file, recipient_cannot_extend_own_expired_share, suspended_user_sees_no_files, suspended_user_sees_no_shares, suspended_user_cannot_create_file, suspended_user_cannot_delete_own_file, suspended_user_reads_own_account, suspended_user_cannot_unsuspend, user_sees_only_own_account, anon_sees_no_files, anon_sees_no_shares
+  deny-all: fails on owner_reads_own_files, owner_creates_file, owner_renames_own_file, owner_deletes_own_file, editor_reads_shared_file, editor_renames_shared_file, reader_with_future_expiry_reads_file, owner_sees_all_shares_of_own_files, recipient_sees_only_own_share, owner_creates_share, owner_revokes_share, suspended_user_reads_own_account, user_sees_only_own_account
+  coverage: 8 rules covered
+  traps: recursive-policy caught by owner_reads_own_files, owner_renames_own_file, owner_cannot_transfer_ownership, owner_deletes_own_file, editor_reads_shared_file, editor_renames_shared_file, editor_cannot_take_ownership, editor_cannot_delete_shared_file, reader_with_future_expiry_reads_file, reader_cannot_rename_read_only_share, expired_share_grants_no_read, expired_share_grants_no_rename, owner_sees_all_shares_of_own_files, recipient_sees_only_own_share, recipient_cannot_extend_own_expired_share, owner_revokes_share, suspended_user_sees_no_files, suspended_user_sees_no_shares, suspended_user_cannot_delete_own_file; restrictive-vs-permissive caught by owner_reads_own_files, user_cannot_create_file_for_someone_else, owner_cannot_transfer_ownership, editor_reads_shared_file, editor_cannot_take_ownership, editor_cannot_delete_shared_file, reader_with_future_expiry_reads_file, reader_cannot_rename_read_only_share, expired_share_grants_no_read, expired_share_grants_no_rename, recipient_sees_only_own_share, editor_cannot_reshare_file, recipient_cannot_extend_own_expired_share, suspended_user_sees_no_files, suspended_user_sees_no_shares, suspended_user_cannot_create_file, suspended_user_cannot_delete_own_file; ownership-change caught by editor_cannot_take_ownership; time-window caught by expired_share_grants_no_read
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - edit share with no expiry: file 1 → ben (…02)
+  - expired read share: file 1 → cy (…03), expires 2020-01-01
+  - read share expiring 2099: file 2 → dee (…04)
+  - suspended account: sam (…05) owns file 3 and has a read share on file 1
+
+====================================================================================================
+TASK T010 — Expense approvals through an RPC that must check the caller — tier 3 — traps: rpc-missing-auth-check, service-role-broken, privilege-escalation — verified: False
+tags: rpc, security-definer, column-restriction, department-membership, service-role
+
+REQUIREMENT (verbatim)
+An expense tool. Users belong to departments; some members are managers (`is_manager`). Employees submit expenses, and managers approve or reject them. Implement the decision as the function `public.decide_expense(p_expense_id bigint, p_approve boolean) returns void`, which sets `status` to `approved` or `rejected` and records the caller's user id in `decided_by`.
+
+R1. Users can read their own expenses, and managers can read every expense of the departments they manage.
+R2. Users can submit expenses only as themselves, only to departments they belong to, with status `pending` and no decision recorded.
+R3. Submitters can change the amount of their own pending expenses. Nobody can change `status` or `decided_by` by updating expenses directly.
+R4. `decide_expense` succeeds only when the caller manages the expense's department, the expense is pending, and the caller did not submit it. In every other case it raises an error and changes nothing.
+R5. Server-side code using the service role can call `decide_expense` on any pending expense; `decided_by` is then left empty.
+R6. Users can see their own department memberships. Expenses cannot be deleted, and departments and memberships cannot be changed, through the app.
+R7. Anonymous visitors cannot see anything or decide expenses.
+R8. Server-side code using the service role keeps full access to all tables.
+
+RLSBENCH-CANARY-f9002c750838f00b
+
+TESTS (name → as → expect → covers)
+  member_reads_own_expenses → authenticated:02 → {"rows": [[1], [4]]} → R1
+      select id from expenses order by id
+  manager_reads_department_expenses → authenticated:01 → {"rows": [[1], [2], [3], [4]]} → R1
+      select id from expenses order by id
+  other_manager_reads_only_own_department → authenticated:04 → {"rows": [[5]]} → R1
+      select id from expenses order by id
+  member_cannot_read_colleague_expense → authenticated:02 → {"count": 0} → R1
+      select id from expenses where id = 3
+  member_submits_expense → authenticated:02 → {"affected": 1} → R2
+      insert into expenses (department_id, submitted_by, amount) values (1, '00000000-0000-0000-0000-000000000002', 9.99)
+  member_cannot_submit_for_colleague → authenticated:02 → {"denied": true} → R2
+      insert into expenses (department_id, submitted_by, amount) values (1, '00000000-0000-0000-0000-000000000003', 9.99)
+  member_cannot_submit_to_other_department → authenticated:02 → {"denied": true} → R2
+      insert into expenses (department_id, submitted_by, amount) values (2, '00000000-0000-0000-0000-000000000002', 9.99)
+  member_cannot_submit_preapproved_expense → authenticated:02 → {"denied": true} → R2
+      insert into expenses (department_id, submitted_by, amount, status) values (1, '00000000-0000-0000-0000-000000000002', 9.99, 'approved')
+  submitter_edits_pending_amount → authenticated:02 → {"affected": 1} → R3
+      update expenses set amount = 45.00 where id = 1
+  submitter_cannot_edit_approved_expense → authenticated:02 → {"denied": true} → R3
+      update expenses set amount = 600.00 where id = 4
+  submitter_cannot_approve_directly → authenticated:02 → {"denied": true} → R3
+      update expenses set status = 'approved' where id = 1
+  manager_cannot_approve_directly → authenticated:01 → {"denied": true} → R3
+      update expenses set status = 'approved', decided_by = '00000000-0000-0000-0000-000000000001' where id = 1
+  manager_approves_through_function → authenticated:01 → {"rows": [["approved", "00000000-0000-0000-0000-000000000001"]]} → R4
+      select public.decide_expense(1, true); select status, decided_by from expenses where id = 1
+  manager_rejects_through_function → authenticated:01 → {"rows": [["rejected"]]} → R4
+      select public.decide_expense(3, false); select status from expenses where id = 3
+  member_cannot_decide → authenticated:02 → {"denied": true} → R4
+      select public.decide_expense(1, true)
+  manager_cannot_decide_own_expense → authenticated:01 → {"denied": true} → R4
+      select public.decide_expense(2, true)
+  manager_cannot_decide_other_department → authenticated:04 → {"denied": true} → R4
+      select public.decide_expense(1, true)
+  manager_cannot_decide_twice → authenticated:01 → {"denied": true} → R4
+      select public.decide_expense(4, false)
+  user_without_department_cannot_decide → authenticated:06 → {"denied": true} → R4
+      select public.decide_expense(5, true)
+  service_role_decides_through_function → service_role → {"rows": [["rejected", null]]} → R5
+      select public.decide_expense(5, false); select status, decided_by from expenses where id = 5
+  member_sees_own_membership → authenticated:02 → {"rows": [[1, false]]} → R6
+      select department_id, is_manager from department_members order by department_id
+  member_cannot_promote_self → authenticated:02 → {"denied": true} → R6
+      update department_members set is_manager = true where user_id = '00000000-0000-0000-0000-000000000002'
+  manager_cannot_delete_expense → authenticated:01 → {"denied": true} → R6
+      delete from expenses where id = 1
+  anon_sees_no_expenses → anon → {"rows": [[0]]} → R7
+      select count(*) from expenses
+  anon_cannot_decide → anon → {"denied": true} → R7
+      select public.decide_expense(5, true)
+  service_role_sees_all_expenses → service_role → {"rows": [[5]]} → R8
+      select count(*) from expenses
+
+SOLUTION (verbatim)
+create schema private;
+
+grant usage on schema private to authenticated;
+
+create function private.is_department_member(p_department_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.department_members m
+    where m.department_id = p_department_id and m.user_id = auth.uid()
+  )
+$$;
+
+create function private.is_department_manager(p_department_id bigint) returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.department_members m
+    where m.department_id = p_department_id and m.user_id = auth.uid() and m.is_manager
+  )
+$$;
+
+alter table public.departments enable row level security;
+alter table public.department_members enable row level security;
+alter table public.expenses enable row level security;
+
+revoke update on public.expenses from anon, authenticated;
+grant update (amount) on public.expenses to authenticated;
+
+create policy department_members_select on public.department_members
+  for select to authenticated
+  using (user_id = auth.uid());
+
+create policy expenses_select on public.expenses
+  for select to authenticated
+  using (submitted_by = auth.uid() or private.is_department_manager(department_id));
+
+create policy expenses_insert on public.expenses
+  for insert to authenticated
+  with check (
+    submitted_by = auth.uid()
+    and private.is_department_member(department_id)
+    and status = 'pending'
+    and decided_by is null
+  );
+
+create policy expenses_update on public.expenses
+  for update to authenticated
+  using (submitted_by = auth.uid() and status = 'pending')
+  with check (submitted_by = auth.uid() and status = 'pending');
+
+create function public.decide_expense(p_expense_id bigint, p_approve boolean) returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_expense public.expenses%rowtype;
+begin
+  select * into v_expense from public.expenses where id = p_expense_id for update;
+  if not found or v_expense.status <> 'pending' then
+    raise exception 'expense % is not pending', p_expense_id;
+  end if;
+  if auth.role() is distinct from 'service_role' then
+    if auth.uid() is null
+       or v_expense.submitted_by = auth.uid()
+       or not exists (
+         select 1 from public.department_members m
+         where m.department_id = v_expense.department_id
+           and m.user_id = auth.uid()
+           and m.is_manager
+       ) then
+      raise exception 'not allowed to decide expense %', p_expense_id;
+    end if;
+  end if;
+  update public.expenses
+  set status = case when p_approve then 'approved' else 'rejected' end,
+      decided_by = auth.uid()
+  where id = p_expense_id;
+end
+$$;
+
+VALIDATE: reference ✓  no-policy ✗(expected)  allow-all ✗(expected)  deny-all ✗(expected)  deterministic ✓  coverage ✓  structure ✓  traps ✓
+  no-policy: fails on member_reads_own_expenses, manager_reads_department_expenses, other_manager_reads_only_own_department, member_cannot_read_colleague_expense, member_cannot_submit_for_colleague, member_cannot_submit_to_other_department, member_cannot_submit_preapproved_expense, submitter_cannot_edit_approved_expense, submitter_cannot_approve_directly, manager_cannot_approve_directly, manager_approves_through_function, manager_rejects_through_function, member_cannot_decide, manager_cannot_decide_own_expense, manager_cannot_decide_other_department, manager_cannot_decide_twice, user_without_department_cannot_decide, service_role_decides_through_function, member_sees_own_membership, member_cannot_promote_self, manager_cannot_delete_expense, anon_sees_no_expenses, anon_cannot_decide
+  allow-all: fails on member_reads_own_expenses, manager_reads_department_expenses, other_manager_reads_only_own_department, member_cannot_read_colleague_expense, member_cannot_submit_for_colleague, member_cannot_submit_to_other_department, member_cannot_submit_preapproved_expense, submitter_cannot_edit_approved_expense, submitter_cannot_approve_directly, manager_cannot_approve_directly, manager_approves_through_function, manager_rejects_through_function, member_cannot_decide, manager_cannot_decide_own_expense, manager_cannot_decide_other_department, manager_cannot_decide_twice, user_without_department_cannot_decide, service_role_decides_through_function, member_sees_own_membership, member_cannot_promote_self, manager_cannot_delete_expense, anon_sees_no_expenses, anon_cannot_decide
+  deny-all: fails on member_reads_own_expenses, manager_reads_department_expenses, other_manager_reads_only_own_department, member_submits_expense, submitter_edits_pending_amount, manager_approves_through_function, manager_rejects_through_function, member_cannot_decide, manager_cannot_decide_own_expense, manager_cannot_decide_other_department, manager_cannot_decide_twice, user_without_department_cannot_decide, service_role_decides_through_function, member_sees_own_membership, anon_cannot_decide
+  coverage: 8 rules covered
+  traps: rpc-missing-auth-check caught by member_cannot_decide, manager_cannot_decide_own_expense, manager_cannot_decide_other_department, user_without_department_cannot_decide, anon_cannot_decide; service-role-broken caught by service_role_decides_through_function; privilege-escalation caught by submitter_cannot_approve_directly
+FIXTURE EDGE ROWS (check these exist in seed.sql):
+  - manager with own pending expense: mia (…01), expense 2
+  - expense already approved: expense 4
+  - manager of a different department: raj (…04), department 2
+  - signed-in user in no department: eli (…06)
+

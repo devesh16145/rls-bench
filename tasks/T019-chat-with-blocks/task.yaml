@@ -1,0 +1,21 @@
+id: T019
+title: Group chat where blocked users cannot post
+tier: 2
+tags:
+- membership
+- negative-condition
+- security-definer-helper
+- client-returning
+traps:
+- negative-condition
+- recursive-policy
+- ownership-change
+extra_tables: []
+fixture_notes:
+- ben (…02) has blocked cy (…03); dee (…04) has blocked cy
+- conversation 2 includes ana, ben and cy; conversation 3 cy and dee
+- dee, the blocker, can still post in conversation 3
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

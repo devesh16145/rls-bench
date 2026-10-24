@@ -1,0 +1,100 @@
+- name: user_reads_own_entries
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from journal_entries order by id
+  expect:
+    rows:
+    - [1]
+
+- name: user_writes_entry
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: journal_entries
+    values: {user_id: 00000000-0000-0000-0000-000000000001, body: Rainy, mood: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_write_for_someone_else
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: journal_entries
+    values: {user_id: 00000000-0000-0000-0000-000000000002, body: x, mood: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_edits_fresh_entry
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into journal_entries (user_id, body, mood) values ('00000000-0000-0000-0000-000000000001', 'Good day', 4); update journal_entries set mood = 5 where id = 3
+  expect: {affected: 1}
+
+- name: user_deletes_fresh_entry
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into journal_entries (user_id, body, mood) values ('00000000-0000-0000-0000-000000000001', 'Good day', 4); delete from journal_entries where id = 3
+  expect: {affected: 1}
+
+- name: user_cannot_edit_old_entry
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: journal_entries
+    values: {body: rewritten}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_old_entry
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: journal_entries
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: user_cannot_edit_someone_elses_entry
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: journal_entries
+    values: {body: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_backdate_entry
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: journal_entries
+    values: {user_id: 00000000-0000-0000-0000-000000000001, body: x, mood: 3, created_at: '2019-01-01'}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_move_fresh_entry_back_in_time
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into journal_entries (user_id, body, mood) values ('00000000-0000-0000-0000-000000000001', 'Good day', 4); update journal_entries set created_at = '2019-01-01' where id = 3
+  expect: {denied: true}
+
+- name: anon_sees_no_entries
+  covers: [R4]
+  as: {role: anon}
+  sql: select * from journal_entries
+  expect: {denied: true}
+
+- name: service_role_sees_all_entries
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from journal_entries
+  expect:
+    rows:
+    - [2]

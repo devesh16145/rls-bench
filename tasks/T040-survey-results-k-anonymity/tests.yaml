@@ -1,0 +1,138 @@
+- name: user_sees_all_surveys
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from surveys
+  expect:
+    rows:
+    - [3]
+
+- name: owner_creates_survey
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: surveys
+    values: {id: 4, owner_id: 00000000-0000-0000-0000-000000000001, title: Q2 pulse}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_rename_someone_elses_survey
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: surveys
+    values: {title: x}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: respondent_reads_own_responses
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select survey_id, score from survey_responses order by survey_id
+  expect:
+    rows:
+    - [1, 4]
+    - [2, 5]
+    - [3, 2]
+
+- name: respondent_answers_survey
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: upsert
+    table: survey_responses
+    values: {survey_id: 3, respondent_id: 00000000-0000-0000-0000-000000000005, score: 5, comment: ok}
+    on_conflict: [survey_id, respondent_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: respondent_changes_answer
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: survey_responses
+    values: {survey_id: 1, respondent_id: 00000000-0000-0000-0000-000000000002, score: 2, comment: ok}
+    on_conflict: [survey_id, respondent_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_answer_as_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: upsert
+    table: survey_responses
+    values: {survey_id: 3, respondent_id: 00000000-0000-0000-0000-000000000005, score: 1, comment: ok}
+    on_conflict: [survey_id, respondent_id]
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_read_individual_responses
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select score from survey_responses where survey_id = 1
+  expect: {count: 0}
+
+- name: respondent_cannot_read_other_responses
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from survey_responses
+  expect:
+    rows:
+    - [3]
+
+- name: owner_sees_results_above_threshold_only
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select survey_id, responses, avg_score from survey_results order by survey_id
+  expect:
+    rows:
+    - [1, 4, 4]
+
+- name: other_owner_sees_own_results
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000006}
+  sql: select survey_id, responses, avg_score from survey_results order by survey_id
+  expect:
+    rows:
+    - [3, 3, 3]
+
+- name: respondent_sees_no_results
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select * from survey_results
+  expect: {denied: true}
+
+- name: survey_results_has_exactly_three_columns
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select column_name from information_schema.columns where table_schema = 'public' and table_name = 'survey_results' order by ordinal_position
+  expect:
+    rows:
+    - [survey_id]
+    - [responses]
+    - [avg_score]
+
+- name: anon_sees_no_results
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from survey_results
+  expect: {denied: true}
+
+- name: anon_sees_no_responses
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from survey_responses
+  expect: {denied: true}
+
+- name: service_role_sees_all_results
+  covers: [R6]
+  as: {role: service_role}
+  sql: select survey_id from survey_results order by survey_id
+  expect:
+    rows:
+    - [1]
+    - [3]

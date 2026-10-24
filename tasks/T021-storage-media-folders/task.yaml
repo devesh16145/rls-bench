@@ -1,0 +1,22 @@
+id: T021
+title: Storage bucket with per-user public and private folders
+tier: 3
+tags:
+- storage-paths
+- public-bucket-subset
+- anon-read
+- client-returning
+traps:
+- storage-path
+- ownership-change
+- bucket-scope
+extra_tables:
+- storage.objects
+fixture_notes:
+- 'object whose path contains ''public'' deeper in a private folder: ''<…03>/private/public/x.txt'''
+- 'object not under a user folder: media ''shared/readme.txt'' (owner null)'
+- 'internal bucket object: ''reports/q3.pdf'''
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

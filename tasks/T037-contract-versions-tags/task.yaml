@@ -1,0 +1,21 @@
+id: T037
+title: Contracts whose versions and tags inherit sharing
+tier: 2
+tags:
+- parent-child
+- sharing
+- multi-table
+- append-only
+- client-returning
+traps:
+- forgot-enable
+- child-leak
+- reference-check
+extra_tables: []
+fixture_notes:
+- contract 1 owned by olga (…01) and shared with sid (…02); contract 2 olga's, not shared; contract 3 tara's (…03)
+- 'user with no access: ugo (…04)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

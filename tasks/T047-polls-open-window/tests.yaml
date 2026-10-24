@@ -1,0 +1,159 @@
+- name: user_reads_polls
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from polls
+  expect:
+    rows:
+    - [2]
+
+- name: user_reads_options
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from poll_options
+  expect:
+    rows:
+    - [4]
+
+- name: user_sees_own_vote
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select poll_id, option_id from votes order by poll_id
+  expect:
+    rows:
+    - [1, 1]
+
+- name: user_without_votes_sees_none
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select poll_id from votes
+  expect: {count: 0}
+
+- name: user_votes_in_open_poll
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: votes
+    values: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000003, option_id: 2}
+    on_conflict: [poll_id, user_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_vote_for_option_of_other_poll
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: votes
+    values: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000003, option_id: 3}
+    on_conflict: [poll_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_vote_in_closed_poll
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: upsert
+    table: votes
+    values: {poll_id: 2, user_id: 00000000-0000-0000-0000-000000000003, option_id: 4}
+    on_conflict: [poll_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_vote_for_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: votes
+    values: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000003, option_id: 1}
+    on_conflict: [poll_id, user_id]
+    returning: false
+  expect: {denied: true}
+
+- name: user_changes_vote_in_open_poll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: votes
+    values: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000001, option_id: 2}
+    on_conflict: [poll_id, user_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_change_vote_to_option_of_other_poll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: votes
+    values: {option_id: 4}
+    match: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: cannot_change_vote_in_closed_poll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: votes
+    values: {option_id: 4}
+    match: {poll_id: 2, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_withdraws_vote_in_open_poll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: votes
+    match: {poll_id: 1, user_id: 00000000-0000-0000-0000-000000000001}
+  expect: {affected: 1}
+
+- name: cannot_withdraw_vote_in_closed_poll
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: votes
+    match: {poll_id: 2, user_id: 00000000-0000-0000-0000-000000000002}
+  expect: {denied: true}
+
+- name: user_cannot_add_option
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: poll_options
+    values: {id: 9, poll_id: 1, label: Moon}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_reopen_poll
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: polls
+    values: {closes_at: '2099-01-01'}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_polls
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from polls
+  expect: {denied: true}
+
+- name: service_role_sees_all_votes
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from votes
+  expect:
+    rows:
+    - [2]

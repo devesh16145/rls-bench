@@ -1,0 +1,153 @@
+- name: anon_reads_avatars
+  covers: [R1]
+  as: {role: anon}
+  sql: select name from storage.objects where bucket_id = 'avatars' order by name
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001.png]
+    - [00000000-0000-0000-0000-000000000002.jpg]
+
+- name: user_cannot_read_private_bucket
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where bucket_id = 'docs'
+  expect: {count: 0}
+
+- name: user_uploads_own_jpg
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.jpg, owner: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_replaces_own_avatar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {created_at: '2020-02-01'}
+    match: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.png}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_upload_someone_elses_name
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000002.png, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_extra_extension
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.png.html, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_into_folder
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001/evil.png, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_other_file_type
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.gif, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_upload_with_other_owner
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.jpg, owner: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_replace_someone_elses_avatar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {owner: 00000000-0000-0000-0000-000000000001}
+    match: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000002.jpg}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_rename_own_avatar_to_someone_elses_name
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: storage.objects
+    values: {name: 00000000-0000-0000-0000-000000000002.png}
+    match: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.png}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_avatar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: storage.objects
+    match: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.png}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_someone_elses_avatar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: storage.objects
+    match: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000002.jpg}
+  expect: {denied: true}
+
+- name: user_cannot_upload_into_private_bucket
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: docs, name: 00000000-0000-0000-0000-000000000001.png, owner: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_upload_avatar
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: storage.objects
+    values: {bucket_id: avatars, name: 00000000-0000-0000-0000-000000000001.jpg, owner: null}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_objects
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from storage.objects
+  expect:
+    rows:
+    - [3]

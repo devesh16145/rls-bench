@@ -1,0 +1,18 @@
+id: T084
+title: Email drafts that freeze once the server sends them
+tier: 1
+tags:
+- single-owner
+- state-transition
+- server-set-column
+- client-returning
+traps:
+- negative-condition
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- 'ana (…01): draft 1 and sent email 2; ben (…02): draft 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

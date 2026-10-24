@@ -1,0 +1,21 @@
+id: T033
+title: Friend requests and friends-only posts
+tier: 2
+tags:
+- social-graph
+- audience
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- state-transition
+- private-row-leak
+- old-vs-new
+extra_tables: []
+fixture_notes:
+- 'accepted: ana–ben, dee–cy; pending: cy → ana'
+- 'posts with each audience: public 1 and 6, friends 2/4/5, only_me 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

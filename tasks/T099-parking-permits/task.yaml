@@ -1,0 +1,21 @@
+id: T099
+title: Parking permits capped per unit and revoked only by the HOA
+tier: 2
+tags:
+- aggregate-limit
+- time-window
+- two-roles
+- column-restriction
+traps:
+- aggregate-limit
+- time-window
+- state-transition
+extra_tables: []
+fixture_notes:
+- unit 101 (ana …01) already has 2 active permits (the cap)
+- 'unit 102 (ben …02): permit 3 expired in 2020, permit 4 revoked'
+- HOA admin hal (…03)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

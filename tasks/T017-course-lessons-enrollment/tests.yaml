@@ -1,0 +1,250 @@
+- name: anon_reads_published_courses
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from courses order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: instructor_reads_own_unpublished_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from courses order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: student_does_not_see_unpublished_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from courses order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: instructor_creates_course
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: courses
+    values: {id: 5, instructor_id: 00000000-0000-0000-0000-000000000001, title: Window functions, is_published: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: cannot_create_course_for_another_instructor
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: courses
+    values: {id: 6, instructor_id: 00000000-0000-0000-0000-000000000004, title: Spoof, is_published: true}
+    returning: false
+  expect: {denied: true}
+
+- name: instructor_publishes_own_course
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: courses
+    values: {is_published: true}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: instructor_cannot_edit_other_course
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: courses
+    values: {title: x}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: instructor_cannot_hand_course_to_other_instructor
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: courses
+    values: {instructor_id: 00000000-0000-0000-0000-000000000004}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_reads_only_previews_of_published_courses
+  covers: [R3]
+  as: {role: anon}
+  sql: select id from lessons order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: unenrolled_student_reads_only_previews
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from lessons order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: enrolled_student_reads_all_course_lessons
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from lessons order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: instructor_reads_all_own_lessons
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from lessons order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: instructor_adds_lesson
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: lessons
+    values: {id: 7, course_id: 1, title: Subqueries, is_preview: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: instructor_cannot_add_lesson_to_other_course
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: lessons
+    values: {id: 8, course_id: 3, title: x, is_preview: true}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_add_lesson
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: lessons
+    values: {id: 9, course_id: 1, title: x, is_preview: true}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_edit_lesson
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: lessons
+    values: {title: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: student_enrolls_in_published_course
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: enrollments
+    values: {course_id: 3, student_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: student_cannot_enroll_in_unpublished_course
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: enrollments
+    values: {course_id: 2, student_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: student_cannot_enroll_someone_else
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: enrollments
+    values: {course_id: 3, student_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: student_unenrolls
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: enrollments
+    match: {course_id: 1, student_id: 00000000-0000-0000-0000-000000000002}
+  expect: {affected: 1}
+
+- name: student_sees_own_enrollments
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select course_id, student_id from enrollments order by course_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002]
+
+- name: instructor_sees_enrollments_in_own_courses
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select course_id, student_id from enrollments order by course_id
+  expect:
+    rows:
+    - [1, 00000000-0000-0000-0000-000000000002]
+
+- name: other_instructor_sees_no_enrollments
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select course_id from enrollments
+  expect: {count: 0}
+
+- name: anon_cannot_enroll
+  covers: [R6]
+  as: {role: anon}
+  client:
+    op: insert
+    table: enrollments
+    values: {course_id: 3, student_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_edit_courses
+  covers: [R6]
+  as: {role: anon}
+  client:
+    op: update
+    table: courses
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_lessons
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from lessons
+  expect:
+    rows:
+    - [4]

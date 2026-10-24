@@ -1,0 +1,134 @@
+- name: anon_subscribes
+  covers: [R1]
+  as: {role: anon}
+  client:
+    op: insert
+    table: subscriptions
+    values: {email: new@example.org, topic: weekly}
+    returning: false
+  expect: {affected: 1}
+
+- name: signed_in_user_subscribes
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      email: ben@example.com
+      user_metadata: {email: ana@example.com}
+  client:
+    op: insert
+    table: subscriptions
+    values: {email: ben@example.com, topic: product}
+    returning: false
+  expect: {affected: 1}
+
+- name: anon_cannot_subscribe_confirmed
+  covers: [R1, R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: subscriptions
+    values: {email: x@example.org, topic: weekly, confirmed: true}
+    returning: false
+  expect: {denied: true}
+
+- name: user_sees_own_subscriptions_any_case
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  sql: select id from subscriptions order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_metadata_email_is_ignored
+  covers: [R2, R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      email: ben@example.com
+      user_metadata: {email: ana@example.com}
+  sql: select id from subscriptions order by id
+  expect:
+    rows:
+    - [3]
+
+- name: user_unsubscribes_mixed_case_row
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: delete
+    table: subscriptions
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_other_address
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: delete
+    table: subscriptions
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: user_cannot_confirm_own_subscription
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: update
+    table: subscriptions
+    values: {confirmed: true}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_change_subscription_email
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {email: ana@example.com}
+  client:
+    op: update
+    table: subscriptions
+    values: {email: cy@example.com}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_read_subscriptions
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from subscriptions
+  expect: {denied: true}
+
+- name: anon_cannot_delete_subscriptions
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: delete
+    table: subscriptions
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: service_role_sees_all_subscriptions
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from subscriptions
+  expect:
+    rows:
+    - [4]

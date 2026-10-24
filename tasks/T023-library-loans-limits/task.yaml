@@ -1,0 +1,22 @@
+id: T023
+title: Library loans limited by free copies and per-member caps
+tier: 2
+tags:
+- aggregate-limit
+- column-restriction
+- state-transition
+- client-returning
+traps:
+- aggregate-limit
+- old-vs-new
+- state-transition
+extra_tables: []
+fixture_notes:
+- book 1 has 1 copy and 1 active loan (full); book 4 has 1 copy, only a returned loan
+- ben (…02) has 3 active loans (at the cap); ana (…01) has 2
+- 'returned loan: loans.id=6 (cy)'
+- 'librarian: lib (…04)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

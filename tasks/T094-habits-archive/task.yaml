@@ -1,0 +1,17 @@
+id: T094
+title: Habits that users archive and restore instead of deleting
+tier: 1
+tags:
+- single-owner
+- soft-delete
+- client-filtering
+traps:
+- soft-delete-visibility
+- private-row-leak
+extra_tables: []
+fixture_notes:
+- 'ana (…01): active habit 1 and archived habit 2; ben (…02): habit 3'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,110 @@
+- name: user_sees_active_and_archived_habits
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from habits order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_cannot_see_someone_elses_habits
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from habits where id = 3
+  expect: {count: 0}
+
+- name: user_creates_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: habits
+    values: {user_id: 00000000-0000-0000-0000-000000000001, name: Read 10 pages}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_habit_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: habits
+    values: {user_id: 00000000-0000-0000-0000-000000000002, name: x}
+    returning: false
+  expect: {denied: true}
+
+- name: user_archives_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: habits
+    values: {archived_at: '2020-06-01'}
+    match: {id: 1}
+    returning: false
+  expect: {affected: 1}
+
+- name: user_restores_archived_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: habits
+    values: {archived_at: null}
+    match: {id: 2}
+    returning: false
+  expect: {affected: 1}
+
+- name: user_renames_archived_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: habits
+    values: {name: Learn Portuguese}
+    match: {id: 2}
+    returning: false
+  expect: {affected: 1}
+
+- name: user_cannot_archive_someone_elses_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: habits
+    values: {archived_at: '2020-06-01'}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: user_deletes_own_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: habits
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_someone_elses_habit
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: habits
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: anon_sees_no_habits
+  covers: [R3]
+  as: {role: anon}
+  sql: select * from habits
+  expect: {denied: true}
+
+- name: service_role_sees_all_habits
+  covers: [R4]
+  as: {role: service_role}
+  sql: select count(*) from habits
+  expect:
+    rows:
+    - [3]

@@ -1,0 +1,90 @@
+- name: anon_reads_published_incidents
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from incidents order by id
+  expect:
+    rows:
+    - [1]
+
+- name: signed_in_user_reads_published_incidents
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from incidents order by id
+  expect:
+    rows:
+    - [1]
+
+- name: anon_reads_published_updates
+  covers: [R2]
+  as: {role: anon}
+  sql: select id from incident_updates order by id
+  expect:
+    rows:
+    - [1]
+
+- name: published_update_of_draft_incident_stays_hidden
+  covers: [R2, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from incident_updates where id = 3
+  expect: {count: 0}
+
+- name: draft_incident_is_hidden
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from incidents where id = 2
+  expect: {count: 0}
+
+- name: draft_update_is_hidden
+  covers: [R3]
+  as: {role: anon}
+  sql: select id from incident_updates where id = 2
+  expect: {count: 0}
+
+- name: anon_cannot_create_incident
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: insert
+    table: incidents
+    values: {id: 3, title: Fake outage, severity: major, is_published: true}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_resolve_incident
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: incidents
+    values: {status: resolved}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_publish_draft_update
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: incident_updates
+    values: {is_published: true}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_update
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: incident_updates
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: service_role_sees_all_updates
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from incident_updates
+  expect:
+    rows:
+    - [3]

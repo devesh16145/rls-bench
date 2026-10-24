@@ -1,0 +1,20 @@
+id: T047
+title: Poll voting with option checks and a closing time
+tier: 2
+tags:
+- reference-check
+- time-window
+- upsert
+- private-rows
+traps:
+- reference-check
+- time-window
+- upsert-needs-update
+extra_tables: []
+fixture_notes:
+- poll 1 open until 2099 (options 1, 2); poll 2 closed in 2020 (options 3, 4)
+- ana (…01) voted option 1 on poll 1; ben (…02) voted option 3 on poll 2; cy (…03) has not voted
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

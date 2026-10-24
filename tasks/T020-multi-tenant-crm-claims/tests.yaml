@@ -1,0 +1,356 @@
+- name: agent_reads_active_tenant_contacts
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  sql: select id from contacts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: admin_reads_archived_contacts_too
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  sql: select id from contacts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: other_tenant_agent_reads_only_own_tenant
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      app_metadata: {tenant_id: globex, tenant_role: agent}
+  sql: select id from contacts order by id
+  expect:
+    rows:
+    - [4]
+
+- name: user_without_tenant_claim_reads_nothing
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from contacts
+  expect: {count: 0}
+
+- name: user_metadata_tenant_is_ignored
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000005
+    claims:
+      app_metadata: {tenant_id: globex, tenant_role: agent}
+      user_metadata: {tenant_id: acme, tenant_role: admin}
+  sql: select id from contacts order by id
+  expect:
+    rows:
+    - [4]
+
+- name: user_metadata_admin_role_is_ignored
+  covers: [R1, R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000005
+    claims:
+      app_metadata: {tenant_id: globex, tenant_role: agent}
+      user_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: delete
+    table: contacts
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: agent_creates_contact
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: insert
+    table: contacts
+    values: {tenant_id: acme, owner_id: 00000000-0000-0000-0000-000000000002, name: New lead, is_archived: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: agent_cannot_create_contact_in_other_tenant
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: insert
+    table: contacts
+    values: {tenant_id: globex, owner_id: 00000000-0000-0000-0000-000000000002, name: New lead, is_archived: false}
+    returning: false
+  expect: {denied: true}
+
+- name: agent_cannot_create_contact_for_someone_else
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: insert
+    table: contacts
+    values: {tenant_id: acme, owner_id: 00000000-0000-0000-0000-000000000001, name: New lead, is_archived: false}
+    returning: false
+  expect: {denied: true}
+
+- name: agent_cannot_create_archived_contact
+  covers: [R3, R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: insert
+    table: contacts
+    values: {tenant_id: acme, owner_id: 00000000-0000-0000-0000-000000000002, name: New lead, is_archived: true}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_edits_own_contact
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: update
+    table: contacts
+    values: {name: Lena O.}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: agent_cannot_edit_colleagues_contact
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: update
+    table: contacts
+    values: {name: x}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_edits_any_tenant_contact
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: update
+    table: contacts
+    values: {name: Lena Ortiz-Ruiz}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: contact_cannot_move_to_other_tenant
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: update
+    table: contacts
+    values: {tenant_id: globex}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: other_tenant_cannot_edit_contact
+  covers: [R2, R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      app_metadata: {tenant_id: globex, tenant_role: agent}
+  client:
+    op: update
+    table: contacts
+    values: {name: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: agent_cannot_archive_own_contact
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: update
+    table: contacts
+    values: {is_archived: true}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_archives_contact
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: update
+    table: contacts
+    values: {is_archived: true}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_deletes_contact
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: delete
+    table: contacts
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: agent_cannot_delete_own_contact
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: delete
+    table: contacts
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: user_reads_own_tenant_settings
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  sql: select tenant_id, plan from tenant_settings order by tenant_id
+  expect:
+    rows:
+    - [acme, pro]
+
+- name: spoofed_user_reads_only_real_tenant_settings
+  covers: [R1, R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000005
+    claims:
+      app_metadata: {tenant_id: globex, tenant_role: agent}
+      user_metadata: {tenant_id: acme, tenant_role: admin}
+  sql: select tenant_id from tenant_settings order by tenant_id
+  expect:
+    rows:
+    - [globex]
+
+- name: agent_cannot_change_settings
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: agent}
+  client:
+    op: update
+    table: tenant_settings
+    values: {plan: enterprise}
+    match: {tenant_id: acme}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_changes_own_tenant_settings
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: update
+    table: tenant_settings
+    values: {sso_required: false}
+    match: {tenant_id: acme}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_change_other_tenant_settings
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: update
+    table: tenant_settings
+    values: {plan: free}
+    match: {tenant_id: globex}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_cannot_create_settings_row
+  covers: [R5]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      app_metadata: {tenant_id: acme, tenant_role: admin}
+  client:
+    op: insert
+    table: tenant_settings
+    values: {tenant_id: initech, plan: pro, sso_required: false}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_contacts
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from contacts
+  expect: {denied: true}
+
+- name: service_role_sees_all_contacts
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from contacts
+  expect:
+    rows:
+    - [4]

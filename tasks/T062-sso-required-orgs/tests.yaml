@@ -1,0 +1,285 @@
+- name: admin_in_sso_session_reads_all_docs
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  sql: select id from org_documents order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: password_session_hides_sso_org_docs
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  sql: select id from org_documents order by id
+  expect:
+    rows:
+    - [3]
+
+- name: member_in_sso_session_reads_org_docs
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  sql: select id from org_documents order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: member_in_password_session_reads_nothing
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  sql: select id from org_documents
+  expect: {count: 0}
+
+- name: non_sso_org_readable_in_password_session
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  sql: select id from org_documents order by id
+  expect:
+    rows:
+    - [3]
+
+- name: password_session_hides_sso_org
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  sql: select id from orgs order by id
+  expect:
+    rows:
+    - [2]
+
+- name: password_session_hides_sso_org_members
+  covers: [R1]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  sql: select user_id from org_members
+  expect: {count: 0}
+
+- name: user_metadata_sso_flag_does_not_count
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+      user_metadata: {sso: true}
+  sql: select id from org_documents
+  expect: {count: 0}
+
+- name: admin_creates_doc_in_sso_session
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: insert
+    table: org_documents
+    values: {org_id: 1, title: Q3 board pack}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_create_doc_in_password_session
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  client:
+    op: insert
+    table: org_documents
+    values: {org_id: 1, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_create_doc
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: insert
+    table: org_documents
+    values: {org_id: 1, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_of_non_sso_org_creates_doc
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  client:
+    op: insert
+    table: org_documents
+    values: {org_id: 2, title: Hiring plan}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_edits_doc_in_sso_session
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: update
+    table: org_documents
+    values: {title: Risk report v2}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: admin_cannot_edit_doc_in_password_session
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  client:
+    op: update
+    table: org_documents
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_deletes_doc_in_sso_session
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: delete
+    table: org_documents
+    match: {id: 2}
+  expect: {affected: 1}
+
+- name: admin_cannot_disable_sso_from_password_session
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: password, timestamp: 1893456000}
+  client:
+    op: update
+    table: orgs
+    values: {require_sso: false}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: admin_renames_org_in_sso_session
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: update
+    table: orgs
+    values: {name: Bank Ltd}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: non_admin_cannot_change_org
+  covers: [R3]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: update
+    table: orgs
+    values: {name: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_promote_self
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims:
+      amr:
+      - {method: sso/saml, timestamp: 1893456000}
+  client:
+    op: update
+    table: org_members
+    values: {role: admin}
+    match: {org_id: 1, user_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_no_documents
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from org_documents
+  expect: {denied: true}
+
+- name: service_role_sees_all_documents
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from org_documents
+  expect:
+    rows:
+    - [3]

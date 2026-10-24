@@ -1,0 +1,21 @@
+id: T041
+title: Timesheets with locked pay periods and a service-role payroll import
+tier: 2
+tags:
+- membership
+- negative-condition
+- service-role
+- client-returning
+traps:
+- service-role-broken
+- negative-condition
+- reference-check
+extra_tables: []
+fixture_notes:
+- period 1 (Jan 2020) locked, period 2 (Jan 2030) open
+- ana (…01) assigned to projects 1 and 2, ben (…02) to project 2; nobody to project 3
+- ana's entry 1 is in the locked period
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

@@ -1,0 +1,20 @@
+id: T044
+title: Public status page with draft incidents and updates
+tier: 1
+tags:
+- public-read
+- parent-child
+- read-only
+- anon-read
+traps:
+- child-leak
+- private-row-leak
+- anon-vs-authenticated
+extra_tables: []
+fixture_notes:
+- draft incident 2 carries a published update (id 3)
+- published incident 1 has a draft update (id 2)
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

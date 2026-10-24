@@ -1,0 +1,20 @@
+id: T098
+title: Gym classes with capacity limits and a waitlist
+tier: 2
+tags:
+- aggregate-limit
+- waitlist
+- instructor-role
+- client-returning
+traps:
+- aggregate-limit
+- state-transition
+extra_tables: []
+fixture_notes:
+- 'class 1 Yoga (capacity 2) is full: ana (…01) and ben (…02) enrolled, cy (…03) waitlisted'
+- 'class 2 HIIT (capacity 3): ana enrolled, eli (…05) waitlisted — room left'
+- instructor ins (…06) teaches classes 1 and 2; ins2 (…07) teaches class 3
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

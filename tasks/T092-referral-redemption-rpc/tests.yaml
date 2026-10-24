@@ -1,0 +1,111 @@
+- name: user_sees_own_code
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select code from referral_codes
+  expect:
+    rows:
+    - [REF-ANA]
+
+- name: referrer_sees_own_referrals
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select referee_id from referrals order by referee_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000009]
+
+- name: user_sees_only_own_credits
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000009}
+  sql: select amount from credits
+  expect:
+    rows:
+    - [100]
+
+- name: user_cannot_grant_self_credits
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  client:
+    op: insert
+    table: credits
+    values: {user_id: 00000000-0000-0000-0000-000000000008, amount: 1000, reason: x}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_insert_referral
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  client:
+    op: insert
+    table: referrals
+    values: {referrer_id: 00000000-0000-0000-0000-000000000001, referee_id: 00000000-0000-0000-0000-000000000008}
+    returning: false
+  expect: {denied: true}
+
+- name: new_user_redeems_code
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  sql: select public.redeem_referral('REF-ANA')
+  expect:
+    rows:
+    - [7]
+
+- name: new_user_receives_credits
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  sql: select public.redeem_referral('REF-ANA'); select amount from credits
+  expect:
+    rows:
+    - [100]
+
+- name: referrer_receives_credits
+  covers: [R3]
+  as: {role: service_role}
+  sql: 'select set_config(''request.jwt.claims'', ''{"role": "authenticated", "sub": "00000000-0000-0000-0000-000000000008"}'', true); select public.redeem_referral(''REF-ANA''); select count(*) from credits where user_id = ''00000000-0000-0000-0000-000000000001'''
+  expect:
+    rows:
+    - [2]
+
+- name: user_cannot_redeem_own_code
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select public.redeem_referral('REF-ANA')
+  expect: {denied: true}
+
+- name: user_cannot_redeem_twice
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000009}
+  sql: select public.redeem_referral('REF-R1')
+  expect: {denied: true}
+
+- name: code_at_limit_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  sql: select public.redeem_referral('MAXED')
+  expect: {denied: true}
+
+- name: unknown_code_is_refused
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000008}
+  sql: select public.redeem_referral('NOPE')
+  expect: {denied: true}
+
+- name: anon_cannot_redeem
+  covers: [R4, R5]
+  as: {role: anon}
+  sql: select public.redeem_referral('REF-ANA')
+  expect: {denied: true}
+
+- name: anon_sees_no_credits
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from credits
+  expect: {denied: true}
+
+- name: service_role_sees_all_referrals
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from referrals
+  expect:
+    rows:
+    - [6]

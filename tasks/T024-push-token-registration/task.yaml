@@ -1,0 +1,18 @@
+id: T024
+title: Push-notification tokens registered by upsert
+tier: 1
+tags:
+- single-owner
+- upsert
+- takeover
+traps:
+- upsert-takeover
+- upsert-needs-update
+extra_tables: []
+fixture_notes:
+- ana's (…01) existing token 'tok-ana-phone'; ben's (…02) 'tok-ben-web'
+- 'user with no tokens: cy (…03)'
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

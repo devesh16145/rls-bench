@@ -1,0 +1,328 @@
+- name: owner_reads_all_own_events
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: client_owner_creates_private_event
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: Dentist, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_owner_edits_own_private_event
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: events
+    values: {title: Doctor (moved)}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: owner_deletes_own_event
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: events
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: owner_cannot_create_event_on_someone_elses_calendar
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000005, title: Spam, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: false}
+  expect: {denied: true}
+
+- name: editing_delegate_reads_own_and_grantors_public_events
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+    - [4]
+
+- name: reading_delegate_reads_grantors_public_events
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: expired_delegate_reads_nothing
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from events
+  expect: {count: 0}
+
+- name: user_without_delegation_reads_only_own
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select id from events order by id
+  expect:
+    rows:
+    - [5]
+
+- name: client_editing_delegate_creates_event_for_grantor
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: Press call, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: editing_delegate_cannot_create_private_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: Secret, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: true}
+  expect: {denied: true}
+
+- name: reading_delegate_cannot_create_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: x, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: false}
+  expect: {denied: true}
+
+- name: expired_delegate_cannot_create_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: x, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: false}
+  expect: {denied: true}
+
+- name: client_editing_delegate_edits_public_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {title: Board meeting (room 2)}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: editing_delegate_cannot_edit_private_event
+  covers: [R3, R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {title: x}
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: editing_delegate_cannot_make_event_private
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {is_private: true}
+    match: {id: 3}
+  expect: {denied: true}
+
+- name: editing_delegate_cannot_move_event_to_own_calendar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: owner_cannot_move_own_event_to_another_calendar
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001}
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: editing_delegate_deletes_public_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: events
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: reading_delegate_cannot_delete_event
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: events
+    match: {id: 3}
+  expect: {denied: true}
+
+- name: delegate_sees_busy_slots_including_private
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select owner_id, starts_at from busy_slots order by starts_at
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000002, '2030-01-07T07:00:00+00:00']
+    - [00000000-0000-0000-0000-000000000001, '2030-01-07T09:00:00+00:00']
+    - [00000000-0000-0000-0000-000000000001, '2030-01-07T14:00:00+00:00']
+    - [00000000-0000-0000-0000-000000000001, '2030-01-08T12:00:00+00:00']
+
+- name: reading_delegate_sees_grantors_busy_slots
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select starts_at from busy_slots
+  expect: {count: 3}
+
+- name: expired_delegate_sees_no_busy_slots
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select * from busy_slots
+  expect: {denied: true}
+
+- name: user_sees_only_own_busy_slots
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  sql: select owner_id from busy_slots order by owner_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000005]
+
+- name: busy_slots_has_exactly_three_columns
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select column_name from information_schema.columns where table_schema = 'public' and table_name = 'busy_slots' order by ordinal_position
+  expect:
+    rows:
+    - [owner_id]
+    - [starts_at]
+    - [ends_at]
+
+- name: owner_sees_all_own_delegations
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select delegate_id from delegations
+  expect: {count: 3}
+
+- name: delegate_sees_only_own_delegation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select grantor_id, can_edit from delegations order by grantor_id
+  expect:
+    rows:
+    - [00000000-0000-0000-0000-000000000001, true]
+
+- name: client_owner_creates_delegation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: delegations
+    values: {grantor_id: 00000000-0000-0000-0000-000000000001, delegate_id: 00000000-0000-0000-0000-000000000005, can_edit: false}
+    returning: true
+  expect: {affected: 1}
+
+- name: client_owner_upserts_delegation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: upsert
+    table: delegations
+    values: {grantor_id: 00000000-0000-0000-0000-000000000001, delegate_id: 00000000-0000-0000-0000-000000000003, can_edit: true, expires_at: null}
+    on_conflict: [grantor_id, delegate_id]
+    returning: true
+  expect: {affected: 1}
+
+- name: delegate_cannot_pass_access_on
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: delegations
+    values: {grantor_id: 00000000-0000-0000-0000-000000000001, delegate_id: 00000000-0000-0000-0000-000000000005, can_edit: true}
+  expect: {denied: true}
+
+- name: expired_delegate_cannot_renew_own_delegation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: delegations
+    values: {expires_at: null}
+    match: {grantor_id: 00000000-0000-0000-0000-000000000001, delegate_id: 00000000-0000-0000-0000-000000000004}
+  expect: {denied: true}
+
+- name: owner_revokes_delegation
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: delegations
+    match: {grantor_id: 00000000-0000-0000-0000-000000000001, delegate_id: 00000000-0000-0000-0000-000000000003}
+  expect: {affected: 1}
+
+- name: anon_sees_no_events
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from events
+  expect: {denied: true}
+
+- name: anon_sees_no_busy_slots
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from busy_slots
+  expect: {denied: true}
+
+- name: anon_cannot_create_event
+  covers: [R6]
+  as: {role: anon}
+  client:
+    op: insert
+    table: events
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, title: anon, starts_at: '2030-01-09 09:00+00', ends_at: '2030-01-09 10:00+00', is_private: false}
+  expect: {denied: true}
+
+- name: service_role_sees_all_busy_slots
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from busy_slots
+  expect:
+    rows:
+    - [5]
+
+- name: service_role_sees_all_events
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from events
+  expect:
+    rows:
+    - [5]

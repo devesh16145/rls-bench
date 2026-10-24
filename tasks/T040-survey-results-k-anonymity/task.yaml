@@ -1,0 +1,22 @@
+id: T040
+title: Survey results visible to owners only above a minimum group size
+tier: 2
+tags:
+- view
+- aggregate
+- k-anonymity
+- upsert
+traps:
+- k-anonymity
+- private-row-leak
+- view-bypass
+extra_tables: []
+fixture_notes:
+- 'survey 1 (olly …01): 4 responses, average 4.00'
+- 'survey 2 (olly): only 2 responses — below the threshold'
+- 'survey 3 (pat …06): 3 responses, average 3.00'
+- respondents …02–…05
+verified: true
+author: owner
+created: '2026-10-25'
+canary: RLSBENCH-CANARY-f9002c750838f00b

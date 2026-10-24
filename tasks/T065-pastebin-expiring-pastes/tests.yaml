@@ -1,0 +1,141 @@
+- name: anon_reads_live_public_pastes
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from pastes order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: signed_in_user_reads_public_and_own
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from pastes order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+    - [6]
+
+- name: author_reads_own_private_and_expired
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from pastes order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: expired_anonymous_paste_is_hidden
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from pastes where id = 5
+  expect: {count: 0}
+
+- name: anon_creates_paste
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: false}
+    returning: false
+  expect: {affected: 1}
+
+- name: anon_cannot_create_private_paste
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: true}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_claim_an_author
+  covers: [R3]
+  as: {role: anon}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: false, author_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: author_creates_private_paste
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_paste_as_someone_else
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: false, author_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: signed_in_user_cannot_post_anonymously
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pastes
+    values: {content: print('hi'), is_private: false, author_id: null}
+    returning: false
+  expect: {denied: true}
+
+- name: author_deletes_own_expired_paste
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: pastes
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: user_cannot_delete_anonymous_paste
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: pastes
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: anon_cannot_delete_anonymous_paste
+  covers: [R4]
+  as: {role: anon}
+  client:
+    op: delete
+    table: pastes
+    match: {id: 4}
+  expect: {denied: true}
+
+- name: author_cannot_edit_paste
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: pastes
+    values: {content: edited}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_pastes
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from pastes
+  expect:
+    rows:
+    - [6]
