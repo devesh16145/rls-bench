@@ -199,6 +199,19 @@ def summarize() -> None:
 
 
 @app.command()
+def split(freeze: bool = typer.Option(False, "--freeze", help="Write tasks/split.json (only once, ever).")) -> None:
+    """Show the frozen train/dev/test split, or freeze it with --freeze."""
+    from harness import split as splitmod
+
+    if freeze:
+        result = splitmod.freeze([Task.load(p) for p in _all_tasks()])
+        typer.echo(f"froze {splitmod.SPLIT_PATH.relative_to(db.ROOT)}")
+    else:
+        result = splitmod.load()
+    typer.echo(f"counts {result['counts']} per tier {result['per_tier']} seed {result['seed']}")
+
+
+@app.command()
 def card(
     paths: list[Path] = typer.Argument(None),
     all_: bool = typer.Option(False, "--all"),

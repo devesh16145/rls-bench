@@ -94,3 +94,9 @@
 
 - Drafted 10 tasks: T094–T096 tier 1, T097–T100 tier 2, T101–T103 tier 3. The set is now 103 tasks.
 - T098 `reference-check` trap (an over-broad instructor delete policy) passed every test: the other instructor cannot see the spots, so the delete matches nothing. Not a real hole; dropped the trap. Tests unchanged.
+
+## 2026-10-25 — split frozen
+
+- Committed all work so far on branch `rls-bench-v0`.
+- Froze `tasks/split.json` with `rls split --freeze` (seed 20261025, stratified by tier): 72 train / 11 dev / 20 test (tier 1: 22/3/6, tier 2: 32/5/9, tier 3: 18/3/5). `freeze` refuses to run if the file exists; a pytest checks the split stays disjoint and within the task set.
+- Note: 4 of the 20 test tasks (T001, T002, T009, T012) were already baselined against frontier and open models in Phase 2; their prompts were sent to OpenRouter, which is acceptable for evaluation but they must never be used to build SFT data.
