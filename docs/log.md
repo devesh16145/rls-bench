@@ -233,3 +233,9 @@
 
 - Same recipe as the Qwen sweep; no calibrated rate exists for Nemotron, so lr 3e-5 / 1e-4 / 3e-4. Final dev NLL 0.205 / 0.159 / **0.153** (min 0.148 at 3e-4); training loss 0.18 / 0.11 / 0.066. The best point sits at the top of the sweep, so a higher rate might do slightly better; not pursued (about $0.7 per run, small expected gain). SFT model: run 20261025T190749Z. GRPO mini-sweep (2e-5, 6e-5; 10 steps × 16 × 8) started from it, plus its dev reference eval.
 - Nemotron dev reference (11 tasks × 6 samples): base 9% pass / 39% leak; v1 SFT (hand loop, lr 1e-4) 15% / 35%; v2 SFT (cookbook loop, lr 3e-4) 30% / 44%, apply errors 44% → 12%, 584 tokens per answer. Tuning the learning rate alone doubled the dev pass rate; the leak rate did not improve, which is GRPO's job.
+
+## 2026-10-26 — GRPO learning-rate sweep, Qwen3.5-9B (10 steps × 16 tasks × 8 rollouts, from the SFT model)
+
+- lr 2e-5: train reward 0.27 → 0.35, pass 37% → 43%, leak 20% → 14%, entropy 0.082 → 0.054, dev after 10 steps 21% pass / 42% leak. lr 6e-5: reward 0.32 → 0.47, pass 41% → 54%, leak 18% → 15%, entropy 0.079 → 0.022, dev 21% / 39%. lr 2e-4: reward 0.30 → 0.12, pass 41% → 20% (collapsed), dev 20% / 39%. Sampler-trainer KL ≤ 5e-4 throughout. About $3.1 per run.
+- Decision: the full run uses lr 4e-5 (between the stable 2e-5 and the fast-but-entropy-collapsing 6e-5; also the cookbook's RL default), 50 steps × 16 × 8, dev eval every 10 steps, cap $40 (worst case $37.6).
+- Watch item: all three runs raised the dev leak rate above the SFT model's 26% while cutting dev apply errors (24% → 12–20%): SQL that used to fail to apply now applies and leaks. Train-side leak rates fell. Reported either way; the pre-registered selection rule (highest dev pass) stands.

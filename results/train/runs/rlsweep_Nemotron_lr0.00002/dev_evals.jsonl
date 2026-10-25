@@ -1,0 +1,1 @@
+{"eval": 1, "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@rlsweep_Nemotron_lr0.00002-eval001", "dev/pass_all": 0.22727272727272727, "dev/leak_all": 0.3484848484848485, "dev/apply_error_all": 0.16666666666666666, "dev/pass_at_1": 0.2727272727272727, "dev/mean_completion_tokens": 582.560606060606, "dev/spend_usd": 0.025896926999999997}
