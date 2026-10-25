@@ -244,3 +244,8 @@
 ## 2026-10-26 — Repair-RL dry run (experiment B, not started)
 
 - Environment check with 3 turns: all 72 references score 1 on the first try; every trap gets feedback and a second turn (no episode ends early). Estimate at 30 steps × 16 tasks × 4 rollouts with 2,048-token answers: typical $13, worst $56 (three turns, each re-reading the growing conversation), over the $40 cap. The run will use 25 steps and 1,536-token answers (worst ≈ $35), starting from the best single-turn GRPO checkpoint once that run finishes.
+
+## 2026-10-26 — GRPO mini-sweep, Nemotron (10 steps × 16 × 8, from its SFT model)
+
+- lr 2e-5: reward 0.30 → 0.31, pass 38% → 40%, dev after 10 steps 23% pass / 35% leak. lr 6e-5: reward 0.29 → 0.36, pass 39% → 44%, leak 20% → 16%, entropy 0.088 → 0.043, KL ≤ 2e-3, dev 27% / 39%. About $1.15 per run. Decision: the full Nemotron run uses lr 6e-5, 50 steps × 16 × 8, cap $20 (typical ≈ $7, worst ≈ $15).
+- Qwen3.5-9B full run (lr 4e-5) mid-way: dev pass 29% at step 20 and **45% at step 30**, dev leak 39% → 18%, against 24% / 26% for the SFT model.

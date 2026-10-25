@@ -1,0 +1,1660 @@
+### repo: /Users/Devesh/Documents/VIBE/Handshake @ f0db1e27eda47af8944a128f40b9abfb2b59579b
+modules: tinker_cookbook
+-- repo-wide (vs HEAD, staged+unstaged) --
+diff --git a/results/train/runs/rlsweep_Nemotron_lr0.00002/logs.log b/results/train/runs/rlsweep_Nemotron_lr0.00002/logs.log
+index c91717a..a06fb45 100644
+--- a/results/train/runs/rlsweep_Nemotron_lr0.00002/logs.log
++++ b/results/train/runs/rlsweep_Nemotron_lr0.00002/logs.log
+@@ -2892,3 +2892,1638 @@ create policy cart_items_delete on public.cart_items
+   using (user_id = auth.uid());
+ ```<|im_end|>
+ ====== End Trajectory Group ======
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/rlsweep_Nemotron_lr0.00002/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++                                 Step 1                                 
++┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
++┃ Metric                                                  ┃ Value      ┃
++┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
++│ env/all/ac_tokens_per_turn                              │ 740.666667 │
++│ env/all/apply_error                                     │ 0.408333   │
++│ env/all/block                                           │ 0.250000   │
++│ env/all/by_group/frac_all_bad                           │ 0.000000   │
++│ env/all/by_group/frac_all_good                          │ 0.000000   │
++│ env/all/by_group/frac_mixed                             │ 1.000000   │
++│ env/all/format_error                                    │ 0.033333   │
++│ env/all/grade_ms                                        │ 695.500000 │
++│ env/all/leak                                            │ 0.158333   │
++│ env/all/ob_tokens_per_turn                              │ 580.933333 │
++│ env/all/pass                                            │ 0.216667   │
++│ env/all/pass_final                                      │ 0.216667   │
++│ env/all/reward/total                                    │ 0.134167   │
++│ env/all/total_ac_tokens                                 │ 88880      │
++│ env/all/total_episodes                                  │ 120        │
++│ env/all/total_ob_tokens                                 │ 69712      │
++│ env/all/total_turns                                     │ 120        │
++│ env/all/turns                                           │ 1.000000   │
++│ env/all/turns_per_episode                               │ 1.000000   │
++│ env/tier1/ac_tokens_per_turn                            │ 715.437500 │
++│ env/tier1/apply_error                                   │ 0.406250   │
++│ env/tier1/block                                         │ 0.156250   │
++│ env/tier1/by_group/frac_all_bad                         │ 0.000000   │
++│ env/tier1/by_group/frac_all_good                        │ 0.000000   │
++│ env/tier1/by_group/frac_mixed                           │ 1.000000   │
++│ env/tier1/format_error                                  │ 0.031250   │
++│ env/tier1/grade_ms                                      │ 733.093750 │
++│ env/tier1/leak                                          │ 0.031250   │
++│ env/tier1/ob_tokens_per_turn                            │ 535.250000 │
++│ env/tier1/pass                                          │ 0.375000   │
++│ env/tier1/pass_final                                    │ 0.375000   │
++│ env/tier1/reward/total                                  │ 0.356250   │
++│ env/tier1/total_ac_tokens                               │ 22894      │
++│ env/tier1/total_episodes                                │ 32         │
++│ env/tier1/total_ob_tokens                               │ 17128      │
++│ env/tier1/total_turns                                   │ 32         │
++│ env/tier1/turns                                         │ 1.000000   │
++│ env/tier1/turns_per_episode                             │ 1.000000   │
++│ env/tier2/ac_tokens_per_turn                            │ 669.395833 │
++│ env/tier2/apply_error                                   │ 0.375000   │
++│ env/tier2/block                                         │ 0.291667   │
++│ env/tier2/by_group/frac_all_bad                         │ 0.000000   │
++│ env/tier2/by_group/frac_all_good                        │ 0.000000   │
++│ env/tier2/by_group/frac_mixed                           │ 1.000000   │
++│ env/tier2/format_error                                  │ 0.041667   │
++│ env/tier2/grade_ms                                      │ 615.895833 │
++│ env/tier2/leak                                          │ 0.187500   │
++│ env/tier2/ob_tokens_per_turn                            │ 575.833333 │
++│ env/tier2/pass                                          │ 0.187500   │
++│ env/tier2/pass_final                                    │ 0.187500   │
++│ env/tier2/reward/total                                  │ 0.089583   │
++│ env/tier2/total_ac_tokens                               │ 32131      │
++│ env/tier2/total_episodes                                │ 48         │
++│ env/tier2/total_ob_tokens                               │ 27640      │
++│ env/tier2/total_turns                                   │ 48         │
++│ env/tier2/turns                                         │ 1.000000   │
++│ env/tier2/turns_per_episode                             │ 1.000000   │
++│ env/tier3/ac_tokens_per_turn                            │ 846.375000 │
++│ env/tier3/apply_error                                   │ 0.450000   │
++│ env/tier3/block                                         │ 0.275000   │
++│ env/tier3/by_group/frac_all_bad                         │ 0.000000   │
++│ env/tier3/by_group/frac_all_good                        │ 0.000000   │
++│ env/tier3/by_group/frac_mixed                           │ 1.000000   │
++│ env/tier3/format_error                                  │ 0.025000   │
++│ env/tier3/grade_ms                                      │ 760.950000 │
++│ env/tier3/leak                                          │ 0.225000   │
++│ env/tier3/ob_tokens_per_turn                            │ 623.600000 │
++│ env/tier3/pass                                          │ 0.125000   │
++│ env/tier3/pass_final                                    │ 0.125000   │
++│ env/tier3/reward/total                                  │ 0.010000   │
++│ env/tier3/total_ac_tokens                               │ 33855      │
++│ env/tier3/total_episodes                                │ 40         │
++│ env/tier3/total_ob_tokens                               │ 24944      │
++│ env/tier3/total_turns                                   │ 40         │
++│ env/tier3/turns                                         │ 1.000000   │
++│ env/tier3/turns_per_episode                             │ 1.000000   │
++│ optim/entropy                                           │ 0.092296   │
++│ optim/kl_sample_train_v1                                │ 0.001262   │
++│ optim/kl_sample_train_v2                                │ 0.001378   │
++│ optim/lr                                                │ 0.000020   │
++│ progress/batch                                          │ 1          │
++│ progress/done_frac                                      │ 0.200000   │
++│ time/assemble_training_data                             │ 0.254339   │
++│ time/compute_full_batch_metrics_and_get_sampling_client │ 5.745871   │
++│ time/compute_group_rewards:max                          │ 0.000310   │
++│ time/compute_group_rewards:mean                         │ 0.000066   │
++│ time/compute_kl_sample_train                            │ 0.007062   │
++│ time/do_group_rollout_and_filter_constant_reward:max    │ 33.716761  │
++│ time/do_group_rollout_and_filter_constant_reward:mean   │ 28.089611  │
++│ time/do_train_step_and_get_sampling_client              │ 12.159108  │
++│ time/env_initial_observation:max                        │ 0.218256   │
++│ time/env_initial_observation:mean                       │ 0.091563   │
++│ time/env_step:max                                       │ 20.815204  │
++│ time/env_step:mean                                      │ 11.644488  │
++│ time/policy_sample:max                                  │ 14.413764  │
++│ time/policy_sample:mean                                 │ 8.531220   │
++│ time/prepare_minibatch                                  │ 0.306318   │
++│ time/sampling                                           │ 33.858379  │
++│ time/save_checkpoint                                    │ 5.738698   │
++│ time/save_checkpoint_and_get_sampling_client            │ 5.738751   │
++│ time/total                                              │ 46.062138  │
++│ time/train_step                                         │ 6.102805   │
++└─────────────────────────────────────────────────────────┴────────────┘
++tinker_cookbook.rl.train:268 [INFO] 
++====== Trajectory Group ======
++****** trajectory idx=0, reward=0 ******
++Per-step metrics:
++  Step 0:
++    pass: 0.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 1.0
++    grade_ms: 320.0
++    turns: 1.0
++    pass_final: 0.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.fleet_managers (
++  user_id uuid primary key references auth.users(id)
++);
++
++create table public.vehicles (
++  id bigint primary key,
++  plate text not null unique
++);
++
++create table public.assignments (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null references auth.users(id),
++  starts_on date not null,
++  ends_on date not null,
++  check (ends_on >= starts_on)
++);
++
++create table public.trips (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null default auth.uid() references auth.users(id),
++  trip_date date not null,
++  km numeric(8, 1) not null check (km >= 0)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.assignments: 3 rows
++- public.fleet_managers: 1 rows
++- public.trips: 2 rows
++- public.vehicles: 2 rows
++- auth.users: 3 rows
++
++## Access rules
++
++A fleet app built with supabase-js. Fleet managers (users in `fleet_managers`) assign drivers to vehicles for date ranges; both `starts_on` and `ends_on` are included. Drivers log trips with `supabase.from('trips').insert({ vehicle_id, driver_id, trip_date, km }).select()` and correct them with `.update({...}).eq('id', id).select()`.
++
++R1. Signed-in users can see every vehicle. Drivers can see their own assignments and trips; fleet managers can see every assignment and trip.
++R2. Drivers can log trips, as themselves, only for a vehicle and a date covered by one of their own assignments, including the first and last day.
++R3. Drivers can edit and delete their own trips; an edited trip must still be covered by one of their assignments.
++R4. Only fleet managers can create, change or delete assignments. Nobody can change `fleet_managers` through the app.
++R5. Anonymous visitors cannot see or change anything.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++create schema private;
++
++grant usage on schema private to authenticated;
++
++create function private.is_manager() returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.fleet_managers m where m.user_id = auth.uid())
++$$;
++
++create function private.can_drive(vehicle_id bigint, on date) returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.assignments a where a.vehicle_id = vehicle_id and a.driver_id = auth.uid() and on between a.starts_on and a.ends_on)
++$$;
++
++alter table public.fleet_managers enable row level security;
++alter table public.vehicles enable row level security;
++alter table public.assignments enable row level security;
++alter table public.trips enable row level security;
++
++create policy vehicles_select on public.vehicles
++  for select to authenticated
++  using (true);
++
++create policy assignments_select on public.assignments
++  for select to authenticated
++  using (driver_id = auth.uid() or private.is_manager());
++
++create policy trips_select on public.trips
++  for select to authenticated
++  using (driver_id = auth.uid() or private.is_manager());
++
++create policy vehicles_insert on public.vehicles
++  for insert to authenticated
++  with check (private.is_manager());
++
++create policy vehicles_update on public.vehicles
++  for update to authenticated
++  using (private.is_manager())
++  with check (private.is_manager());
++
++create policy vehicles_delete on public.vehicles
++  for delete to authenticated
++  using (private.is_manager());
++
++create policy assignments_insert on public.assignments
++  for insert to authenticated
++  with check (private.is_manager());
++
++create policy assignments_update on public.assignments
++  for update to authenticated
++  using (private.is_manager())
++  with check (private.is_manager());
++
++create policy assignments_delete on public.assignments
++  for delete to authenticated
++  using (private.is_manager());
++
++create policy trips_insert on public.trips
++  for insert to authenticated
++  with check (driver_id = auth.uid() and private.can_drive(vehicle_id, trip_date));
++
++create policy trips_update on public.trips
++  for update to authenticated
++  using (driver_id = auth.uid())
++  with check (driver_id = auth.uid() and private.can_drive(vehicle_id, trip_date));
++
++create policy trips_delete on public.trips
++  for delete to authenticated
++  using (driver_id = auth.uid());
++```<|im_end|>
++****** trajectory idx=1, reward=1 ******
++Per-step metrics:
++  Step 0:
++    pass: 1.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 854.0
++    turns: 1.0
++    pass_final: 1.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.fleet_managers (
++  user_id uuid primary key references auth.users(id)
++);
++
++create table public.vehicles (
++  id bigint primary key,
++  plate text not null unique
++);
++
++create table public.assignments (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null references auth.users(id),
++  starts_on date not null,
++  ends_on date not null,
++  check (ends_on >= starts_on)
++);
++
++create table public.trips (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null default auth.uid() references auth.users(id),
++  trip_date date not null,
++  km numeric(8, 1) not null check (km >= 0)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.assignments: 3 rows
++- public.fleet_managers: 1 rows
++- public.trips: 2 rows
++- public.vehicles: 2 rows
++- auth.users: 3 rows
++
++## Access rules
++
++A fleet app built with supabase-js. Fleet managers (users in `fleet_managers`) assign drivers to vehicles for date ranges; both `starts_on` and `ends_on` are included. Drivers log trips with `supabase.from('trips').insert({ vehicle_id, driver_id, trip_date, km }).select()` and correct them with `.update({...}).eq('id', id).select()`.
++
++R1. Signed-in users can see every vehicle. Drivers can see their own assignments and trips; fleet managers can see every assignment and trip.
++R2. Drivers can log trips, as themselves, only for a vehicle and a date covered by one of their own assignments, including the first and last day.
++R3. Drivers can edit and delete their own trips; an edited trip must still be covered by one of their assignments.
++R4. Only fleet managers can create, change or delete assignments. Nobody can change `fleet_managers` through the app.
++R5. Anonymous visitors cannot see or change anything.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++create schema private;
++
++grant usage on schema private to authenticated;
++
++create function private.is_manager() returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.fleet_managers m where m.user_id = auth.uid())
++$$;
++
++create function private.covered(p_vehicle_id bigint, p_on date) returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (
++    select 1 from public.assignments a
++    where a.vehicle_id = p_vehicle_id
++      and a.driver_id = auth.uid()
++      and p_on between a.starts_on and a.ends_on
++  )
++$$;
++
++alter table public.fleet_managers enable row level security;
++alter table public.vehicles enable row level security;
++alter table public.assignments enable row level security;
++alter table public.trips enable row level security;
++
++revoke all on public.fleet_managers from anon, authenticated;
++revoke all on public.vehicles from anon;
++revoke all on public.assignments from anon;
++revoke all on public.trips from anon;
++
++grant select on public.vehicles to authenticated;
++grant select on public.assignments to authenticated;
++grant select, insert, update, delete on public.trips to authenticated;
++
++grant all on public.fleet_managers to service_role;
++grant all on public.vehicles to service_role;
++grant all on public.assignments to service_role;
++grant all on public.trips to service_role;
++
++create policy vehicles_select_authenticated
++on public.vehicles
++for select
++to authenticated
++using (true);
++
++create policy assignments_select_own_or_manager
++on public.assignments
++for select
++to authenticated
++using (driver_id = auth.uid() or private.is_manager());
++
++create policy assignments_insert_manager
++on public.assignments
++for insert
++to authenticated
++with check (private.is_manager());
++
++create policy assignments_update_manager
++on public.assignments
++for update
++to authenticated
++using (private.is_manager())
++with check (private.is_manager());
++
++create policy assignments_delete_manager
++on public.assignments
++for delete
++to authenticated
++using (private.is_manager());
++
++create policy trips_select_own_or_manager
++on public.trips
++for select
++to authenticated
++using (driver_id = auth.uid() or private.is_manager());
++
++create policy trips_insert_driver_self_covered
++on public.trips
++for insert
++to authenticated
++with check (
++  driver_id = auth.uid()
++  and private.covered(vehicle_id, trip_date)
++);
++
++create policy trips_update_driver_self_covered
++on public.trips
++for update
++to authenticated
++using (driver_id = auth.uid())
++with check (driver_id = auth.uid() and private.covered(vehicle_id, trip_date));
++
++create policy trips_delete_driver
++on public.trips
++for delete
++to authenticated
++using (driver_id = auth.uid());
++```<|im_end|>
++****** trajectory idx=2, reward=1 ******
++Per-step metrics:
++  Step 0:
++    pass: 1.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 504.0
++    turns: 1.0
++    pass_final: 1.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.fleet_managers (
++  user_id uuid primary key references auth.users(id)
++);
++
++create table public.vehicles (
++  id bigint primary key,
++  plate text not null unique
++);
++
++create table public.assignments (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null references auth.users(id),
++  starts_on date not null,
++  ends_on date not null,
++  check (ends_on >= starts_on)
++);
++
++create table public.trips (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null default auth.uid() references auth.users(id),
++  trip_date date not null,
++  km numeric(8, 1) not null check (km >= 0)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.assignments: 3 rows
++- public.fleet_managers: 1 rows
++- public.trips: 2 rows
++- public.vehicles: 2 rows
++- auth.users: 3 rows
++
++## Access rules
++
++A fleet app built with supabase-js. Fleet managers (users in `fleet_managers`) assign drivers to vehicles for date ranges; both `starts_on` and `ends_on` are included. Drivers log trips with `supabase.from('trips').insert({ vehicle_id, driver_id, trip_date, km }).select()` and correct them with `.update({...}).eq('id', id).select()`.
++
++R1. Signed-in users can see every vehicle. Drivers can see their own assignments and trips; fleet managers can see every assignment and trip.
++R2. Drivers can log trips, as themselves, only for a vehicle and a date covered by one of their own assignments, including the first and last day.
++R3. Drivers can edit and delete their own trips; an edited trip must still be covered by one of their assignments.
++R4. Only fleet managers can create, change or delete assignments. Nobody can change `fleet_managers` through the app.
++R5. Anonymous visitors cannot see or change anything.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++create schema private;
++
++grant usage on schema private to authenticated;
++
++create function private.is_manager() returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.fleet_managers fm where fm.user_id = auth.uid())
++$$;
++
++create function private.covered(p_vehicle_id bigint, p_date date) returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.assignments a where a.vehicle_id = p_vehicle_id and a.driver_id = auth.uid() and p_date between a.starts_on and a.ends_on)
++$$;
++
++alter table public.fleet_managers enable row level security;
++alter table public.vehicles enable row level security;
++alter table public.assignments enable row level security;
++alter table public.trips enable row level security;
++
++create policy vehicles_select on public.vehicles
++for select to authenticated
++using (true);
++
++create policy assignments_select on public.assignments
++for select to authenticated
++using (driver_id = auth.uid() or private.is_manager());
++
++create policy assignments_insert on public.assignments
++for insert to authenticated
++with check (private.is_manager());
++
++create policy assignments_update on public.assignments
++for update to authenticated
++using (private.is_manager())
++with check (private.is_manager());
++
++create policy assignments_delete on public.assignments
++for delete to authenticated
++using (private.is_manager());
++
++create policy trips_select on public.trips
++for select to authenticated
++using (driver_id = auth.uid() or private.is_manager());
++
++create policy trips_insert on public.trips
++for insert to authenticated
++with check (driver_id = auth.uid() and private.covered(vehicle_id, trip_date));
++
++create policy trips_update on public.trips
++for update to authenticated
++using (driver_id = auth.uid())
++with check (driver_id = auth.uid() and private.covered(vehicle_id, trip_date));
++
++create policy trips_delete on public.trips
++for delete to authenticated
++using (driver_id = auth.uid());
++
++revoke all on public.fleet_managers from anon, authenticated;
++grant usage on schema private to authenticated;
++```<|im_end|>
++****** trajectory idx=3, reward=1 ******
++Per-step metrics:
++  Step 0:
++    pass: 1.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 494.0
++    turns: 1.0
++    pass_final: 1.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.fleet_managers (
++  user_id uuid primary key references auth.users(id)
++);
++
++create table public.vehicles (
++  id bigint primary key,
++  plate text not null unique
++);
++
++create table public.assignments (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null references auth.users(id),
++  starts_on date not null,
++  ends_on date not null,
++  check (ends_on >= starts_on)
++);
++
++create table public.trips (
++  id bigint generated by default as identity primary key,
++  vehicle_id bigint not null references public.vehicles(id),
++  driver_id uuid not null default auth.uid() references auth.users(id),
++  trip_date date not null,
++  km numeric(8, 1) not null check (km >= 0)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.assignments: 3 rows
++- public.fleet_managers: 1 rows
++- public.trips: 2 rows
++- public.vehicles: 2 rows
++- auth.users: 3 rows
++
++## Access rules
++
++A fleet app built with supabase-js. Fleet managers (users in `fleet_managers`) assign drivers to vehicles for date ranges; both `starts_on` and `ends_on` are included. Drivers log trips with `supabase.from('trips').insert({ vehicle_id, driver_id, trip_date, km }).select()` and correct them with `.update({...}).eq('id', id).select()`.
++
++R1. Signed-in users can see every vehicle. Drivers can see their own assignments and trips; fleet managers can see every assignment and trip.
++R2. Drivers can log trips, as themselves, only for a vehicle and a date covered by one of their own assignments, including the first and last day.
++R3. Drivers can edit and delete their own trips; an edited trip must still be covered by one of their assignments.
++R4. Only fleet managers can create, change or delete assignments. Nobody can change `fleet_managers` through the app.
++R5. Anonymous visitors cannot see or change anything.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++alter table public.fleet_managers enable row level security;
++alter table public.vehicles enable row level security;
++alter table public.assignments enable row level security;
++alter table public.trips enable row level security;
++
++create or replace function public.is_fleet_manager()
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.fleet_managers
++    where user_id = auth.uid()
++  );
++$$;
++
++create or replace function public.is_covered(p_vehicle_id bigint, p_date date)
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.assignments a
++    where a.driver_id = auth.uid()
++      and a.vehicle_id = p_vehicle_id
++      and p_date between a.starts_on and a.ends_on
++  );
++$$;
++
++create or replace function public.protect_trips()
++returns trigger
++language plpgsql
++security definer
++set search_path = ''
++as $$
++begin
++  if new.driver_id is distinct from old.driver_id then
++    if new.driver_id is null
++       or not exists (
++         select 1
++         from public.assignments a
++         where a.driver_id = new.driver_id
++           and a.vehicle_id = new.vehicle_id
++           and new.trip_date between a.starts_on and a.ends_on
++       ) then
++      raise exception 'protected: driver/vehicle/date not covered by an assignment';
++    end if;
++  end if;
++  return new;
++end;
++$$;
++
++revoke all on function public.is_fleet_manager() from public, anon;
++revoke all on function public.is_covered(bigint, date) from public, anon;
++revoke all on function public.protect_trips() from public, anon;
++
++grant execute on function public.is_fleet_manager() to authenticated, service_role;
++grant execute on function public.is_covered(bigint, date) to authenticated, service_role;
++grant execute on function public.protect_trips() to authenticated, service_role;
++
++create policy vehicles_select_authenticated
++  on public.vehicles for select
++  to authenticated
++  using (true);
++
++create policy assignments_select_authenticated
++  on public.assignments for select
++  to authenticated
++  using (driver_id = auth.uid() or public.is_fleet_manager());
++
++create policy assignments_insert_manager
++  on public.assignments for insert
++  to authenticated
++  with check (public.is_fleet_manager());
++
++create policy assignments_update_manager
++  on public.assignments for update
++  to authenticated
++  using (public.is_fleet_manager())
++  with check (public.is_fleet_manager());
++
++create policy assignments_delete_manager
++  on public.assignments for delete
++  to authenticated
++  using (public.is_fleet_manager());
++
++create policy trips_select_authenticated
++  on public.trips for select
++  to authenticated
++  using (driver_id = auth.uid() or public.is_fleet_manager());
++
++create policy trips_insert_covered
++  on public.trips for insert
++  to authenticated
++  with check (
++    driver_id = auth.uid()
++    and public.is_covered(vehicle_id, trip_date)
++  );
++
++create policy trips_update_own_covered
++  on public.trips for update
++  to authenticated
++  using (driver_id = auth.uid())
++  with check (
++    driver_id = auth.uid()
++    and public.is_covered(vehicle_id, trip_date)
++  );
++
++create policy trips_delete_own
++  on public.trips for delete
++  to authenticated
++  using (driver_id = auth.uid());
++
++create trigger trips_protect_update
++  before update on public.trips
++  for each row
++  execute function public.protect_trips();
++
++revoke all on public.fleet_managers from public, anon, authenticated;
++revoke all on public.vehicles from anon;
++revoke all on public.assignments from anon;
++revoke all on public.trips from anon;
++revoke all on sequence public.assignments_id_seq from anon;
++revoke all on sequence public.trips_id_seq from anon;
++
++grant select on public.vehicles to authenticated;
++grant select, insert, update, delete on public.assignments to authenticated;
++grant select, insert, update, delete on public.trips to authenticated;
++grant usage, select on sequence public.assignments_id_seq to authenticated;
++grant usage, select on sequence public.trips_id_seq to authenticated;
++
++grant all on public.fleet_managers to service_role;
++grant all on public.vehicles to service_role;
++grant all on public.assignments to service_role;
++grant all on public.trips to service_role;
++grant usage, select on sequence public.assignments_id_seq to service_role;
++grant usage, select on sequence public.trips_id_seq to service_role;
++```<|im_end|>
++====== End Trajectory Group ======
++tinker_cookbook.rl.train:268 [INFO] 
++====== Trajectory Group ======
++****** trajectory idx=0, reward=0 ******
++Per-step metrics:
++  Step 0:
++    pass: 0.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 1.0
++    grade_ms: 288.0
++    turns: 1.0
++    pass_final: 0.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.contracts (
++  id bigint primary key,
++  owner_id uuid not null references auth.users(id),
++  title text not null
++);
++
++create table public.contract_shares (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  user_id uuid not null references auth.users(id),
++  primary key (contract_id, user_id)
++);
++
++create table public.contract_versions (
++  id bigint generated by default as identity primary key,
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  version integer not null,
++  body text not null,
++  created_by uuid not null default auth.uid() references auth.users(id),
++  unique (contract_id, version)
++);
++
++create table public.contract_tags (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  tag text not null,
++  primary key (contract_id, tag)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.contract_shares: 1 rows
++- public.contract_tags: 3 rows
++- public.contract_versions: 4 rows
++- public.contracts: 3 rows
++- auth.users: 4 rows
++
++## Access rules
++
++A contract-management app built with supabase-js. Each contract has an owner and can be shared with other users. Versions and tags hang off a contract. Writes read the row back with `.select()`.
++
++R1. Owners can create contracts as themselves and read, rename and delete their own contracts. Users can read the contracts shared with them.
++R2. A contract's versions and tags are visible to exactly the people who can read the contract.
++R3. Owners and the users a contract is shared with can add new versions to it, as themselves. Versions are never edited or deleted.
++R4. Only a contract's owner can add or remove its tags and its shares.
++R5. Users can see the share rows of the contracts they own and the shares addressed to them.
++R6. Anonymous visitors cannot see or change anything.
++R7. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++alter table public.contracts enable row level security;
++alter table public.contract_shares enable row level security;
++alter table public.contract_versions enable row level security;
++alter table public.contract_tags enable row level security;
++
++create or replace function public.is_contract_owner(cid bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = cid
++      and c.owner_id = auth.uid()
++  );
++$$;
++
++create or replace function public.can_read_contract(cid bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = cid
++      and c.owner_id = auth.uid()
++  )
++  or exists (
++    select 1
++    from public.contract_shares s
++    where s.contract_id = cid
++      and s.user_id = auth.uid()
++  );
++$$;
++
++create policy contracts_select_owner_or_shared
++  on public.contracts
++  for select
++  to authenticated
++  using (public.can_read_contract(id));
++
++create policy contracts_insert_owner
++  on public.contracts
++  for insert
++  to authenticated
++  with check (public.is_contract_owner(id));
++
++create policy contracts_update_owner
++  on public.contracts
++  for update
++  to authenticated
++  using (public.is_contract_owner(id))
++  with check (public.is_contract_owner(id));
++
++create policy contracts_delete_owner
++  on public.contracts
++  for delete
++  to authenticated
++  using (public.is_contract_owner(id));
++
++create policy contract_shares_select_owner_or_addressed
++  on public.contract_shares
++  for select
++  to authenticated
++  using (user_id = auth.uid() or public.is_contract_owner(contract_id));
++
++create policy contract_shares_insert_owner
++  on public.contract_shares
++  for insert
++  to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_shares_delete_owner
++  on public.contract_shares
++  for delete
++  to authenticated
++  using (public.is_contract_owner(contract_id));
++
++create policy contract_versions_select_readable
++  on public.contract_versions
++  for select
++  to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_versions_insert_able
++  on public.contract_versions
++  for insert
++  to authenticated
++  with check (public.can_read_contract(contract_id) and created_by = auth.uid());
++
++create policy contract_tags_select_readable
++  on public.contract_tags
++  for select
++  to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_tags_insert_owner
++  on public.contract_tags
++  for insert
++  to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_tags_delete_owner
++  on public.contract_tags
++  for delete
++  to authenticated
++  using (public.is_contract_owner(contract_id));
++
++create or replace function public.sanitize_contract_versions_insert()
++returns trigger
++language plpgsql
++security definer
++set search_path = public, pg_temp
++as $$
++begin
++  if new.contract_id is null then
++    raise exception 'contract_id is required';
++  end if;
++
++  if new.version is null then
++    raise exception 'version is required';
++  end if;
++
++  if new.body is null then
++    raise exception 'body is required';
++  end if;
++
++  if new.created_by is null then
++    raise exception 'created_by is required';
++  end if;
++
++  if new.created_by <> auth.uid() then
++    raise exception 'created_by must be the current user';
++  end if;
++
++  if not exists (
++    select 1
++    from public.contracts c
++    where c.id = new.contract_id
++  ) then
++    raise exception 'unknown contract';
++  end if;
++
++  return new;
++end;
++$$;
++
++create trigger contract_versions_sanitize_insert
++  before insert on public.contract_versions
++  for each row
++  execute function public.sanitize_contract_versions_insert();
++
++revoke all on function public.is_contract_owner(bigint) from public, anon;
++revoke all on function public.can_read_contract(bigint) from public, anon;
++revoke all on function public.sanitize_contract_versions_insert() from public, anon;
++
++grant execute on function public.is_contract_owner(bigint) to authenticated, service_role;
++grant execute on function public.can_read_contract(bigint) to authenticated, service_role;
++grant execute on function public.sanitize_contract_versions_insert() to authenticated, service_role;
++
++revoke all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags from anon, authenticated;
++grant select, insert, update, delete on table public.contracts to authenticated;
++grant select on table public.contract_shares to authenticated;
++grant insert, delete on table public.contract_shares to authenticated;
++grant select, insert on table public.contract_versions to authenticated;
++grant select, insert on table public.contract_tags to authenticated;
++grant delete on table public.contract_tags to authenticated;
++
++grant all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags to service_role;
++
++revoke all sequence default privileges on public.sequence on public.contract_versions_id_seq from anon, authenticated;
++grant usage, select on sequence public.contract_versions_id_seq to authenticated, service_role;
++
++revoke all on table public.contract_shares, public.contract_tags, public.contract_versions from service_role;
++grant all on table public.contract_shares, public.contract_tags, public.contract_versions to service_role;
++```<|im_end|>
++****** trajectory idx=1, reward=0 ******
++Per-step metrics:
++  Step 0:
++    pass: 0.0
++    leak: 0.0
++    block: 1.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 613.0
++    turns: 1.0
++    pass_final: 0.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.contracts (
++  id bigint primary key,
++  owner_id uuid not null references auth.users(id),
++  title text not null
++);
++
++create table public.contract_shares (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  user_id uuid not null references auth.users(id),
++  primary key (contract_id, user_id)
++);
++
++create table public.contract_versions (
++  id bigint generated by default as identity primary key,
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  version integer not null,
++  body text not null,
++  created_by uuid not null default auth.uid() references auth.users(id),
++  unique (contract_id, version)
++);
++
++create table public.contract_tags (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  tag text not null,
++  primary key (contract_id, tag)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.contract_shares: 1 rows
++- public.contract_tags: 3 rows
++- public.contract_versions: 4 rows
++- public.contracts: 3 rows
++- auth.users: 4 rows
++
++## Access rules
++
++A contract-management app built with supabase-js. Each contract has an owner and can be shared with other users. Versions and tags hang off a contract. Writes read the row back with `.select()`.
++
++R1. Owners can create contracts as themselves and read, rename and delete their own contracts. Users can read the contracts shared with them.
++R2. A contract's versions and tags are visible to exactly the people who can read the contract.
++R3. Owners and the users a contract is shared with can add new versions to it, as themselves. Versions are never edited or deleted.
++R4. Only a contract's owner can add or remove its tags and its shares.
++R5. Users can see the share rows of the contracts they own and the shares addressed to them.
++R6. Anonymous visitors cannot see or change anything.
++R7. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++alter table public.contracts enable row level security;
++alter table public.contract_shares enable row level security;
++alter table public.contract_versions enable row level security;
++alter table public.contract_tags enable row level security;
++
++create function public.is_contract_owner(p_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = p_contract_id
++      and c.owner_id = auth.uid()
++  );
++$$;
++
++create function public.is_contract_shared(p_contract_id bigint, p_user_id uuid)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contract_shares s
++    where s.contract_id = p_contract_id
++      and s.user_id = p_user_id
++  );
++$$;
++
++create function public.can_read_contract(p_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select coalesce(
++    (select exists (select 1 from public.contracts c where c.id = p_contract_id and c.owner_id = auth.uid())),
++    (select exists (select 1 from public.contract_shares s where s.contract_id = p_contract_id and s.user_id = auth.uid()))
++  );
++$$;
++
++revoke all on function public.is_contract_owner(bigint) from public;
++revoke all on function public.is_contract_shared(bigint, uuid) from public;
++revoke all on function public.can_read_contract(bigint) from public;
++
++grant execute on function public.is_contract_owner(bigint) to authenticated, service_role;
++grant execute on function public.is_contract_shared(bigint, uuid) to authenticated, service_role;
++grant execute on function public.can_read_contract(bigint) to authenticated, service_role;
++
++create policy contracts_select on public.contracts
++  for select to authenticated
++  using (owner_id = auth.uid() or public.is_contract_shared(id, auth.uid()));
++
++create policy contracts_insert on public.contracts
++  for insert to authenticated
++  with check (owner_id = auth.uid());
++
++create policy contracts_update on public.contracts
++  for update to authenticated
++  using (owner_id = auth.uid())
++  with check (owner_id = auth.uid());
++
++create policy contracts_delete on public.contracts
++  for delete to authenticated
++  using (owner_id = auth.uid());
++
++create policy contract_shares_select on public.contract_shares
++  for select to authenticated
++  using (user_id = auth.uid() or public.is_contract_owner(contract_id));
++
++create policy contract_shares_insert on public.contract_shares
++  for insert to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_shares_delete on public.contract_shares
++  for delete to authenticated
++  using (public.is_contract_owner(contract_id));
++
++create policy contract_versions_select on public.contract_versions
++  for select to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_versions_insert on public.contract_versions
++  for insert to authenticated
++  with check (public.can_read_contract(contract_id) and created_by = auth.uid());
++
++create policy contract_tags_select on public.contract_tags
++  for select to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_tags_insert on public.contract_tags
++  for insert to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_tags_delete on public.contract_tags
++  for delete to authenticated
++  using (public.is_contract_owner(contract_id));
++
++revoke all on table public.contracts from anon;
++revoke all on table public.contract_shares from anon;
++revoke all on table public.contract_versions from anon;
++revoke all on table public.contract_tags from anon;
++
++revoke all on sequence public.contract_versions_id_seq from anon;
++
++grant select, insert, update, delete on table public.contracts to authenticated;
++grant select, insert, delete on table public.contract_shares to authenticated;
++grant select, insert on table public.contract_versions to authenticated;
++grant select, insert, delete on table public.contract_tags to authenticated;
++
++grant usage, select on sequence public.contract_versions_id_seq to authenticated;
++
++grant all privileges on table public.contracts to service_role;
++grant all privileges on table public.contract_shares to service_role;
++grant all privileges on table public.contract_versions to service_role;
++grant all privileges on table public.contract_tags to service_role;
++
++grant usage, select on sequence public.contract_versions_id_seq to service_role;
++```<|im_end|>
++****** trajectory idx=2, reward=1 ******
++Per-step metrics:
++  Step 0:
++    pass: 1.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 276.0
++    turns: 1.0
++    pass_final: 1.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.contracts (
++  id bigint primary key,
++  owner_id uuid not null references auth.users(id),
++  title text not null
++);
++
++create table public.contract_shares (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  user_id uuid not null references auth.users(id),
++  primary key (contract_id, user_id)
++);
++
++create table public.contract_versions (
++  id bigint generated by default as identity primary key,
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  version integer not null,
++  body text not null,
++  created_by uuid not null default auth.uid() references auth.users(id),
++  unique (contract_id, version)
++);
++
++create table public.contract_tags (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  tag text not null,
++  primary key (contract_id, tag)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.contract_shares: 1 rows
++- public.contract_tags: 3 rows
++- public.contract_versions: 4 rows
++- public.contracts: 3 rows
++- auth.users: 4 rows
++
++## Access rules
++
++A contract-management app built with supabase-js. Each contract has an owner and can be shared with other users. Versions and tags hang off a contract. Writes read the row back with `.select()`.
++
++R1. Owners can create contracts as themselves and read, rename and delete their own contracts. Users can read the contracts shared with them.
++R2. A contract's versions and tags are visible to exactly the people who can read the contract.
++R3. Owners and the users a contract is shared with can add new versions to it, as themselves. Versions are never edited or deleted.
++R4. Only a contract's owner can add or remove its tags and its shares.
++R5. Users can see the share rows of the contracts they own and the shares addressed to them.
++R6. Anonymous visitors cannot see or change anything.
++R7. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++alter table public.contracts enable row level security;
++alter table public.contract_shares enable row level security;
++alter table public.contract_versions enable row level security;
++alter table public.contract_tags enable row level security;
++
++-- Helper functions (security definer so they can read contracts without
++-- recursing through their own RLS policies)
++create or replace function public.is_contract_owner(target_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = target_contract_id
++      and c.owner_id = auth.uid()
++  );
++$$;
++
++create or replace function public.can_read_contract(target_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = target_contract_id
++      and c.owner_id = auth.uid()
++  )
++  or exists (
++    select 1
++    from public.contract_shares s
++    where s.contract_id = target_contract_id
++      and s.user_id = auth.uid()
++  );
++$$;
++
++create or replace function public.is_contract_owner_guard()
++returns trigger
++language plpgsql
++security definer
++set search_path = ''
++as $$
++begin
++  if coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
++     or current_user = 'service_role' then
++    return new;
++  end if;
++
++  if new.owner_id is distinct from auth.uid() then
++    raise exception 'contract owner must be the creator' using errcode = '42501';
++  end if;
++
++  return new;
++end;
++$$;
++
++create trigger contracts_owner_guard
++before insert on public.contracts
++for each row execute function public.is_contract_owner_guard();
++
++-- R1: owners create contracts as themselves, read their own or shared ones
++create policy contracts_insert_owner
++  on public.contracts
++  for insert
++  to authenticated
++  with check (owner_id = auth.uid());
++
++create policy contracts_select_owner_or_shared
++  on public.contracts
++  for select
++  to authenticated
++  using (owner_id = auth.uid() or public.can_read_contract(id));
++
++create policy contracts_update_owner
++  on public.contracts
++  for update
++  to authenticated
++  using (owner_id = auth.uid())
++  with check (owner_id = auth.uid());
++
++create policy contracts_delete_owner
++  on public.contracts
++  for delete
++  to authenticated
++  using (owner_id = auth.uid());
++
++-- R2: versions and tags are scoped to read visibility of the parent contract
++create policy versions_select_readable_contract
++  on public.contract_versions
++  for select
++  to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy tags_select_readable_contract
++  on public.contract_tags
++  for select
++  to authenticated
++  using (public.can_read_contract(contract_id));
++
++-- R3: owners and shared users may add versions, always as themselves
++create policy versions_insert_readable_contract
++  on public.contract_versions
++  for insert
++  to authenticated
++  with check (
++    created_by = auth.uid()
++    and public.can_read_contract(contract_id)
++  );
++
++-- R4: only the owner may add or remove shares (R5 writes addressed to the
++-- current user are still visible; share rows of owned contracts are also visible)
++create policy shares_select_owner_or_self
++  on public.contract_shares
++  for select
++  to authenticated
++  using (
++    user_id = auth.uid()
++    or public.is_contract_owner(contract_id)
++  );
++
++create policy shares_insert_owner
++  on public.contract_shares
++  for insert
++  to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy shares_delete_owner
++  on public.contract_shares
++  for delete
++  to authenticated
++  using (public.is_contract_owner(contract_id));
++
++-- R4: only the owner may add or remove tags
++create policy tags_insert_owner
++  on public.contract_tags
++  for insert
++  to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy tags_delete_owner
++  on public.contract_tags
++  for delete
++  to authenticated
++  using (public.is_contract_owner(contract_id));
++
++-- Grants: anon gets nothing, authenticated gets only what the policies allow,
++-- service_role bypasses RLS and keeps full access
++revoke all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags from anon;
++revoke all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags from public;
++
++grant select, insert, update, delete on table public.contracts to authenticated;
++grant select, insert, delete on table public.contract_shares to authenticated;
++grant select, insert on table public.contract_versions to authenticated;
++grant select, insert, delete on table public.contract_tags to authenticated;
++
++grant usage, select on all sequences in schema public to authenticated;
++
++grant all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags to service_role;
++grant usage, select on all sequences in schema public to service_role;
++```<|im_end|>
++****** trajectory idx=3, reward=1 ******
++Per-step metrics:
++  Step 0:
++    pass: 1.0
++    leak: 0.0
++    block: 0.0
++    format_error: 0.0
++    apply_error: 0.0
++    grade_ms: 500.0
++    turns: 1.0
++    pass_final: 1.0
++---- datum ----
++<|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.contracts (
++  id bigint primary key,
++  owner_id uuid not null references auth.users(id),
++  title text not null
++);
++
++create table public.contract_shares (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  user_id uuid not null references auth.users(id),
++  primary key (contract_id, user_id)
++);
++
++create table public.contract_versions (
++  id bigint generated by default as identity primary key,
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  version integer not null,
++  body text not null,
++  created_by uuid not null default auth.uid() references auth.users(id),
++  unique (contract_id, version)
++);
++
++create table public.contract_tags (
++  contract_id bigint not null references public.contracts(id) on delete cascade,
++  tag text not null,
++  primary key (contract_id, tag)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.contract_shares: 1 rows
++- public.contract_tags: 3 rows
++- public.contract_versions: 4 rows
++- public.contracts: 3 rows
++- auth.users: 4 rows
++
++## Access rules
++
++A contract-management app built with supabase-js. Each contract has an owner and can be shared with other users. Versions and tags hang off a contract. Writes read the row back with `.select()`.
++
++R1. Owners can create contracts as themselves and read, rename and delete their own contracts. Users can read the contracts shared with them.
++R2. A contract's versions and tags are visible to exactly the people who can read the contract.
++R3. Owners and the users a contract is shared with can add new versions to it, as themselves. Versions are never edited or deleted.
++R4. Only a contract's owner can add or remove its tags and its shares.
++R5. Users can see the share rows of the contracts they own and the shares addressed to them.
++R6. Anonymous visitors cannot see or change anything.
++R7. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think></think>```sql
++alter table public.contracts enable row level security;
++alter table public.contract_shares enable row level security;
++alter table public.contract_versions enable row level security;
++alter table public.contract_tags enable row level security;
++
++create function public.is_contract_owner(p_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = p_contract_id
++      and c.owner_id = auth.uid()
++  );
++$$;
++
++create function public.can_read_contract(p_contract_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = public, pg_temp
++as $$
++  select exists (
++    select 1
++    from public.contracts c
++    where c.id = p_contract_id
++      and c.owner_id = auth.uid()
++  )
++  or exists (
++    select 1
++    from public.contract_shares s
++    where s.contract_id = p_contract_id
++      and s.user_id = auth.uid()
++  );
++$$;
++
++revoke all on function public.is_contract_owner(bigint) from public;
++revoke all on function public.can_read_contract(bigint) from public;
++revoke all on function public.is_contract_owner(bigint) from anon;
++revoke all on function public.can_read_contract(bigint) from anon;
++grant execute on function public.is_contract_owner(bigint) to authenticated, service_role;
++grant execute on function public.can_read_contract(bigint) to authenticated, service_role;
++
++create policy contracts_select on public.contracts
++  for select to authenticated
++  using (public.can_read_contract(id));
++
++create policy contracts_insert on public.contracts
++  for insert to authenticated
++  with check (owner_id = auth.uid());
++
++create policy contracts_update on public.contracts
++  for update to authenticated
++  using (owner_id = auth.uid())
++  with check (owner_id = auth.uid());
++
++create policy contracts_delete on public.contracts
++  for delete to authenticated
++  using (owner_id = auth.uid());
++
++create policy contract_shares_select on public.contract_shares
++  for select to authenticated
++  using (user_id = auth.uid() or public.is_contract_owner(contract_id));
++
++create policy contract_shares_insert on public.contract_shares
++  for insert to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_shares_delete on public.contract_shares
++  for delete to authenticated
++  using (public.is_contract_owner(contract_id));
++
++create policy contract_versions_select on public.contract_versions
++  for select to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_versions_insert on public.contract_versions
++  for insert to authenticated
++  with check (public.can_read_contract(contract_id) and created_by = auth.uid());
++
++create policy contract_tags_select on public.contract_tags
++  for select to authenticated
++  using (public.can_read_contract(contract_id));
++
++create policy contract_tags_insert on public.contract_tags
++  for insert to authenticated
++  with check (public.is_contract_owner(contract_id));
++
++create policy contract_tags_delete on public.contract_tags
++  for delete to authenticated
++  using (public.is_contract_owner(contract_id));
++
++revoke all on table public.contracts from anon, authenticated;
++revoke all on table public.contract_shares from anon, authenticated;
++revoke all on table public.contract_versions from anon, authenticated;
++revoke all on table public.contract_tags from anon, authenticated;
++
++grant select, insert, update, delete on table public.contracts to authenticated;
++grant select, insert, delete on table public.contract_shares to authenticated;
++grant select, insert on table public.contract_versions to authenticated;
++grant select, insert, delete on table public.contract_tags to authenticated;
++grant all on table public.contracts, public.contract_shares, public.contract_versions, public.contract_tags to service_role;
++```<|im_end|>
++====== End Trajectory Group ======
+diff --git a/results/train/runs/rlsweep_Nemotron_lr0.00002/metrics.jsonl b/results/train/runs/rlsweep_Nemotron_lr0.00002/metrics.jsonl
+index bec4665..b977f88 100644
+--- a/results/train/runs/rlsweep_Nemotron_lr0.00002/metrics.jsonl
++++ b/results/train/runs/rlsweep_Nemotron_lr0.00002/metrics.jsonl
+@@ -1 +1,2 @@
+ {"step": 0, "progress/batch": 0, "optim/lr": 2e-05, "progress/done_frac": 0.1, "dev/pass_all": 0.22727272727272727, "dev/leak_all": 0.3484848484848485, "dev/apply_error_all": 0.16666666666666666, "dev/pass_at_1": 0.2727272727272727, "dev/mean_completion_tokens": 582.560606060606, "dev/spend_usd": 0.025896926999999997, "env/tier2/ac_tokens_per_turn": 737.796875, "env/tier2/ob_tokens_per_turn": 579.875, "env/tier2/turns_per_episode": 1.0, "env/tier2/total_episodes": 64, "env/tier2/total_turns": 64, "env/tier2/total_ac_tokens": 47219, "env/tier2/total_ob_tokens": 37112, "env/tier2/reward/total": 0.3359375, "env/tier2/pass": 0.390625, "env/tier2/leak": 0.109375, "env/tier2/block": 0.15625, "env/tier2/format_error": 0.0, "env/tier2/apply_error": 0.375, "env/tier2/grade_ms": 445.515625, "env/tier2/turns": 1.0, "env/tier2/pass_final": 0.390625, "env/tier2/by_group/frac_mixed": 1.0, "env/tier2/by_group/frac_all_good": 0.0, "env/tier2/by_group/frac_all_bad": 0.0, "env/tier3/ac_tokens_per_turn": 867.9375, "env/tier3/ob_tokens_per_turn": 653.5, "env/tier3/turns_per_episode": 1.0, "env/tier3/total_episodes": 32, "env/tier3/total_turns": 32, "env/tier3/total_ac_tokens": 27774, "env/tier3/total_ob_tokens": 20912, "env/tier3/reward/total": 0.0625, "env/tier3/pass": 0.21875, "env/tier3/leak": 0.3125, "env/tier3/block": 0.3125, "env/tier3/format_error": 0.0, "env/tier3/apply_error": 0.3125, "env/tier3/grade_ms": 473.46875, "env/tier3/turns": 1.0, "env/tier3/pass_final": 0.21875, "env/tier3/by_group/frac_mixed": 1.0, "env/tier3/by_group/frac_all_good": 0.0, "env/tier3/by_group/frac_all_bad": 0.0, "env/tier1/ac_tokens_per_turn": 263.875, "env/tier1/ob_tokens_per_turn": 425.0, "env/tier1/turns_per_episode": 1.0, "env/tier1/total_episodes": 32, "env/tier1/total_turns": 32, "env/tier1/total_ac_tokens": 8444, "env/tier1/total_ob_tokens": 13600, "env/tier1/reward/total": 0.809375, "env/tier1/pass": 0.8125, "env/tier1/leak": 0.0, "env/tier1/block": 0.03125, "env/tier1/format_error": 0.03125, "env/tier1/apply_error": 0.125, "env/tier1/grade_ms": 376.625, "env/tier1/turns": 1.0, "env/tier1/pass_final": 0.8125, "env/tier1/by_group/frac_mixed": 1.0, "env/tier1/by_group/frac_all_good": 0.0, "env/tier1/by_group/frac_all_bad": 0.0, "env/all/ac_tokens_per_turn": 651.8515625, "env/all/ob_tokens_per_turn": 559.5625, "env/all/turns_per_episode": 1.0, "env/all/total_episodes": 128, "env/all/total_turns": 128, "env/all/total_ac_tokens": 83437, "env/all/total_ob_tokens": 71624, "env/all/reward/total": 0.3859375, "env/all/pass": 0.453125, "env/all/leak": 0.1328125, "env/all/block": 0.1640625, "env/all/format_error": 0.0078125, "env/all/apply_error": 0.296875, "env/all/grade_ms": 435.28125, "env/all/turns": 1.0, "env/all/pass_final": 0.453125, "env/all/by_group/frac_mixed": 1.0, "env/all/by_group/frac_all_good": 0.0, "env/all/by_group/frac_all_bad": 0.0, "optim/kl_sample_train_v1": 0.0009287580032832921, "optim/kl_sample_train_v2": 0.0011352244764566422, "optim/entropy": 0.08648521453142166, "time/run_single_evaluation": 30.14768241601996, "time/run_evaluations_parallel": 30.150080666993745, "time/env_initial_observation:total": 26.147859538788907, "time/env_initial_observation:count": 128, "time/env_initial_observation:mean": 0.20428015264678834, "time/env_initial_observation:max": 0.34814758296124637, "time/policy_sample:total": 872.88025474397, "time/policy_sample:count": 128, "time/policy_sample:mean": 6.819376990187266, "time/policy_sample:max": 14.062100833980367, "time/env_step:total": 592.8735141652869, "time/env_step:count": 128, "time/env_step:mean": 4.631824329416304, "time/env_step:max": 10.689883208018728, "time/compute_group_rewards:total": 0.001444291789084673, "time/compute_group_rewards:count": 16, "time/compute_group_rewards:mean": 9.026823681779206e-05, "time/compute_group_rewards:max": 0.0007267919136211276, "time/do_group_rollout_and_filter_constant_reward:total": 251.14018708351068, "time/do_group_rollout_and_filter_constant_reward:count": 16, "time/do_group_rollout_and_filter_constant_reward:mean": 15.696261692719418, "time/do_group_rollout_and_filter_constant_reward:max": 20.96403041703161, "time/sampling": 21.040620791958645, "time/assemble_training_data": 0.09424300002865493, "time/prepare_minibatch": 0.11062166700139642, "time/train_step": 6.4240378339309245, "time/compute_kl_sample_train": 0.008129207999445498, "time/save_checkpoint": 6.1768555419985205, "time/save_checkpoint_and_get_sampling_client": 6.176953666028567, "time/compute_full_batch_metrics_and_get_sampling_client": 6.185263124993071, "time/do_train_step_and_get_sampling_client": 12.729495125007816, "time/total": 63.92478137498256}
++{"step": 1, "progress/batch": 1, "optim/lr": 2e-05, "progress/done_frac": 0.2, "env/tier3/ac_tokens_per_turn": 846.375, "env/tier3/ob_tokens_per_turn": 623.6, "env/tier3/turns_per_episode": 1.0, "env/tier3/total_episodes": 40, "env/tier3/total_turns": 40, "env/tier3/total_ac_tokens": 33855, "env/tier3/total_ob_tokens": 24944, "env/tier3/reward/total": 0.009999999999999998, "env/tier3/pass": 0.125, "env/tier3/leak": 0.225, "env/tier3/block": 0.275, "env/tier3/format_error": 0.025, "env/tier3/apply_error": 0.45, "env/tier3/grade_ms": 760.95, "env/tier3/turns": 1.0, "env/tier3/pass_final": 0.125, "env/tier3/by_group/frac_mixed": 1.0, "env/tier3/by_group/frac_all_good": 0.0, "env/tier3/by_group/frac_all_bad": 0.0, "env/tier1/ac_tokens_per_turn": 715.4375, "env/tier1/ob_tokens_per_turn": 535.25, "env/tier1/turns_per_episode": 1.0, "env/tier1/total_episodes": 32, "env/tier1/total_turns": 32, "env/tier1/total_ac_tokens": 22894, "env/tier1/total_ob_tokens": 17128, "env/tier1/reward/total": 0.35625, "env/tier1/pass": 0.375, "env/tier1/leak": 0.03125, "env/tier1/block": 0.15625, "env/tier1/format_error": 0.03125, "env/tier1/apply_error": 0.40625, "env/tier1/grade_ms": 733.09375, "env/tier1/turns": 1.0, "env/tier1/pass_final": 0.375, "env/tier1/by_group/frac_mixed": 1.0, "env/tier1/by_group/frac_all_good": 0.0, "env/tier1/by_group/frac_all_bad": 0.0, "env/tier2/ac_tokens_per_turn": 669.3958333333334, "env/tier2/ob_tokens_per_turn": 575.8333333333334, "env/tier2/turns_per_episode": 1.0, "env/tier2/total_episodes": 48, "env/tier2/total_turns": 48, "env/tier2/total_ac_tokens": 32131, "env/tier2/total_ob_tokens": 27640, "env/tier2/reward/total": 0.08958333333333333, "env/tier2/pass": 0.1875, "env/tier2/leak": 0.1875, "env/tier2/block": 0.2916666666666667, "env/tier2/format_error": 0.041666666666666664, "env/tier2/apply_error": 0.375, "env/tier2/grade_ms": 615.8958333333334, "env/tier2/turns": 1.0, "env/tier2/pass_final": 0.1875, "env/tier2/by_group/frac_mixed": 1.0, "env/tier2/by_group/frac_all_good": 0.0, "env/tier2/by_group/frac_all_bad": 0.0, "env/all/ac_tokens_per_turn": 740.6666666666666, "env/all/ob_tokens_per_turn": 580.9333333333333, "env/all/turns_per_episode": 1.0, "env/all/total_episodes": 120, "env/all/total_turns": 120, "env/all/total_ac_tokens": 88880, "env/all/total_ob_tokens": 69712, "env/all/reward/total": 0.13416666666666668, "env/all/pass": 0.21666666666666667, "env/all/leak": 0.15833333333333333, "env/all/block": 0.25, "env/all/format_error": 0.03333333333333333, "env/all/apply_error": 0.4083333333333333, "env/all/grade_ms": 695.5, "env/all/turns": 1.0, "env/all/pass_final": 0.21666666666666667, "env/all/by_group/frac_mixed": 1.0, "env/all/by_group/frac_all_good": 0.0, "env/all/by_group/frac_all_bad": 0.0, "optim/kl_sample_train_v1": 0.001262171659618616, "optim/kl_sample_train_v2": 0.001378319226205349, "optim/entropy": 0.09229587763547897, "time/env_initial_observation:total": 11.720069704111665, "time/env_initial_observation:count": 128, "time/env_initial_observation:mean": 0.09156304456337239, "time/env_initial_observation:max": 0.2182559589855373, "time/policy_sample:total": 1091.9961837898009, "time/policy_sample:count": 128, "time/policy_sample:mean": 8.53122018585782, "time/policy_sample:max": 14.413764207973145, "time/env_step:total": 1490.4944719693158, "time/env_step:count": 128, "time/env_step:mean": 11.64448806226028, "time/env_step:max": 20.815203500096686, "time/compute_group_rewards:total": 0.0010515432804822922, "time/compute_group_rewards:count": 16, "time/compute_group_rewards:mean": 6.572145503014326e-05, "time/compute_group_rewards:max": 0.00030979199800640345, "time/do_group_rollout_and_filter_constant_reward:total": 449.4337707491359, "time/do_group_rollout_and_filter_constant_reward:count": 16, "time/do_group_rollout_and_filter_constant_reward:mean": 28.089610671820992, "time/do_group_rollout_and_filter_constant_reward:max": 33.71676083304919, "time/sampling": 33.85837887506932, "time/assemble_training_data": 0.25433920801151544, "time/prepare_minibatch": 0.3063175000716001, "time/train_step": 6.102804542053491, "time/compute_kl_sample_train": 0.007061542011797428, "time/save_checkpoint": 5.738698332919739, "time/save_checkpoint_and_get_sampling_client": 5.738751291995868, "time/compute_full_batch_metrics_and_get_sampling_client": 5.745870833052322, "time/do_train_step_and_get_sampling_client": 12.15910783293657, "time/total": 46.06213816697709}
+diff --git a/results/train/runs/rlsweep_Nemotron_lr0.00002/timing_spans.jsonl b/results/train/runs/rlsweep_Nemotron_lr0.00002/timing_spans.jsonl
+index 41b827d..5d8a0ca 100644
+--- a/results/train/runs/rlsweep_Nemotron_lr0.00002/timing_spans.jsonl
++++ b/results/train/runs/rlsweep_Nemotron_lr0.00002/timing_spans.jsonl
+@@ -1 +1,2 @@
+ {"step": 0, "spans": [{"name": "run_single_evaluation", "duration": 30.14768241601996, "wall_start": 0.002282857894897461, "wall_end": 30.149965524673462}, {"name": "run_evaluations_parallel", "duration": 30.150080666993745, "wall_start": 0.0, "wall_end": 30.15008044242859}, {"name": "env_initial_observation", "duration": 0.010826082900166512, "wall_start": 30.169002771377563, "wall_end": 30.179828882217407}, {"name": "env_initial_observation", "duration": 0.012737750075757504, "wall_start": 30.168055772781372, "wall_end": 30.18079376220703}, {"name": "env_initial_observation", "duration": 0.012896207976154983, "wall_start": 30.16877794265747, "wall_end": 30.18167471885681}, {"name": "env_initial_observation", "duration": 0.012984457891434431, "wall_start": 30.169166564941406, "wall_end": 30.182151317596436}, {"name": "env_initial_observation", "duration": 0.015099000069312751, "wall_start": 30.16786503791809, "wall_end": 30.18296456336975}, {"name": "env_initial_observation", "duration": 0.01390512497164309, "wall_start": 30.169727325439453, "wall_end": 30.183632850646973}, {"name": "env_initial_observation", "duration": 0.01518516696523875, "wall_start": 30.168542623519897, "wall_end": 30.183727502822876}, {"name": "env_initial_observation", "duration": 0.014444499975070357, "wall_start": 30.16933560371399, "wall_end": 30.18377995491028}, {"name": "env_initial_observation", "duration": 0.013155749998986721, "wall_start": 30.17068362236023, "wall_end": 30.183839082717896}, {"name": "env_initial_observation", "duration": 0.012272541993297637, "wall_start": 30.171611547470093, "wall_end": 30.183883905410767}, {"name": "env_initial_observation", "duration": 0.011513374978676438, "wall_start": 30.173041105270386, "wall_end": 30.18455410003662}, {"name": "env_initial_observation", "duration": 0.011546374997124076, "wall_start": 30.17452049255371, "wall_end": 30.186067581176758}, {"name": "env_initial_observation", "duration": 0.01214345800690353, "wall_start": 30.17399263381958, "wall_end": 30.186136960983276}, {"name": "env_initial_observation", "duration": 0.011640708078630269, "wall_start": 30.17454171180725, "wall_end": 30.186182260513306}, {"name": "env_initial_observation", "duration": 0.011684291996061802, "wall_start": 30.174555778503418, "wall_end": 30.18623971939087}, {"name": "env_initial_observation", "duration": 0.01148841599933803, "wall_start": 30.17479181289673, "wall_end": 30.186280250549316}, {"name": "env_initial_observation", "duration": 0.011749333003535867, "wall_start": 30.174567699432373, "wall_end": 30.186317920684814}, {"name": "env_initial_observation", "duration": 0.011549083050340414, "wall_start": 30.17480731010437, "wall_end": 30.18635630607605}, {"name": "env_initial_observation", "duration": 0.011995124979875982, "wall_start": 30.174580097198486, "wall_end": 30.186575174331665}, {"name": "env_initial_observation", "duration": 0.01185291598085314, "wall_start": 30.174773454666138, "wall_end": 30.186626195907593}, {"name": "env_initial_observation", "duration": 0.011348749976605177, "wall_start": 30.175331354141235, "wall_end": 30.18668007850647}, {"name": "env_initial_observation", "duration": 0.013764334027655423, "wall_start": 30.176549196243286, "wall_end": 30.190314292907715}, {"name": "env_initial_observation", "duration": 0.01727716706227511, "wall_start": 30.17483353614807, "wall_end": 30.192111492156982}, {"name": "env_initial_observation", "duration": 0.016403457964770496, "wall_start": 30.175777673721313, "wall_end": 30.1921808719635}, {"name": "env_initial_observation", "duration": 0.016425875015556812, "wall_start": 30.175799131393433, "wall_end": 30.192224979400635}, {"name": "env_initial_observation", "duration": 0.016450416995212436, "wall_start": 30.17584490776062, "wall_end": 30.192296266555786}, {"name": "env_initial_observation", "duration": 0.016468457994051278, "wall_start": 30.175869703292847, "wall_end": 30.19233798980713}, {"name": "env_initial_observation", "duration": 0.015842291992157698, "wall_start": 30.17653203010559, "wall_end": 30.192373991012573}, {"name": "env_initial_observation", "duration": 0.015834666090086102, "wall_start": 30.1765775680542, "wall_end": 30.192413330078125}, {"name": "env_initial_observation", "duration": 0.018268750049173832, "wall_start": 30.17659068107605, "wall_end": 30.19485902786255}, {"name": "env_initial_observation", "duration": 0.026749541983008385, "wall_start": 30.174819231033325, "wall_end": 30.201568365097046}, {"name": "env_initial_observation", "duration": 0.025104166939854622, "wall_start": 30.176564693450928, "wall_end": 30.201668739318848}, {"name": "env_initial_observation", "duration": 0.0250374999595806, "wall_start": 30.176682710647583, "wall_end": 30.20172095298767}, {"name": "env_initial_observation", "duration": 0.025128709035925567, "wall_start": 30.176639556884766, "wall_end": 30.201768159866333}, {"name": "env_initial_observation", "duration": 0.02518629201222211, "wall_start": 30.17662811279297, "wall_end": 30.201815128326416}, {"name": "env_initial_observation", "duration": 0.025306624942459166, "wall_start": 30.176602125167847, "wall_end": 30.201908588409424}, {"name": "env_initial_observation", "duration": 0.025305000017397106, "wall_start": 30.17669415473938, "wall_end": 30.201998949050903}, {"name": "env_initial_observation", "duration": 0.025368832983076572, "wall_start": 30.17667245864868, "wall_end": 30.202041149139404}, {"name": "env_initial_observation", "duration": 0.025422499980777502, "wall_start": 30.176660776138306, "wall_end": 30.202083110809326}, {"name": "env_initial_observation", "duration": 0.025403167004697025, "wall_start": 30.176717281341553, "wall_end": 30.202120304107666}, {"name": "env_initial_observation", "duration": 0.025452416040934622, "wall_start": 30.176703929901123, "wall_end": 30.202157020568848}, {"name": "env_initial_observation", "duration": 0.025574250030331314, "wall_start": 30.17661714553833, "wall_end": 30.20219111442566}, {"name": "env_initial_observation", "duration": 0.025455291965045035, "wall_start": 30.176769256591797, "wall_end": 30.202224254608154}, {"name": "env_initial_observation", "duration": 0.2579139160225168, "wall_start": 30.176836729049683, "wall_end": 30.43475031852722}, {"name": "env_initial_observation", "duration": 0.2582439159741625, "wall_start": 30.176779985427856, "wall_end": 30.43502449989319}, {"name": "env_initial_observation", "duration": 0.25826725002843887, "wall_start": 30.176905393600464, "wall_end": 30.43517231941223}, {"name": "env_initial_observation", "duration": 0.2585035830270499, "wall_start": 30.176794290542603, "wall_end": 30.43529772758484}, {"name": "env_initial_observation", "duration": 0.2585553330136463, "wall_start": 30.176807641983032, "wall_end": 30.43536400794983}, {"name": "env_initial_observation", "duration": 0.2620122500229627, "wall_start": 30.176847457885742, "wall_end": 30.438860177993774}, {"name": "env_initial_observation", "duration": 0.26223295903764665, "wall_start": 30.176818370819092, "wall_end": 30.439051866531372}, {"name": "env_initial_observation", "duration": 0.2622614169958979, "wall_start": 30.17685866355896, "wall_end": 30.439120054244995}, {"name": "env_initial_observation", "duration": 0.26484449999406934, "wall_start": 30.176892280578613, "wall_end": 30.44173765182495}, {"name": "env_initial_observation", "duration": 0.26504608301911503, "wall_start": 30.17686915397644, "wall_end": 30.441915035247803}, {"name": "env_initial_observation", "duration": 0.26504345901776105, "wall_start": 30.1769278049469, "wall_end": 30.44197106361389}, {"name": "env_initial_observation", "duration": 0.26624649995937943, "wall_start": 30.177000284194946, "wall_end": 30.443246364593506}, {"name": "env_initial_observation", "duration": 0.2669378330465406, "wall_start": 30.17691683769226, "wall_end": 30.443854331970215}, {"name": "env_initial_observation", "duration": 0.2671444579027593, "wall_start": 30.177011489868164, "wall_end": 30.4441556930542}, {"name": "env_initial_observation", "duration": 0.26733291696291417, "wall_start": 30.176879167556763, "wall_end": 30.444212913513184}, {"name": "env_initial_observation", "duration": 0.26718754100147635, "wall_start": 30.17707085609436, "wall_end": 30.444258213043213}, {"name": "env_initial_observation", "duration": 0.26732391701079905, "wall_start": 30.176976442337036, "wall_end": 30.444300174713135}, {"name": "env_initial_observation", "duration": 0.2672553339507431, "wall_start": 30.17708396911621, "wall_end": 30.444339275360107}, {"name": "env_initial_observation", "duration": 0.26734416594263166, "wall_start": 30.17706036567688, "wall_end": 30.444404363632202}, {"name": "env_initial_observation", "duration": 0.27390075009316206, "wall_start": 30.177095413208008, "wall_end": 30.450995922088623}, {"name": "env_initial_observation", "duration": 0.27404799999203533, "wall_start": 30.17703342437744, "wall_end": 30.45108199119568}, {"name": "env_initial_observation", "duration": 0.2748859589919448, "wall_start": 30.17704677581787, "wall_end": 30.45193362236023}, {"name": "env_initial_observation", "duration": 0.2748868749476969, "wall_start": 30.177122354507446, "wall_end": 30.452008962631226}, {"name": "env_initial_observation", "duration": 0.2749468330293894, "wall_start": 30.17710852622986, "wall_end": 30.452054977416992}, {"name": "env_initial_observation", "duration": 0.27485558309126645, "wall_start": 30.177260875701904, "wall_end": 30.45211672782898}, {"name": "env_initial_observation", "duration": 0.2750248749507591, "wall_start": 30.177133321762085, "wall_end": 30.452158212661743}, {"name": "env_initial_observation", "duration": 0.2750495419604704, "wall_start": 30.177144765853882, "wall_end": 30.452194213867188}, {"name": "env_initial_observation", "duration": 0.27592670905869454, "wall_start": 30.177276372909546, "wall_end": 30.453203201293945}, {"name": "env_initial_observation", "duration": 0.2760932919336483, "wall_start": 30.17723274230957, "wall_end": 30.45332670211792}, {"name": "env_initial_observation", "duration": 0.2761999999638647, "wall_start": 30.177204132080078, "wall_end": 30.45340394973755}, {"name": "env_initial_observation", "duration": 0.28941025002859533, "wall_start": 30.1771559715271, "wall_end": 30.46656584739685}, {"name": "env_initial_observation", "duration": 0.29052287503145635, "wall_start": 30.177218675613403, "wall_end": 30.46774125099182}, {"name": "env_initial_observation", "duration": 0.290527708013542, "wall_start": 30.177307605743408, "wall_end": 30.467834949493408}, {"name": "env_initial_observation", "duration": 0.29055949999019504, "wall_start": 30.1773681640625, "wall_end": 30.46792721748352}, {"name": "env_initial_observation", "duration": 0.2905753329396248, "wall_start": 30.177416801452637, "wall_end": 30.467991828918457}, {"name": "env_initial_observation", "duration": 0.29064449993893504, "wall_start": 30.177393913269043, "wall_end": 30.468038320541382}, {"name": "env_initial_observation", "duration": 0.2907246659742668, "wall_start": 30.17735266685486, "wall_end": 30.468077182769775}, {"name": "env_initial_observation", "duration": 0.29073270806111395, "wall_start": 30.17738175392151, "wall_end": 30.468114137649536}, {"name": "env_initial_observation", "duration": 0.2906877079512924, "wall_start": 30.17746353149414, "wall_end": 30.468151092529297}, {"name": "env_initial_observation", "duration": 0.29084995901212096, "wall_start": 30.17733931541443, "wall_end": 30.468189239501953}, {"name": "env_initial_observation", "duration": 0.29091199999675155, "wall_start": 30.177318334579468, "wall_end": 30.46823024749756}, {"name": "env_initial_observation", "duration": 0.295763292000629, "wall_start": 30.177475929260254, "wall_end": 30.473238706588745}, {"name": "env_initial_observation", "duration": 0.29665795795153826, "wall_start": 30.177294969558716, "wall_end": 30.473952770233154}, {"name": "env_initial_observation", "duration": 0.29645462497137487, "wall_start": 30.17755651473999, "wall_end": 30.474010944366455}, {"name": "env_initial_observation", "duration": 0.29664791701361537, "wall_start": 30.177404403686523, "wall_end": 30.474053144454956}, {"name": "env_initial_observation", "duration": 0.2966289579635486, "wall_start": 30.177497386932373, "wall_end": 30.47412610054016}, {"name": "env_initial_observation", "duration": 0.3004730000393465, "wall_start": 30.177567958831787, "wall_end": 30.47804045677185}, {"name": "env_initial_observation", "duration": 0.3006041670450941, "wall_start": 30.177507877349854, "wall_end": 30.47811198234558}, {"name": "env_initial_observation", "duration": 0.30803370801731944, "wall_start": 30.177603244781494, "wall_end": 30.485636711120605}, {"name": "env_initial_observation", "duration": 0.30828704102896154, "wall_start": 30.177545309066772, "wall_end": 30.48583197593689}, {"name": "env_initial_observation", "duration": 0.308418209082447, "wall_start": 30.177486419677734, "wall_end": 30.485904216766357}, {"name": "env_initial_observation", "duration": 0.30848733289167285, "wall_start": 30.17752957344055, "wall_end": 30.486016750335693}, {"name": "env_initial_observation", "duration": 0.3084684159839526, "wall_start": 30.177589654922485, "wall_end": 30.486057996749878}, {"name": "env_initial_observation", "duration": 0.3085784160066396, "wall_start": 30.177518844604492, "wall_end": 30.48609709739685}, {"name": "env_initial_observation", "duration": 0.30855587497353554, "wall_start": 30.177579164505005, "wall_end": 30.486135005950928}, {"name": "env_initial_observation", "duration": 0.3085036249831319, "wall_start": 30.1776704788208, "wall_end": 30.48617386817932}, {"name": "env_initial_observation", "duration": 0.30867729207966477, "wall_start": 30.177696466445923, "wall_end": 30.48637342453003}, {"name": "env_initial_observation", "duration": 0.3087494589854032, "wall_start": 30.177684545516968, "wall_end": 30.48643398284912}, {"name": "env_initial_observation", "duration": 0.31770208303350955, "wall_start": 30.177706956863403, "wall_end": 30.49540877342224}, {"name": "env_initial_observation", "duration": 0.3188219160074368, "wall_start": 30.177614212036133, "wall_end": 30.49643588066101}, {"name": "env_initial_observation", "duration": 0.31932041700929403, "wall_start": 30.177655458450317, "wall_end": 30.496976613998413}, {"name": "env_initial_observation", "duration": 0.31925149995367974, "wall_start": 30.177815437316895, "wall_end": 30.497066736221313}, {"name": "env_initial_observation", "duration": 0.3192505829501897, "wall_start": 30.17786455154419, "wall_end": 30.497114896774292}, {"name": "env_initial_observation", "duration": 0.3193920829799026, "wall_start": 30.177767276763916, "wall_end": 30.497159242630005}, {"name": "env_initial_observation", "duration": 0.3216920420527458, "wall_start": 30.177720308303833, "wall_end": 30.499412059783936}, {"name": "env_initial_observation", "duration": 0.3218119579833001, "wall_start": 30.17773151397705, "wall_end": 30.499544143676758}, {"name": "env_initial_observation", "duration": 0.32182266598101705, "wall_start": 30.17778754234314, "wall_end": 30.49960994720459}, {"name": "env_initial_observation", "duration": 0.3218971670139581, "wall_start": 30.1777560710907, "wall_end": 30.499653100967407}, {"name": "env_initial_observation", "duration": 0.3345965000335127, "wall_start": 30.17789340019226, "wall_end": 30.51249074935913}, {"name": "env_initial_observation", "duration": 0.334797624964267, "wall_start": 30.177798748016357, "wall_end": 30.512596130371094}, {"name": "env_initial_observation", "duration": 0.3348154580453411, "wall_start": 30.177879571914673, "wall_end": 30.51269507408142}, {"name": "env_initial_observation", "duration": 0.3348214590223506, "wall_start": 30.177919626235962, "wall_end": 30.512741088867188}, {"name": "env_initial_observation", "duration": 0.3362240419955924, "wall_start": 30.177778005599976, "wall_end": 30.514001846313477}, {"name": "env_initial_observation", "duration": 0.33612808294128627, "wall_start": 30.177930116653442, "wall_end": 30.514058113098145}, {"name": "env_initial_observation", "duration": 0.3361571669811383, "wall_start": 30.177940130233765, "wall_end": 30.514097213745117}, {"name": "env_initial_observation", "duration": 0.33616449998226017, "wall_start": 30.177982807159424, "wall_end": 30.514148235321045}, {"name": "env_initial_observation", "duration": 0.34541841701138765, "wall_start": 30.17805767059326, "wall_end": 30.523475885391235}, {"name": "env_initial_observation", "duration": 0.3456871670205146, "wall_start": 30.17790699005127, "wall_end": 30.52359390258789}, {"name": "env_initial_observation", "duration": 0.34568041702732444, "wall_start": 30.17796277999878, "wall_end": 30.523643016815186}, {"name": "env_initial_observation", "duration": 0.34768524998798966, "wall_start": 30.17795157432556, "wall_end": 30.525636672973633}, {"name": "env_initial_observation", "duration": 0.34770358400419354, "wall_start": 30.178004503250122, "wall_end": 30.525707960128784}, {"name": "env_initial_observation", "duration": 0.3478827499784529, "wall_start": 30.17801523208618, "wall_end": 30.52589774131775}, {"name": "env_initial_observation", "duration": 0.3479609170462936, "wall_start": 30.17807388305664, "wall_end": 30.526034593582153}, {"name": "env_initial_observation", "duration": 0.3481258329702541, "wall_start": 30.17797327041626, "wall_end": 30.52609896659851}, {"name": "env_initial_observation", "duration": 0.34814758296124637, "wall_start": 30.177993774414062, "wall_end": 30.52614116668701}, {"name": "policy_sample", "duration": 3.868127000052482, "wall_start": 30.473251581192017, "wall_end": 34.3413782119751}, {"name": "policy_sample", "duration": 3.8577544159488752, "wall_start": 30.485931873321533, "wall_end": 34.3436861038208}, {"name": "policy_sample", "duration": 3.8653689159546047, "wall_start": 30.48643684387207, "wall_end": 34.351805448532104}, {"name": "policy_sample", "duration": 3.8897761249681935, "wall_start": 30.467936277389526, "wall_end": 34.35771203041077}, {"name": "policy_sample", "duration": 3.8746152910171077, "wall_start": 30.485646724700928, "wall_end": 34.3602614402771}, {"name": "policy_sample", "duration": 3.892226083087735, "wall_start": 30.474053144454956, "wall_end": 34.36627960205078}, {"name": "policy_sample", "duration": 3.881010334007442, "wall_start": 30.486175060272217, "wall_end": 34.36718511581421}, {"name": "policy_sample", "duration": 3.8910589169245213, "wall_start": 30.48637866973877, "wall_end": 34.377437114715576}, {"name": "policy_sample", "duration": 3.9186375830322504, "wall_start": 30.468151330947876, "wall_end": 34.386789083480835}, {"name": "env_step", "duration": 0.3517540420871228, "wall_start": 34.341405153274536, "wall_end": 34.693159341812134}, {"name": "policy_sample", "duration": 4.2721210840390995, "wall_start": 30.44191837310791, "wall_end": 34.71403980255127}, {"name": "policy_sample", "duration": 4.290150624932721, "wall_start": 30.435033798217773, "wall_end": 34.72518491744995}, {"name": "policy_sample", "duration": 4.283220625016838, "wall_start": 30.444214582443237, "wall_end": 34.72743487358093}, {"name": "policy_sample", "duration": 4.26288241695147, "wall_start": 30.468114137649536, "wall_end": 34.73099708557129}, {"name": "policy_sample", "duration": 4.236536458949558, "wall_start": 30.49541997909546, "wall_end": 34.73195672035217}, {"name": "policy_sample", "duration": 4.283268792089075, "wall_start": 30.451083660125732, "wall_end": 34.734352111816406}, {"name": "policy_sample", "duration": 4.305669042048976, "wall_start": 30.443263053894043, "wall_end": 34.748931646347046}, {"name": "policy_sample", "duration": 4.282190375030041, "wall_start": 30.496442079544067, "wall_end": 34.778631925582886}, {"name": "policy_sample", "duration": 4.57769687497057, "wall_start": 30.20211911201477, "wall_end": 34.77981638908386}, {"name": "policy_sample", "duration": 4.336124625056982, "wall_start": 30.444339275360107, "wall_end": 34.780463457107544}, {"name": "policy_sample", "duration": 4.336864999961108, "wall_start": 30.444160223007202, "wall_end": 34.781025648117065}, {"name": "env_step", "duration": 0.4430549999233335, "wall_start": 34.34369683265686, "wall_end": 34.786752223968506}, {"name": "policy_sample", "duration": 4.368978874990717, "wall_start": 30.441750049591064, "wall_end": 34.810729026794434}, {"name": "policy_sample", "duration": 4.343490749946795, "wall_start": 30.46803879737854, "wall_end": 34.81152892112732}, {"name": "policy_sample", "duration": 4.6120024169795215, "wall_start": 30.202223300933838, "wall_end": 34.814225912094116}, {"name": "policy_sample", "duration": 4.346770707983524, "wall_start": 30.467994213104248, "wall_end": 34.81476426124573}, {"name": "env_step", "duration": 0.46807141706813127, "wall_start": 34.35182023048401, "wall_end": 34.819891929626465}, {"name": "env_step", "duration": 0.4695257080020383, "wall_start": 34.357747077941895, "wall_end": 34.82727313041687}, {"name": "policy_sample", "duration": 4.6506326659582555, "wall_start": 30.443862438201904, "wall_end": 35.09449577331543}, {"name": "policy_sample", "duration": 4.6128022079356015, "wall_start": 30.4969801902771, "wall_end": 35.10978293418884}, {"name": "policy_sample", "duration": 4.6002484580967575, "wall_start": 30.514147996902466, "wall_end": 35.11439609527588}, {"name": "policy_sample", "duration": 4.673511500004679, "wall_start": 30.44425916671753, "wall_end": 35.1177704334259}, {"name": "policy_sample", "duration": 4.683856874937192, "wall_start": 30.43517804145813, "wall_end": 35.119035482406616}, {"name": "policy_sample", "duration": 4.688375708064996, "wall_start": 30.4348623752594, "wall_end": 35.12323784828186}, {"name": "policy_sample", "duration": 4.689068999956362, "wall_start": 30.444300651550293, "wall_end": 35.1333692073822}, {"name": "env_step", "duration": 0.7919790000887588, "wall_start": 34.36027812957764, "wall_end": 35.152257680892944}, {"name": "env_step", "duration": 0.8466367499204352, "wall_start": 34.36629819869995, "wall_end": 35.21293544769287}, {"name": "env_step", "duration": 0.845877791987732, "wall_start": 34.36719608306885, "wall_end": 35.21307349205017}, {"name": "env_step", "duration": 0.8383103749947622, "wall_start": 34.37745428085327, "wall_end": 35.21576428413391}, {"name": "policy_sample", "duration": 4.973326500039548, "wall_start": 30.486057996749878, "wall_end": 35.45938420295715}, {"name": "policy_sample", "duration": 5.021231709048152, "wall_start": 30.43889093399048, "wall_end": 35.46012306213379}, {"name": "policy_sample", "duration": 4.974727833061479, "wall_start": 30.485833883285522, "wall_end": 35.46056151390076}, {"name": "policy_sample", "duration": 4.939983958029188, "wall_start": 30.526040077209473, "wall_end": 35.466023683547974}, {"name": "env_step", "duration": 1.1530024170642719, "wall_start": 34.38681411743164, "wall_end": 35.53981590270996}, {"name": "env_step", "duration": 0.8805992919951677, "wall_start": 34.727465867996216, "wall_end": 35.608065605163574}, {"name": "env_step", "duration": 0.8950726250186563, "wall_start": 34.71406555175781, "wall_end": 35.60913872718811}, {"name": "env_step", "duration": 0.8878236250020564, "wall_start": 34.72521734237671, "wall_end": 35.613041162490845}, {"name": "policy_sample", "duration": 5.34016841603443, "wall_start": 30.45340394973755, "wall_end": 35.793572664260864}, {"name": "policy_sample", "duration": 5.593952041002922, "wall_start": 30.202154636383057, "wall_end": 35.79610729217529}, {"name": "policy_sample", "duration": 5.3545099159237, "wall_start": 30.453349113464355, "wall_end": 35.80785918235779}, {"name": "policy_sample", "duration": 5.340707041090354, "wall_start": 30.4677517414093, "wall_end": 35.80845856666565}, {"name": "policy_sample", "duration": 5.4008752080844715, "wall_start": 30.435364484786987, "wall_end": 35.83623933792114}, {"name": "policy_sample", "duration": 5.313734833034687, "wall_start": 30.523642539978027, "wall_end": 35.83737754821777}, {"name": "policy_sample", "duration": 5.386803667061031, "wall_start": 30.452054738998413, "wall_end": 35.83885884284973}, {"name": "policy_sample", "duration": 5.319745375076309, "wall_start": 30.523487329483032, "wall_end": 35.84323310852051}, {"name": "env_step", "duration": 1.239675624994561, "wall_start": 34.73102521896362, "wall_end": 35.97070026397705}, {"name": "env_step", "duration": 1.304588667000644, "wall_start": 34.74895191192627, "wall_end": 36.0535409450531}, {"name": "env_step", "duration": 1.320223749964498, "wall_start": 34.73438286781311, "wall_end": 36.05460715293884}, {"name": "env_step", "duration": 1.3269432079978287, "wall_start": 34.73198938369751, "wall_end": 36.05893278121948}, {"name": "policy_sample", "duration": 5.634229667019099, "wall_start": 30.52589774131775, "wall_end": 36.16012787818909}, {"name": "policy_sample", "duration": 5.650940082967281, "wall_start": 30.52614116668701, "wall_end": 36.17708086967468}, {"name": "policy_sample", "duration": 5.655307415989228, "wall_start": 30.525708436965942, "wall_end": 36.18101644515991}, {"name": "policy_sample", "duration": 5.714021250023507, "wall_start": 30.46822953224182, "wall_end": 36.18225026130676}, {"name": "policy_sample", "duration": 5.672841958934441, "wall_start": 30.512500762939453, "wall_end": 36.18534302711487}, {"name": "policy_sample", "duration": 5.717817083001137, "wall_start": 30.486096143722534, "wall_end": 36.20391273498535}, {"name": "policy_sample", "duration": 5.755701250047423, "wall_start": 30.452116012573242, "wall_end": 36.20781683921814}, {"name": "policy_sample", "duration": 5.68446033296641, "wall_start": 30.526099920272827, "wall_end": 36.21056079864502}, {"name": "policy_sample", "duration": 6.026914292015135, "wall_start": 30.186315536499023, "wall_end": 36.21323013305664}, {"name": "env_step", "duration": 1.662536000018008, "wall_start": 34.7787389755249, "wall_end": 36.44127416610718}, {"name": "env_step", "duration": 1.738944916985929, "wall_start": 34.77984166145325, "wall_end": 36.518786907196045}, {"name": "env_step", "duration": 1.7393603340024129, "wall_start": 34.781041860580444, "wall_end": 36.52040243148804}, {"name": "env_step", "duration": 1.7449571659089997, "wall_start": 34.78048896789551, "wall_end": 36.52544569969177}, {"name": "policy_sample", "duration": 6.02447295805905, "wall_start": 30.512696504592896, "wall_end": 36.537168979644775}, {"name": "policy_sample", "duration": 6.129902082961053, "wall_start": 30.4390549659729, "wall_end": 36.568957805633545}, {"name": "policy_sample", "duration": 6.13082145806402, "wall_start": 30.43912363052368, "wall_end": 36.56994557380676}, {"name": "policy_sample", "duration": 6.378229208057746, "wall_start": 30.192371129989624, "wall_end": 36.57060098648071}, {"name": "policy_sample", "duration": 6.103318833047524, "wall_start": 30.468186616897583, "wall_end": 36.57150626182556}, {"name": "policy_sample", "duration": 6.370824957964942, "wall_start": 30.202081441879272, "wall_end": 36.57290697097778}, {"name": "policy_sample", "duration": 6.13108870794531, "wall_start": 30.44440245628357, "wall_end": 36.57549166679382}, {"name": "policy_sample", "duration": 6.102238584076986, "wall_start": 30.473955631256104, "wall_end": 36.57619380950928}, {"name": "policy_sample", "duration": 6.409531624987721, "wall_start": 30.183838844299316, "wall_end": 36.59336996078491}, {"name": "env_step", "duration": 1.996686291997321, "wall_start": 34.81075930595398, "wall_end": 36.807446002960205}, {"name": "env_step", "duration": 2.0767619580728933, "wall_start": 34.811546325683594, "wall_end": 36.88830780982971}, {"name": "env_step", "duration": 2.077121292008087, "wall_start": 34.814255714416504, "wall_end": 36.891377449035645}, {"name": "env_step", "duration": 2.106165334000252, "wall_start": 34.81477952003479, "wall_end": 36.920944929122925}, {"name": "compute_group_rewards", "duration": 4.891701973974705e-05, "wall_start": 36.92173719406128, "wall_end": 36.921785831451416}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 6.7570009579649195, "wall_start": 30.16644549369812, "wall_end": 36.92344641685486}, {"name": "policy_sample", "duration": 6.736276290961541, "wall_start": 30.192179918289185, "wall_end": 36.92845678329468}, {"name": "policy_sample", "duration": 6.44591541599948, "wall_start": 30.48601746559143, "wall_end": 36.93193244934082}, {"name": "policy_sample", "duration": 6.465031291008927, "wall_start": 30.46807551383972, "wall_end": 36.933106422424316}, {"name": "policy_sample", "duration": 6.436897250008769, "wall_start": 30.497159242630005, "wall_end": 36.93405628204346}, {"name": "policy_sample", "duration": 6.748876083060168, "wall_start": 30.186071634292603, "wall_end": 36.93494749069214}, {"name": "policy_sample", "duration": 6.483353083021939, "wall_start": 30.452009677886963, "wall_end": 36.935362577438354}, {"name": "policy_sample", "duration": 6.423088417039253, "wall_start": 30.512739658355713, "wall_end": 36.93582892417908}, {"name": "policy_sample", "duration": 6.750541332992725, "wall_start": 30.18618083000183, "wall_end": 36.93672299385071}, {"name": "policy_sample", "duration": 6.5049981659976766, "wall_start": 30.435301303863525, "wall_end": 36.94029903411865}, {"name": "policy_sample", "duration": 6.427312957937829, "wall_start": 30.514095783233643, "wall_end": 36.94140815734863}, {"name": "policy_sample", "duration": 6.445291875046678, "wall_start": 30.497114896774292, "wall_end": 36.94240689277649}, {"name": "env_step", "duration": 2.0923548340797424, "wall_start": 35.09450888633728, "wall_end": 37.1868634223938}, {"name": "policy_sample", "duration": 7.069627874996513, "wall_start": 30.20171809196472, "wall_end": 37.27134680747986}, {"name": "env_step", "duration": 2.1553536660503596, "wall_start": 35.11778974533081, "wall_end": 37.27314305305481}, {"name": "policy_sample", "duration": 7.087193874991499, "wall_start": 30.186136722564697, "wall_end": 37.27333068847656}, {"name": "policy_sample", "duration": 7.09303245798219, "wall_start": 30.186623573303223, "wall_end": 37.279656171798706}, {"name": "env_step", "duration": 2.1661338749108836, "wall_start": 35.11441421508789, "wall_end": 37.28054761886597}, {"name": "policy_sample", "duration": 7.094426832976751, "wall_start": 30.186239004135132, "wall_end": 37.28066563606262}, {"name": "env_step", "duration": 2.171787375002168, "wall_start": 35.10979866981506, "wall_end": 37.281585693359375}, {"name": "policy_sample", "duration": 6.83008433401119, "wall_start": 30.466587781906128, "wall_end": 37.29667282104492}, {"name": "policy_sample", "duration": 7.105700207990594, "wall_start": 30.19233536720276, "wall_end": 37.298036336898804}, {"name": "env_step", "duration": 2.4409131249412894, "wall_start": 35.119059801101685, "wall_end": 37.559972524642944}, {"name": "env_step", "duration": 2.161682541947812, "wall_start": 35.45940542221069, "wall_end": 37.62108850479126}, {"name": "compute_group_rewards", "duration": 4.75000124424696e-05, "wall_start": 37.62295436859131, "wall_end": 37.623002767562866}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 7.45663245790638, "wall_start": 30.166786432266235, "wall_end": 37.623419523239136}, {"name": "env_step", "duration": 2.4931188749615103, "wall_start": 35.133382081985474, "wall_end": 37.626500368118286}, {"name": "policy_sample", "duration": 7.434822499984875, "wall_start": 30.192293405532837, "wall_end": 37.627116441726685}, {"name": "policy_sample", "duration": 7.43742245901376, "wall_start": 30.192222118377686, "wall_end": 37.62964487075806}, {"name": "policy_sample", "duration": 7.132363041979261, "wall_start": 30.499549865722656, "wall_end": 37.63191366195679}, {"name": "env_step", "duration": 2.510036375024356, "wall_start": 35.12325167655945, "wall_end": 37.63328766822815}, {"name": "policy_sample", "duration": 7.441290291026235, "wall_start": 30.19240975379944, "wall_end": 37.63369965553284}, {"name": "policy_sample", "duration": 7.121225583949126, "wall_start": 30.51405668258667, "wall_end": 37.63528275489807}, {"name": "policy_sample", "duration": 7.162062834016979, "wall_start": 30.474010229110718, "wall_end": 37.636072635650635}, {"name": "policy_sample", "duration": 7.457428958034143, "wall_start": 30.190320014953613, "wall_end": 37.647748708724976}, {"name": "policy_sample", "duration": 7.5073699170025066, "wall_start": 30.452191591262817, "wall_end": 37.95956110954285}, {"name": "policy_sample", "duration": 7.767501624999568, "wall_start": 30.202187299728394, "wall_end": 37.96968936920166}, {"name": "policy_sample", "duration": 7.477783999987878, "wall_start": 30.49960994720459, "wall_end": 37.97739338874817}, {"name": "policy_sample", "duration": 7.505233332980424, "wall_start": 30.47811198234558, "wall_end": 37.9833459854126}, {"name": "policy_sample", "duration": 7.487097542034462, "wall_start": 30.499420404434204, "wall_end": 37.986517667770386}, {"name": "env_step", "duration": 2.5752188749611378, "wall_start": 35.46013522148132, "wall_end": 38.03535437583923}, {"name": "env_step", "duration": 2.6554963340749964, "wall_start": 35.46604037284851, "wall_end": 38.12153673171997}, {"name": "env_step", "duration": 2.35142162500415, "wall_start": 35.79360270500183, "wall_end": 38.14502477645874}, {"name": "env_step", "duration": 2.6898737919982523, "wall_start": 35.4605667591095, "wall_end": 38.15044045448303}, {"name": "policy_sample", "duration": 7.8064694160129875, "wall_start": 30.499650955200195, "wall_end": 38.30612063407898}, {"name": "policy_sample", "duration": 7.79497008305043, "wall_start": 30.523593187332153, "wall_end": 38.31856298446655}, {"name": "env_step", "duration": 2.6604222499299794, "wall_start": 35.79613184928894, "wall_end": 38.456554651260376}, {"name": "env_step", "duration": 2.6935962500283495, "wall_start": 35.83625912666321, "wall_end": 38.529855728149414}, {"name": "env_step", "duration": 2.7314890410052612, "wall_start": 35.80787754058838, "wall_end": 38.539366483688354}, {"name": "env_step", "duration": 2.7339486250421032, "wall_start": 35.808467626571655, "wall_end": 38.542415618896484}, {"name": "policy_sample", "duration": 8.243492375011556, "wall_start": 30.45099925994873, "wall_end": 38.69449186325073}, {"name": "policy_sample", "duration": 8.183978290995583, "wall_start": 30.5125949382782, "wall_end": 38.69657325744629}, {"name": "policy_sample", "duration": 8.248528833966702, "wall_start": 30.4519362449646, "wall_end": 38.700464725494385}, {"name": "policy_sample", "duration": 8.521956541924737, "wall_start": 30.18627691268921, "wall_end": 38.70823383331299}, {"name": "policy_sample", "duration": 8.276094832923263, "wall_start": 30.44196891784668, "wall_end": 38.718064069747925}, {"name": "policy_sample", "duration": 8.212920208927244, "wall_start": 30.514001846313477, "wall_end": 38.72692155838013}, {"name": "env_step", "duration": 3.036946374922991, "wall_start": 35.83889293670654, "wall_end": 38.875839948654175}, {"name": "env_step", "duration": 3.0388704580254853, "wall_start": 35.8374080657959, "wall_end": 38.87627840042114}, {"name": "env_step", "duration": 2.771389791974798, "wall_start": 36.16014790534973, "wall_end": 38.931538343429565}, {"name": "env_step", "duration": 3.091198957990855, "wall_start": 35.84325838088989, "wall_end": 38.93445682525635}, {"name": "policy_sample", "duration": 8.853066707961261, "wall_start": 30.186677932739258, "wall_end": 39.03974413871765}, {"name": "policy_sample", "duration": 8.607518875040114, "wall_start": 30.45321559906006, "wall_end": 39.06073522567749}, {"name": "policy_sample", "duration": 8.86356004094705, "wall_start": 30.201573848724365, "wall_end": 39.06513452529907}, {"name": "policy_sample", "duration": 8.886621208977886, "wall_start": 30.182156085968018, "wall_end": 39.0687780380249}, {"name": "policy_sample", "duration": 8.604472124949098, "wall_start": 30.4780433177948, "wall_end": 39.08251595497131}, {"name": "policy_sample", "duration": 8.609825416933745, "wall_start": 30.474123001098633, "wall_end": 39.0839478969574}, {"name": "policy_sample", "duration": 8.89330945792608, "wall_start": 30.192113399505615, "wall_end": 39.0854229927063}, {"name": "env_step", "duration": 3.088569000014104, "wall_start": 36.1771080493927, "wall_end": 39.26567769050598}, {"name": "env_step", "duration": 3.1650722080376, "wall_start": 36.182273149490356, "wall_end": 39.34734582901001}, {"name": "env_step", "duration": 3.165016416925937, "wall_start": 36.18536734580994, "wall_end": 39.35038352012634}, {"name": "env_step", "duration": 3.174812459037639, "wall_start": 36.181039571762085, "wall_end": 39.35585284233093}, {"name": "policy_sample", "duration": 9.213602041010745, "wall_start": 30.18455696105957, "wall_end": 39.39815926551819}, {"name": "policy_sample", "duration": 8.924524417030625, "wall_start": 30.497065782546997, "wall_end": 39.421589851379395}, {"name": "env_step", "duration": 3.458495291066356, "wall_start": 36.20394539833069, "wall_end": 39.66244125366211}, {"name": "env_step", "duration": 3.5501304579665884, "wall_start": 36.21058392524719, "wall_end": 39.76071381568909}, {"name": "compute_group_rewards", "duration": 2.4540931917726994e-05, "wall_start": 39.761128187179565, "wall_end": 39.761152505874634}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 9.594562041922472, "wall_start": 30.167330026626587, "wall_end": 39.76189160346985}, {"name": "env_step", "duration": 3.5529289999976754, "wall_start": 36.2132625579834, "wall_end": 39.76619100570679}, {"name": "env_step", "duration": 3.565122333006002, "wall_start": 36.2078492641449, "wall_end": 39.772971391677856}, {"name": "policy_sample", "duration": 9.592351499944925, "wall_start": 30.180800199508667, "wall_end": 39.773152351379395}, {"name": "policy_sample", "duration": 9.24919929204043, "wall_start": 30.525638103485107, "wall_end": 39.774837017059326}, {"name": "policy_sample", "duration": 9.593493500025943, "wall_start": 30.186571836471558, "wall_end": 39.7800657749176}, {"name": "policy_sample", "duration": 9.597429040935822, "wall_start": 30.186351537704468, "wall_end": 39.78377985954285}, {"name": "policy_sample", "duration": 9.90112345898524, "wall_start": 30.183879613876343, "wall_end": 40.08500266075134}, {"name": "env_step", "duration": 3.5696534999879077, "wall_start": 36.53719234466553, "wall_end": 40.10684561729431}, {"name": "policy_sample", "duration": 9.91524516697973, "wall_start": 30.194864511489868, "wall_end": 40.11010980606079}, {"name": "policy_sample", "duration": 9.63291558297351, "wall_start": 30.486130952835083, "wall_end": 40.119046211242676}, {"name": "policy_sample", "duration": 9.921265083015896, "wall_start": 30.201908588409424, "wall_end": 40.123173236846924}, {"name": "policy_sample", "duration": 9.923724209074862, "wall_start": 30.202036142349243, "wall_end": 40.12576103210449}, {"name": "policy_sample", "duration": 9.94479387497995, "wall_start": 30.182966470718384, "wall_end": 40.12776064872742}, {"name": "env_step", "duration": 3.613530582981184, "wall_start": 36.57061243057251, "wall_end": 40.18414258956909}, {"name": "env_step", "duration": 3.615243708016351, "wall_start": 36.568987131118774, "wall_end": 40.18423056602478}, {"name": "env_step", "duration": 3.621449749916792, "wall_start": 36.569958209991455, "wall_end": 40.191407442092896}, {"name": "policy_sample", "duration": 10.232760458020493, "wall_start": 30.20176362991333, "wall_end": 40.434523820877075}, {"name": "policy_sample", "duration": 10.236857749987394, "wall_start": 30.201810121536255, "wall_end": 40.4386670589447}, {"name": "policy_sample", "duration": 9.995610791957006, "wall_start": 30.46783137321472, "wall_end": 40.46344256401062}, {"name": "env_step", "duration": 4.023584375041537, "wall_start": 36.57620644569397, "wall_end": 40.599791288375854}, {"name": "env_step", "duration": 4.108159332885407, "wall_start": 36.57293081283569, "wall_end": 40.681090354919434}, {"name": "env_step", "duration": 4.107416665996425, "wall_start": 36.57551097869873, "wall_end": 40.68292808532715}, {"name": "env_step", "duration": 4.117903499980457, "wall_start": 36.57152342796326, "wall_end": 40.68942737579346}, {"name": "policy_sample", "duration": 10.584268791950308, "wall_start": 30.183640480041504, "wall_end": 40.76790952682495}, {"name": "policy_sample", "duration": 10.579522959073074, "wall_start": 30.201666355133057, "wall_end": 40.78118872642517}, {"name": "policy_sample", "duration": 10.342045333934948, "wall_start": 30.452153205871582, "wall_end": 40.794198989868164}, {"name": "env_step", "duration": 4.216084208921529, "wall_start": 36.93315243721008, "wall_end": 41.14923715591431}, {"name": "env_step", "duration": 4.555915917037055, "wall_start": 36.59338426589966, "wall_end": 41.14929986000061}, {"name": "policy_sample", "duration": 10.965707249939442, "wall_start": 30.183725595474243, "wall_end": 41.149433612823486}, {"name": "env_step", "duration": 4.227930166060105, "wall_start": 36.928481101989746, "wall_end": 41.15641188621521}, {"name": "env_step", "duration": 4.228777582990006, "wall_start": 36.93194556236267, "wall_end": 41.16072368621826}, {"name": "env_step", "duration": 4.636021250043996, "wall_start": 36.93406343460083, "wall_end": 41.57008457183838}, {"name": "env_step", "duration": 4.733825750066899, "wall_start": 36.93583106994629, "wall_end": 41.66965699195862}, {"name": "env_step", "duration": 4.735076708020642, "wall_start": 36.93495273590088, "wall_end": 41.670029163360596}, {"name": "env_step", "duration": 4.739291791105643, "wall_start": 36.93536400794983, "wall_end": 41.67465662956238}, {"name": "env_step", "duration": 5.129726084065624, "wall_start": 36.93672561645508, "wall_end": 42.06645202636719}, {"name": "env_step", "duration": 5.206059415941127, "wall_start": 36.94142508506775, "wall_end": 42.14748406410217}, {"name": "env_step", "duration": 5.2099668339360505, "wall_start": 36.94032669067383, "wall_end": 42.150294065475464}, {"name": "compute_group_rewards", "duration": 3.329198807477951e-05, "wall_start": 42.151572942733765, "wall_end": 42.151606798172}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 11.987209958024323, "wall_start": 30.16544795036316, "wall_end": 42.1526575088501}, {"name": "env_step", "duration": 5.217644541990012, "wall_start": 36.942424058914185, "wall_end": 42.16006827354431}, {"name": "env_step", "duration": 5.288759916904382, "wall_start": 37.27137041091919, "wall_end": 42.56013083457947}, {"name": "policy_sample", "duration": 12.387506457976997, "wall_start": 30.183779001235962, "wall_end": 42.57128596305847}, {"name": "env_step", "duration": 5.358372166985646, "wall_start": 37.28067636489868, "wall_end": 42.63904905319214}, {"name": "env_step", "duration": 5.365927457925864, "wall_start": 37.273345947265625, "wall_end": 42.639272689819336}, {"name": "env_step", "duration": 5.368314374936745, "wall_start": 37.279672145843506, "wall_end": 42.6479868888855}, {"name": "policy_sample", "duration": 12.727330666966736, "wall_start": 30.18167519569397, "wall_end": 42.90900659561157}, {"name": "policy_sample", "duration": 12.743374042096548, "wall_start": 30.179901838302612, "wall_end": 42.92327523231506}, {"name": "env_step", "duration": 5.450542666949332, "wall_start": 37.62967395782471, "wall_end": 43.080217123031616}, {"name": "env_step", "duration": 5.875406582956202, "wall_start": 37.29669404029846, "wall_end": 43.17209982872009}, {"name": "env_step", "duration": 5.887716416968033, "wall_start": 37.29819059371948, "wall_end": 43.185906171798706}, {"name": "env_step", "duration": 5.563525374978781, "wall_start": 37.62713146209717, "wall_end": 43.19065737724304}, {"name": "env_step", "duration": 6.0940622499911115, "wall_start": 37.636082887649536, "wall_end": 43.7301459312439}, {"name": "env_step", "duration": 6.100381167023443, "wall_start": 37.63371205329895, "wall_end": 43.7340931892395}, {"name": "env_step", "duration": 6.104096625000238, "wall_start": 37.631927728652954, "wall_end": 43.736024618148804}, {"name": "env_step", "duration": 6.108962249942124, "wall_start": 37.63529396057129, "wall_end": 43.744255781173706}, {"name": "policy_sample", "duration": 14.062100833980367, "wall_start": 30.20199227333069, "wall_end": 44.26409387588501}, {"name": "env_step", "duration": 6.784377250005491, "wall_start": 37.64776301383972, "wall_end": 44.432140588760376}, {"name": "env_step", "duration": 6.56350358389318, "wall_start": 37.9595890045166, "wall_end": 44.52309203147888}, {"name": "env_step", "duration": 6.553464832948521, "wall_start": 37.96975493431091, "wall_end": 44.52322030067444}, {"name": "env_step", "duration": 6.55021549994126, "wall_start": 37.977421283721924, "wall_end": 44.52763748168945}, {"name": "env_step", "duration": 6.951739832991734, "wall_start": 37.98339343070984, "wall_end": 44.93513369560242}, {"name": "env_step", "duration": 7.077782000065781, "wall_start": 37.9865460395813, "wall_end": 45.06432747840881}, {"name": "env_step", "duration": 6.7517265410861, "wall_start": 38.318575859069824, "wall_end": 45.07030272483826}, {"name": "env_step", "duration": 6.768275375012308, "wall_start": 38.30615568161011, "wall_end": 45.07443070411682}, {"name": "env_step", "duration": 6.857934250030667, "wall_start": 38.69453454017639, "wall_end": 45.55246829986572}, {"name": "env_step", "duration": 6.842248125001788, "wall_start": 38.71812295913696, "wall_end": 45.56037163734436}, {"name": "compute_group_rewards", "duration": 3.616698086261749e-05, "wall_start": 45.56055021286011, "wall_end": 45.56058597564697}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 15.39623983297497, "wall_start": 30.165661334991455, "wall_end": 45.561901569366455}, {"name": "env_step", "duration": 6.9302095419261605, "wall_start": 38.69660568237305, "wall_end": 45.62681579589844}, {"name": "env_step", "duration": 6.9279359999345616, "wall_start": 38.70825171470642, "wall_end": 45.63618850708008}, {"name": "env_step", "duration": 6.936745167011395, "wall_start": 38.700562477111816, "wall_end": 45.63730812072754}, {"name": "compute_group_rewards", "duration": 0.0002686249790713191, "wall_start": 45.63898754119873, "wall_end": 45.639256954193115}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 15.474644416943192, "wall_start": 30.16583800315857, "wall_end": 45.64048194885254}, {"name": "env_step", "duration": 7.282352291978896, "wall_start": 39.06534552574158, "wall_end": 46.34769797325134}, {"name": "env_step", "duration": 7.2952618330018595, "wall_start": 39.060771226882935, "wall_end": 46.35603380203247}, {"name": "env_step", "duration": 7.316468416946009, "wall_start": 39.03977656364441, "wall_end": 46.35624599456787}, {"name": "env_step", "duration": 7.637326415977441, "wall_start": 38.72694659233093, "wall_end": 46.36427307128906}, {"name": "env_step", "duration": 7.701156584080309, "wall_start": 39.06880497932434, "wall_end": 46.76996183395386}, {"name": "env_step", "duration": 7.777966708992608, "wall_start": 39.08545780181885, "wall_end": 46.86342525482178}, {"name": "env_step", "duration": 7.78965195803903, "wall_start": 39.083977699279785, "wall_end": 46.8736298084259}, {"name": "env_step", "duration": 7.7982462079962716, "wall_start": 39.08255076408386, "wall_end": 46.880797386169434}, {"name": "env_step", "duration": 7.737116499920376, "wall_start": 39.39819073677063, "wall_end": 47.13530707359314}, {"name": "env_step", "duration": 7.794689624919556, "wall_start": 39.421611070632935, "wall_end": 47.21630144119263}, {"name": "env_step", "duration": 7.443183416966349, "wall_start": 39.773168325424194, "wall_end": 47.21635150909424}, {"name": "compute_group_rewards", "duration": 2.4250010028481483e-05, "wall_start": 47.21646451950073, "wall_end": 47.21648836135864}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 17.050260209012777, "wall_start": 30.166953802108765, "wall_end": 47.21721363067627}, {"name": "env_step", "duration": 7.45244504197035, "wall_start": 39.77485108375549, "wall_end": 47.22729563713074}, {"name": "compute_group_rewards", "duration": 2.291705459356308e-05, "wall_start": 47.227460861206055, "wall_end": 47.227484464645386}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 17.06102895794902, "wall_start": 30.167150259017944, "wall_end": 47.22817897796631}, {"name": "env_step", "duration": 7.417209208011627, "wall_start": 40.110223054885864, "wall_end": 47.52743172645569}, {"name": "env_step", "duration": 7.794097625068389, "wall_start": 39.78381109237671, "wall_end": 47.5779082775116}, {"name": "env_step", "duration": 7.492928166990168, "wall_start": 40.085028886795044, "wall_end": 47.57795763015747}, {"name": "compute_group_rewards", "duration": 1.6915961168706417e-05, "wall_start": 47.58151030540466, "wall_end": 47.58152675628662}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 17.41963149991352, "wall_start": 30.16421341896057, "wall_end": 47.58384442329407}, {"name": "env_step", "duration": 7.810880708042532, "wall_start": 39.780088901519775, "wall_end": 47.590970516204834}, {"name": "compute_group_rewards", "duration": 1.8625054508447647e-05, "wall_start": 47.59111046791077, "wall_end": 47.59112858772278}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 17.428197957924567, "wall_start": 30.164488315582275, "wall_end": 47.59268665313721}, {"name": "env_step", "duration": 7.750748625025153, "wall_start": 40.123189210891724, "wall_end": 47.873937368392944}, {"name": "env_step", "duration": 7.830616499995813, "wall_start": 40.12777495384216, "wall_end": 47.95839214324951}, {"name": "env_step", "duration": 7.832831708015874, "wall_start": 40.1257803440094, "wall_end": 47.958611726760864}, {"name": "env_step", "duration": 7.850808250019327, "wall_start": 40.119062423706055, "wall_end": 47.969870805740356}, {"name": "compute_group_rewards", "duration": 3.483297768980265e-05, "wall_start": 47.970128536224365, "wall_end": 47.970163106918335}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 17.80494458298199, "wall_start": 30.166619777679443, "wall_end": 47.97156500816345}, {"name": "env_step", "duration": 7.764098957995884, "wall_start": 40.767940044403076, "wall_end": 48.532039642333984}, {"name": "env_step", "duration": 8.06868933304213, "wall_start": 40.46346950531006, "wall_end": 48.53215932846069}, {"name": "compute_group_rewards", "duration": 3.38749960064888e-05, "wall_start": 48.534225940704346, "wall_end": 48.53425931930542}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 18.369302541948855, "wall_start": 30.166189670562744, "wall_end": 48.53549289703369}, {"name": "env_step", "duration": 8.107488749898039, "wall_start": 40.43454694747925, "wall_end": 48.542036056518555}, {"name": "env_step", "duration": 7.908809207961895, "wall_start": 41.14944815635681, "wall_end": 49.05825686454773}, {"name": "env_step", "duration": 8.433899750001729, "wall_start": 40.79422640800476, "wall_end": 49.228126764297485}, {"name": "compute_group_rewards", "duration": 2.833292819559574e-05, "wall_start": 49.23593091964722, "wall_end": 49.23595857620239}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 19.07086220907513, "wall_start": 30.166022300720215, "wall_end": 49.236883878707886}, {"name": "env_step", "duration": 8.461750332964584, "wall_start": 40.78121876716614, "wall_end": 49.242968797683716}, {"name": "compute_group_rewards", "duration": 0.0007267919136211276, "wall_start": 49.25074577331543, "wall_end": 49.25147247314453}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 19.133389041991904, "wall_start": 30.164730310440063, "wall_end": 49.29811906814575}, {"name": "env_step", "duration": 7.718847832991742, "wall_start": 42.57132339477539, "wall_end": 50.29017186164856}, {"name": "env_step", "duration": 7.401106916018762, "wall_start": 42.923304319381714, "wall_end": 50.32441449165344}, {"name": "env_step", "duration": 7.422680750023574, "wall_start": 42.90903830528259, "wall_end": 50.331719160079956}, {"name": "compute_group_rewards", "duration": 6.620900239795446e-05, "wall_start": 50.33188796043396, "wall_end": 50.33195376396179}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 20.172249999945052, "wall_start": 30.16237449645996, "wall_end": 50.33462381362915}, {"name": "env_step", "duration": 6.267713624984026, "wall_start": 44.264310121536255, "wall_end": 50.532023191452026}, {"name": "env_step", "duration": 10.689883208018728, "wall_start": 40.43869376182556, "wall_end": 51.1285765171051}, {"name": "compute_group_rewards", "duration": 1.2499978765845299e-05, "wall_start": 51.12866568565369, "wall_end": 51.1286780834198}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 20.96403041703161, "wall_start": 30.165247917175293, "wall_end": 51.1292781829834}, {"name": "sampling", "duration": 21.040620791958645, "wall_start": 30.150256633758545, "wall_end": 51.19087815284729}, {"name": "assemble_training_data", "duration": 0.09424300002865493, "wall_start": 51.21121382713318, "wall_end": 51.30545616149902}, {"name": "prepare_minibatch", "duration": 0.11062166700139642, "wall_start": 51.19491147994995, "wall_end": 51.305532932281494}, {"name": "train_step", "duration": 6.4240378339309245, "wall_start": 51.30558180809021, "wall_end": 57.72961926460266}, {"name": "compute_kl_sample_train", "duration": 0.008129207999445498, "wall_start": 57.72984480857849, "wall_end": 57.73797416687012}, {"name": "save_checkpoint", "duration": 6.1768555419985205, "wall_start": 57.738107204437256, "wall_end": 63.914963483810425}, {"name": "save_checkpoint_and_get_sampling_client", "duration": 6.176953666028567, "wall_start": 57.73801875114441, "wall_end": 63.91497230529785}, {"name": "compute_full_batch_metrics_and_get_sampling_client", "duration": 6.185263124993071, "wall_start": 57.72971510887146, "wall_end": 63.91497802734375}, {"name": "do_train_step_and_get_sampling_client", "duration": 12.729495125007816, "wall_start": 51.19487166404724, "wall_end": 63.92436718940735}]}
++{"step": 1, "spans": [{"name": "env_initial_observation", "duration": 0.02027816593181342, "wall_start": 0.016515254974365234, "wall_end": 0.03679394721984863}, {"name": "env_initial_observation", "duration": 0.018940791953355074, "wall_start": 0.018622398376464844, "wall_end": 0.03756284713745117}, {"name": "env_initial_observation", "duration": 0.020945917000062764, "wall_start": 0.0185239315032959, "wall_end": 0.03946948051452637}, {"name": "env_initial_observation", "duration": 0.021996499970555305, "wall_start": 0.01860666275024414, "wall_end": 0.040602922439575195}, {"name": "env_initial_observation", "duration": 0.025664665969088674, "wall_start": 0.018498897552490234, "wall_end": 0.04416394233703613}, {"name": "env_initial_observation", "duration": 0.025688249967060983, "wall_start": 0.018570423126220703, "wall_end": 0.04425930976867676}, {"name": "env_initial_observation", "duration": 0.02572508400771767, "wall_start": 0.018587827682495117, "wall_end": 0.04431271553039551}, {"name": "env_initial_observation", "duration": 0.026086291996762156, "wall_start": 0.0185394287109375, "wall_end": 0.044626474380493164}, {"name": "env_initial_observation", "duration": 0.0261243749409914, "wall_start": 0.018555164337158203, "wall_end": 0.04467940330505371}, {"name": "env_initial_observation", "duration": 0.02625191700644791, "wall_start": 0.01846790313720703, "wall_end": 0.044719696044921875}, {"name": "env_initial_observation", "duration": 0.026114625041373074, "wall_start": 0.018646955490112305, "wall_end": 0.04476141929626465}, {"name": "env_initial_observation", "duration": 0.028152415994554758, "wall_start": 0.016671419143676758, "wall_end": 0.044823646545410156}, {"name": "env_initial_observation", "duration": 0.028167583979666233, "wall_start": 0.016701221466064453, "wall_end": 0.04486870765686035}, {"name": "env_initial_observation", "duration": 0.028216916951350868, "wall_start": 0.016687870025634766, "wall_end": 0.04490470886230469}, {"name": "env_initial_observation", "duration": 0.026056458009406924, "wall_start": 0.018889427185058594, "wall_end": 0.04494667053222656}, {"name": "env_initial_observation", "duration": 0.026294708950445056, "wall_start": 0.018698453903198242, "wall_end": 0.044992923736572266}, {"name": "env_initial_observation", "duration": 0.026372416992671788, "wall_start": 0.0186612606048584, "wall_end": 0.04503369331359863}, {"name": "env_initial_observation", "duration": 0.026344125042669475, "wall_start": 0.018742799758911133, "wall_end": 0.04508686065673828}, {"name": "env_initial_observation", "duration": 0.0264033330604434, "wall_start": 0.01871967315673828, "wall_end": 0.04512286186218262}, {"name": "env_initial_observation", "duration": 0.026472624973393977, "wall_start": 0.01868438720703125, "wall_end": 0.04515671730041504}, {"name": "env_initial_observation", "duration": 0.026316082919947803, "wall_start": 0.01887369155883789, "wall_end": 0.045189619064331055}, {"name": "env_initial_observation", "duration": 0.026366124977357686, "wall_start": 0.018858671188354492, "wall_end": 0.045224666595458984}, {"name": "env_initial_observation", "duration": 0.026505375048145652, "wall_start": 0.018773555755615234, "wall_end": 0.045279741287231445}, {"name": "env_initial_observation", "duration": 0.026313666021451354, "wall_start": 0.019002437591552734, "wall_end": 0.04531598091125488}, {"name": "env_initial_observation", "duration": 0.0265074580674991, "wall_start": 0.018843412399291992, "wall_end": 0.04535079002380371}, {"name": "env_initial_observation", "duration": 0.031541000003926456, "wall_start": 0.01891946792602539, "wall_end": 0.05046200752258301}, {"name": "env_initial_observation", "duration": 0.031635833089239895, "wall_start": 0.01901841163635254, "wall_end": 0.05065512657165527}, {"name": "env_initial_observation", "duration": 0.031638375017791986, "wall_start": 0.019092082977294922, "wall_end": 0.05073046684265137}, {"name": "env_initial_observation", "duration": 0.03193104197271168, "wall_start": 0.018936634063720703, "wall_end": 0.050867319107055664}, {"name": "env_initial_observation", "duration": 0.0345555410021916, "wall_start": 0.019129276275634766, "wall_end": 0.05368447303771973}, {"name": "env_initial_observation", "duration": 0.03466274996753782, "wall_start": 0.01910996437072754, "wall_end": 0.053772687911987305}, {"name": "env_initial_observation", "duration": 0.034915916970930994, "wall_start": 0.019034147262573242, "wall_end": 0.053949832916259766}, {"name": "env_initial_observation", "duration": 0.03740029106847942, "wall_start": 0.01896047592163086, "wall_end": 0.056360483169555664}, {"name": "env_initial_observation", "duration": 0.04008179099764675, "wall_start": 0.019064903259277344, "wall_end": 0.05914759635925293}, {"name": "env_initial_observation", "duration": 0.04156625003088266, "wall_start": 0.019242048263549805, "wall_end": 0.060808420181274414}, {"name": "env_initial_observation", "duration": 0.043135167099535465, "wall_start": 0.019227981567382812, "wall_end": 0.0623624324798584}, {"name": "env_initial_observation", "duration": 0.04320366703905165, "wall_start": 0.019301414489746094, "wall_end": 0.06250596046447754}, {"name": "env_initial_observation", "duration": 0.04339679202530533, "wall_start": 0.019192934036254883, "wall_end": 0.06258940696716309}, {"name": "env_initial_observation", "duration": 0.04347879101987928, "wall_start": 0.0192110538482666, "wall_end": 0.06268954277038574}, {"name": "env_initial_observation", "duration": 0.04428758309222758, "wall_start": 0.01932692527770996, "wall_end": 0.06361508369445801}, {"name": "env_initial_observation", "duration": 0.04440391599200666, "wall_start": 0.019285917282104492, "wall_end": 0.0636894702911377}, {"name": "env_initial_observation", "duration": 0.04986020899377763, "wall_start": 0.019387483596801758, "wall_end": 0.06924843788146973}, {"name": "env_initial_observation", "duration": 0.05186883301939815, "wall_start": 0.019271373748779297, "wall_end": 0.07114076614379883}, {"name": "env_initial_observation", "duration": 0.05202712502796203, "wall_start": 0.019256591796875, "wall_end": 0.07128334045410156}, {"name": "env_initial_observation", "duration": 0.05664629198145121, "wall_start": 0.01940155029296875, "wall_end": 0.07604813575744629}, {"name": "env_initial_observation", "duration": 0.05809829197824001, "wall_start": 0.01942276954650879, "wall_end": 0.07752180099487305}, {"name": "env_initial_observation", "duration": 0.058088083984330297, "wall_start": 0.019518375396728516, "wall_end": 0.0776071548461914}, {"name": "env_initial_observation", "duration": 0.05829770804848522, "wall_start": 0.019359111785888672, "wall_end": 0.07765674591064453}, {"name": "env_initial_observation", "duration": 0.05816591694019735, "wall_start": 0.019536972045898438, "wall_end": 0.07770276069641113}, {"name": "env_initial_observation", "duration": 0.058305875048972666, "wall_start": 0.019436120986938477, "wall_end": 0.07774186134338379}, {"name": "env_initial_observation", "duration": 0.058335250010713935, "wall_start": 0.019451618194580078, "wall_end": 0.07778668403625488}, {"name": "env_initial_observation", "duration": 0.05824141704943031, "wall_start": 0.019583702087402344, "wall_end": 0.07782483100891113}, {"name": "env_initial_observation", "duration": 0.05823237495496869, "wall_start": 0.019628286361694336, "wall_end": 0.07786059379577637}, {"name": "env_initial_observation", "duration": 0.05825775000266731, "wall_start": 0.01964712142944336, "wall_end": 0.07790565490722656}, {"name": "env_initial_observation", "duration": 0.05819008301477879, "wall_start": 0.019755125045776367, "wall_end": 0.07794499397277832}, {"name": "env_initial_observation", "duration": 0.05825041700154543, "wall_start": 0.019730329513549805, "wall_end": 0.07798075675964355}, {"name": "env_initial_observation", "duration": 0.058497125050053, "wall_start": 0.019554853439331055, "wall_end": 0.07805180549621582}, {"name": "env_initial_observation", "duration": 0.05841241602320224, "wall_start": 0.019677400588989258, "wall_end": 0.07808971405029297}, {"name": "env_initial_observation", "duration": 0.05831587500870228, "wall_start": 0.01982402801513672, "wall_end": 0.0781397819519043}, {"name": "env_initial_observation", "duration": 0.05836483393795788, "wall_start": 0.019808053970336914, "wall_end": 0.07817363739013672}, {"name": "env_initial_observation", "duration": 0.0584366669645533, "wall_start": 0.019774198532104492, "wall_end": 0.07821178436279297}, {"name": "env_initial_observation", "duration": 0.05832525005098432, "wall_start": 0.01992058753967285, "wall_end": 0.0782465934753418}, {"name": "env_initial_observation", "duration": 0.05848716595210135, "wall_start": 0.019791841506958008, "wall_end": 0.07827877998352051}, {"name": "env_initial_observation", "duration": 0.06290224997792393, "wall_start": 0.019947290420532227, "wall_end": 0.08285021781921387}, {"name": "env_initial_observation", "duration": 0.06314137508161366, "wall_start": 0.01990032196044922, "wall_end": 0.08304238319396973}, {"name": "env_initial_observation", "duration": 0.0638014170108363, "wall_start": 0.019966840744018555, "wall_end": 0.08376789093017578}, {"name": "env_initial_observation", "duration": 0.06413558300118893, "wall_start": 0.019702911376953125, "wall_end": 0.08383822441101074}, {"name": "env_initial_observation", "duration": 0.06399362499359995, "wall_start": 0.020006179809570312, "wall_end": 0.0839996337890625}, {"name": "env_initial_observation", "duration": 0.0664993750397116, "wall_start": 0.02005934715270996, "wall_end": 0.08655858039855957}, {"name": "env_initial_observation", "duration": 0.06668333301786333, "wall_start": 0.019982337951660156, "wall_end": 0.08666539192199707}, {"name": "env_initial_observation", "duration": 0.07061908300966024, "wall_start": 0.020041942596435547, "wall_end": 0.09066152572631836}, {"name": "env_initial_observation", "duration": 0.07603666698560119, "wall_start": 0.019839048385620117, "wall_end": 0.09587645530700684}, {"name": "env_initial_observation", "duration": 0.09766220790334046, "wall_start": 0.021027088165283203, "wall_end": 0.11868977546691895}, {"name": "env_initial_observation", "duration": 0.09856570803094655, "wall_start": 0.021202564239501953, "wall_end": 0.11976909637451172}, {"name": "env_initial_observation", "duration": 0.10211766697466373, "wall_start": 0.021138668060302734, "wall_end": 0.12325692176818848}, {"name": "env_initial_observation", "duration": 0.10259266698267311, "wall_start": 0.020789146423339844, "wall_end": 0.1233816146850586}, {"name": "env_initial_observation", "duration": 0.1022748340619728, "wall_start": 0.021158933639526367, "wall_end": 0.12343358993530273}, {"name": "env_initial_observation", "duration": 0.10340712498873472, "wall_start": 0.020074844360351562, "wall_end": 0.12348175048828125}, {"name": "env_initial_observation", "duration": 0.10251800005789846, "wall_start": 0.021082162857055664, "wall_end": 0.12359976768493652}, {"name": "env_initial_observation", "duration": 0.10256691696122289, "wall_start": 0.021106243133544922, "wall_end": 0.1236729621887207}, {"name": "env_initial_observation", "duration": 0.10292941599618644, "wall_start": 0.020812273025512695, "wall_end": 0.12374162673950195}, {"name": "env_initial_observation", "duration": 0.1274351659230888, "wall_start": 0.0200958251953125, "wall_end": 0.14753079414367676}, {"name": "env_initial_observation", "duration": 0.12702583300415426, "wall_start": 0.020686864852905273, "wall_end": 0.14771223068237305}, {"name": "env_initial_observation", "duration": 0.12789562495891005, "wall_start": 0.021314144134521484, "wall_end": 0.14920973777770996}, {"name": "env_initial_observation", "duration": 0.13093366601970047, "wall_start": 0.02123546600341797, "wall_end": 0.15216898918151855}, {"name": "env_initial_observation", "duration": 0.1308938330039382, "wall_start": 0.0214235782623291, "wall_end": 0.15231704711914062}, {"name": "env_initial_observation", "duration": 0.1354342499980703, "wall_start": 0.02228832244873047, "wall_end": 0.15772223472595215}, {"name": "env_initial_observation", "duration": 0.141248791012913, "wall_start": 0.020763397216796875, "wall_end": 0.16201138496398926}, {"name": "env_initial_observation", "duration": 0.14099970797542483, "wall_start": 0.021218538284301758, "wall_end": 0.16221904754638672}, {"name": "env_initial_observation", "duration": 0.1595891669858247, "wall_start": 0.021251916885375977, "wall_end": 0.18084049224853516}, {"name": "env_initial_observation", "duration": 0.15932595904450864, "wall_start": 0.021929025650024414, "wall_end": 0.18125557899475098}, {"name": "env_initial_observation", "duration": 0.15915370790753514, "wall_start": 0.022267818450927734, "wall_end": 0.18142127990722656}, {"name": "env_initial_observation", "duration": 0.1603103750385344, "wall_start": 0.02118682861328125, "wall_end": 0.18149685859680176}, {"name": "env_initial_observation", "duration": 0.15898408298380673, "wall_start": 0.022594213485717773, "wall_end": 0.1815791130065918}, {"name": "env_initial_observation", "duration": 0.15912295901216567, "wall_start": 0.022554636001586914, "wall_end": 0.18167734146118164}, {"name": "env_initial_observation", "duration": 0.1593673749594018, "wall_start": 0.02241039276123047, "wall_end": 0.1817774772644043}, {"name": "env_initial_observation", "duration": 0.15946862509008497, "wall_start": 0.022462844848632812, "wall_end": 0.1819324493408203}, {"name": "env_initial_observation", "duration": 0.16085466695949435, "wall_start": 0.02126789093017578, "wall_end": 0.18212223052978516}, {"name": "env_initial_observation", "duration": 0.1605719579383731, "wall_start": 0.021625041961669922, "wall_end": 0.18219685554504395}, {"name": "env_initial_observation", "duration": 0.160082665970549, "wall_start": 0.022231578826904297, "wall_end": 0.18231415748596191}, {"name": "env_initial_observation", "duration": 0.15840820805169642, "wall_start": 0.02398538589477539, "wall_end": 0.18239307403564453}, {"name": "env_initial_observation", "duration": 0.15821675001643598, "wall_start": 0.0243227481842041, "wall_end": 0.1825394630432129}, {"name": "env_initial_observation", "duration": 0.1602983329212293, "wall_start": 0.022307634353637695, "wall_end": 0.18260574340820312}, {"name": "env_initial_observation", "duration": 0.15860025002621114, "wall_start": 0.024080991744995117, "wall_end": 0.18268179893493652}, {"name": "env_initial_observation", "duration": 0.15860395797062665, "wall_start": 0.02419447898864746, "wall_end": 0.1827983856201172}, {"name": "env_initial_observation", "duration": 0.15873416606336832, "wall_start": 0.024140596389770508, "wall_end": 0.18287444114685059}, {"name": "env_initial_observation", "duration": 0.16000879101920873, "wall_start": 0.02440667152404785, "wall_end": 0.18441510200500488}, {"name": "env_initial_observation", "duration": 0.1619997499510646, "wall_start": 0.022624969482421875, "wall_end": 0.18462419509887695}, {"name": "env_initial_observation", "duration": 0.16099537501577288, "wall_start": 0.024361848831176758, "wall_end": 0.18535685539245605}, {"name": "env_initial_observation", "duration": 0.16101699997670949, "wall_start": 0.024472475051879883, "wall_end": 0.18548917770385742}, {"name": "env_initial_observation", "duration": 0.16112712502945215, "wall_start": 0.024423837661743164, "wall_end": 0.18555068969726562}, {"name": "env_initial_observation", "duration": 0.16143687500152737, "wall_start": 0.02417612075805664, "wall_end": 0.18561267852783203}, {"name": "env_initial_observation", "duration": 0.16121545806527138, "wall_start": 0.02445530891418457, "wall_end": 0.1856706142425537}, {"name": "env_initial_observation", "duration": 0.16124170809052885, "wall_start": 0.0245969295501709, "wall_end": 0.1858384609222412}, {"name": "env_initial_observation", "duration": 0.1613031669985503, "wall_start": 0.02463841438293457, "wall_end": 0.18594145774841309}, {"name": "env_initial_observation", "duration": 0.16149362502619624, "wall_start": 0.0245053768157959, "wall_end": 0.18599867820739746}, {"name": "env_initial_observation", "duration": 0.16097608301788568, "wall_start": 0.025076627731323242, "wall_end": 0.1860523223876953}, {"name": "env_initial_observation", "duration": 0.16174258303362876, "wall_start": 0.024390220642089844, "wall_end": 0.18613266944885254}, {"name": "env_initial_observation", "duration": 0.16184379195328802, "wall_start": 0.024342060089111328, "wall_end": 0.18618559837341309}, {"name": "env_initial_observation", "duration": 0.16551099997013807, "wall_start": 0.024756431579589844, "wall_end": 0.19026875495910645}, {"name": "env_initial_observation", "duration": 0.1660595420980826, "wall_start": 0.024547576904296875, "wall_end": 0.19060683250427246}, {"name": "env_initial_observation", "duration": 0.20259399991482496, "wall_start": 0.025145769119262695, "wall_end": 0.2277393341064453}, {"name": "env_initial_observation", "duration": 0.2068021249724552, "wall_start": 0.02480149269104004, "wall_end": 0.23160290718078613}, {"name": "env_initial_observation", "duration": 0.21722433401737362, "wall_start": 0.02498459815979004, "wall_end": 0.24220919609069824}, {"name": "env_initial_observation", "duration": 0.21740500000305474, "wall_start": 0.025203227996826172, "wall_end": 0.24260878562927246}, {"name": "env_initial_observation", "duration": 0.217882958939299, "wall_start": 0.025171518325805664, "wall_end": 0.2430553436279297}, {"name": "env_initial_observation", "duration": 0.2182559589855373, "wall_start": 0.02494335174560547, "wall_end": 0.24319887161254883}, {"name": "env_initial_observation", "duration": 0.21808058291208, "wall_start": 0.025187969207763672, "wall_end": 0.24326825141906738}, {"name": "policy_sample", "duration": 6.0446967909811065, "wall_start": 0.1622316837310791, "wall_end": 6.206928014755249}, {"name": "policy_sample", "duration": 6.041059874929488, "wall_start": 0.18594574928283691, "wall_end": 6.227005481719971}, {"name": "policy_sample", "duration": 6.189937583054416, "wall_start": 0.04060959815979004, "wall_end": 6.230546951293945}, {"name": "policy_sample", "duration": 6.188707791035995, "wall_start": 0.04499316215515137, "wall_end": 6.233701705932617}, {"name": "policy_sample", "duration": 6.1107757079880685, "wall_start": 0.12377214431762695, "wall_end": 6.2345476150512695}, {"name": "policy_sample", "duration": 6.190028209006414, "wall_start": 0.04522514343261719, "wall_end": 6.235253095626831}, {"name": "policy_sample", "duration": 6.055442832992412, "wall_start": 0.18150115013122559, "wall_end": 6.236944675445557}, {"name": "policy_sample", "duration": 6.162410208024085, "wall_start": 0.07790660858154297, "wall_end": 6.240316390991211}, {"name": "policy_sample", "duration": 5.9993999999715015, "wall_start": 0.24263238906860352, "wall_end": 6.242032051086426}, {"name": "policy_sample", "duration": 6.062279416015372, "wall_start": 0.18087458610534668, "wall_end": 6.24315333366394}, {"name": "policy_sample", "duration": 6.120285791927017, "wall_start": 0.12343668937683105, "wall_end": 6.243723154067993}, {"name": "policy_sample", "duration": 6.120732874958776, "wall_start": 0.12327384948730469, "wall_end": 6.244006395339966}, {"name": "policy_sample", "duration": 6.092944624950178, "wall_start": 0.15218067169189453, "wall_end": 6.24512505531311}, {"name": "policy_sample", "duration": 6.063439000048675, "wall_start": 0.1828765869140625, "wall_end": 6.2463157176971436}, {"name": "policy_sample", "duration": 6.12379383307416, "wall_start": 0.12367677688598633, "wall_end": 6.247471332550049}, {"name": "policy_sample", "duration": 6.065530667081475, "wall_start": 0.1825428009033203, "wall_end": 6.248074054718018}, {"name": "policy_sample", "duration": 6.170945250079967, "wall_start": 0.07786202430725098, "wall_end": 6.248807191848755}, {"name": "policy_sample", "duration": 6.203935457975604, "wall_start": 0.04508709907531738, "wall_end": 6.249022483825684}, {"name": "policy_sample", "duration": 6.20436608302407, "wall_start": 0.044946908950805664, "wall_end": 6.249313592910767}, {"name": "policy_sample", "duration": 6.064171000034548, "wall_start": 0.18555331230163574, "wall_end": 6.2497239112854}, {"name": "policy_sample", "duration": 6.059852584032342, "wall_start": 0.19030332565307617, "wall_end": 6.250156402587891}, {"name": "policy_sample", "duration": 6.166750416974537, "wall_start": 0.08377313613891602, "wall_end": 6.250523328781128}, {"name": "policy_sample", "duration": 6.079027167055756, "wall_start": 0.18549299240112305, "wall_end": 6.264520883560181}, {"name": "policy_sample", "duration": 6.4856047090142965, "wall_start": 0.06238842010498047, "wall_end": 6.5479936599731445}, {"name": "policy_sample", "duration": 6.378445249982178, "wall_start": 0.1906142234802246, "wall_end": 6.569059133529663}, {"name": "policy_sample", "duration": 6.471108624944463, "wall_start": 0.11978983879089355, "wall_end": 6.590898752212524}, {"name": "policy_sample", "duration": 6.516159542021342, "wall_start": 0.07805252075195312, "wall_end": 6.594211578369141}, {"name": "policy_sample", "duration": 6.551010458031669, "wall_start": 0.04515647888183594, "wall_end": 6.59616756439209}, {"name": "policy_sample", "duration": 6.513898582896218, "wall_start": 0.08287382125854492, "wall_end": 6.596772193908691}, {"name": "policy_sample", "duration": 6.537564540980384, "wall_start": 0.06259298324584961, "wall_end": 6.600157976150513}, {"name": "policy_sample", "duration": 6.415400207974017, "wall_start": 0.18583965301513672, "wall_end": 6.60124135017395}, {"name": "policy_sample", "duration": 6.416573833907023, "wall_start": 0.18567180633544922, "wall_end": 6.602246046066284}, {"name": "policy_sample", "duration": 6.5586546659469604, "wall_start": 0.04512310028076172, "wall_end": 6.60377836227417}, {"name": "policy_sample", "duration": 6.561939750099555, "wall_start": 0.04431414604187012, "wall_end": 6.60625433921814}, {"name": "env_step", "duration": 0.5229119589785114, "wall_start": 6.207046031951904, "wall_end": 6.729957342147827}, {"name": "env_step", "duration": 0.5653541670180857, "wall_start": 6.227017879486084, "wall_end": 6.79237174987793}, {"name": "env_step", "duration": 0.5603013340150937, "wall_start": 6.2337141036987305, "wall_end": 6.794014930725098}, {"name": "env_step", "duration": 0.568264291039668, "wall_start": 6.230563640594482, "wall_end": 6.798827648162842}, {"name": "policy_sample", "duration": 6.854118915973231, "wall_start": 0.08401179313659668, "wall_end": 6.938131093978882}, {"name": "policy_sample", "duration": 6.894339499995112, "wall_start": 0.04535031318664551, "wall_end": 6.939690351486206}, {"name": "policy_sample", "duration": 6.69862949999515, "wall_start": 0.2430875301361084, "wall_end": 6.941717863082886}, {"name": "policy_sample", "duration": 6.780067709041759, "wall_start": 0.18561458587646484, "wall_end": 6.9656829833984375}, {"name": "policy_sample", "duration": 7.247460167040117, "wall_start": 0.12338423728942871, "wall_end": 7.370844125747681}, {"name": "policy_sample", "duration": 7.323859540978447, "wall_start": 0.07824563980102539, "wall_end": 7.402105093002319}, {"name": "policy_sample", "duration": 7.363740333006717, "wall_start": 0.05377554893493652, "wall_end": 7.417515993118286}, {"name": "policy_sample", "duration": 7.520264166989364, "wall_start": 0.07770228385925293, "wall_end": 7.597968101501465}, {"name": "policy_sample", "duration": 8.14531624992378, "wall_start": 0.039481163024902344, "wall_end": 8.184798002243042}, {"name": "policy_sample", "duration": 8.109272958012298, "wall_start": 0.07808899879455566, "wall_end": 8.1873619556427}, {"name": "policy_sample", "duration": 8.009624416008592, "wall_start": 0.18537259101867676, "wall_end": 8.194997549057007}, {"name": "policy_sample", "duration": 8.15369795798324, "wall_start": 0.04471993446350098, "wall_end": 8.198418378829956}, {"name": "policy_sample", "duration": 8.122143249958754, "wall_start": 0.07794451713562012, "wall_end": 8.200088262557983}, {"name": "policy_sample", "duration": 8.023261958034709, "wall_start": 0.18443036079406738, "wall_end": 8.207692384719849}, {"name": "policy_sample", "duration": 8.132189583033323, "wall_start": 0.07765722274780273, "wall_end": 8.209847450256348}, {"name": "policy_sample", "duration": 8.16331370791886, "wall_start": 0.05073189735412598, "wall_end": 8.214046001434326}, {"name": "policy_sample", "duration": 8.144638249999844, "wall_start": 0.07130885124206543, "wall_end": 8.215947389602661}, {"name": "policy_sample", "duration": 8.17286079202313, "wall_start": 0.04462862014770508, "wall_end": 8.217489004135132}, {"name": "policy_sample", "duration": 8.141081749927253, "wall_start": 0.0781393051147461, "wall_end": 8.219221115112305}, {"name": "policy_sample", "duration": 8.278715374995954, "wall_start": 0.16203975677490234, "wall_end": 8.440755128860474}, {"name": "policy_sample", "duration": 8.223110999912024, "wall_start": 0.22785162925720215, "wall_end": 8.450963020324707}, {"name": "policy_sample", "duration": 8.381624666042626, "wall_start": 0.07116341590881348, "wall_end": 8.452788591384888}, {"name": "policy_sample", "duration": 8.438218250055797, "wall_start": 0.037570953369140625, "wall_end": 8.475789546966553}, {"name": "policy_sample", "duration": 8.402999042067677, "wall_start": 0.07817292213439941, "wall_end": 8.481171369552612}, {"name": "policy_sample", "duration": 8.304526459076442, "wall_start": 0.18280315399169922, "wall_end": 8.487329959869385}, {"name": "policy_sample", "duration": 8.251195542048663, "wall_start": 0.24320697784423828, "wall_end": 8.494402885437012}, {"name": "env_step", "duration": 2.263190499972552, "wall_start": 6.240328788757324, "wall_end": 8.50351858139038}, {"name": "policy_sample", "duration": 8.45426754199434, "wall_start": 0.078277587890625, "wall_end": 8.532545566558838}, {"name": "env_step", "duration": 2.3826426250161603, "wall_start": 6.2345545291900635, "wall_end": 8.617196559906006}, {"name": "env_step", "duration": 2.3821444580098614, "wall_start": 6.235259771347046, "wall_end": 8.617403745651245}, {"name": "env_step", "duration": 2.3929498340003192, "wall_start": 6.23695182800293, "wall_end": 8.629902124404907}, {"name": "policy_sample", "duration": 8.59210762497969, "wall_start": 0.18613243103027344, "wall_end": 8.77824068069458}, {"name": "policy_sample", "duration": 8.723873291979544, "wall_start": 0.07606816291809082, "wall_end": 8.799942016601562}, {"name": "policy_sample", "duration": 8.748706083977595, "wall_start": 0.059154510498046875, "wall_end": 8.807861089706421}, {"name": "policy_sample", "duration": 8.766301832976751, "wall_start": 0.04476189613342285, "wall_end": 8.81106424331665}, {"name": "policy_sample", "duration": 8.6892966250889, "wall_start": 0.12348365783691406, "wall_end": 8.812780618667603}, {"name": "policy_sample", "duration": 8.760785209015012, "wall_start": 0.053974151611328125, "wall_end": 8.814759492874146}, {"name": "policy_sample", "duration": 8.734198625083081, "wall_start": 0.08384013175964355, "wall_end": 8.81803846359253}, {"name": "policy_sample", "duration": 8.728842959040776, "wall_start": 0.0906820297241211, "wall_end": 8.819525241851807}, {"name": "policy_sample", "duration": 8.577319041010924, "wall_start": 0.2432701587677002, "wall_end": 8.820589303970337}, {"name": "policy_sample", "duration": 8.787625625031069, "wall_start": 0.04518842697143555, "wall_end": 8.832814693450928}, {"name": "policy_sample", "duration": 8.711785959079862, "wall_start": 0.12360739707946777, "wall_end": 8.83539366722107}, {"name": "policy_sample", "duration": 8.74112974992022, "wall_start": 0.09593081474304199, "wall_end": 8.837060689926147}, {"name": "policy_sample", "duration": 8.765170749975368, "wall_start": 0.07760834693908691, "wall_end": 8.842779159545898}, {"name": "policy_sample", "duration": 8.800479124998674, "wall_start": 0.045278072357177734, "wall_end": 8.845757722854614}, {"name": "policy_sample", "duration": 8.661236208979972, "wall_start": 0.18599987030029297, "wall_end": 8.847235441207886}, {"name": "policy_sample", "duration": 8.766406874987297, "wall_start": 0.08362555503845215, "wall_end": 8.850032806396484}, {"name": "policy_sample", "duration": 8.675467249937356, "wall_start": 0.18194150924682617, "wall_end": 8.85740876197815}, {"name": "policy_sample", "duration": 8.628325707977638, "wall_start": 0.23172807693481445, "wall_end": 8.86005425453186}, {"name": "policy_sample", "duration": 8.798645625007339, "wall_start": 0.0636906623840332, "wall_end": 8.862336874008179}, {"name": "policy_sample", "duration": 8.820133458008058, "wall_start": 0.044261932373046875, "wall_end": 8.864395141601562}, {"name": "policy_sample", "duration": 8.815200834069401, "wall_start": 0.05047941207885742, "wall_end": 8.865680694580078}, {"name": "policy_sample", "duration": 8.789865667000413, "wall_start": 0.07778573036193848, "wall_end": 8.86765170097351}, {"name": "policy_sample", "duration": 8.721807084046304, "wall_start": 0.15232324600219727, "wall_end": 8.87412977218628}, {"name": "policy_sample", "duration": 8.815137166995555, "wall_start": 0.060835838317871094, "wall_end": 8.875973224639893}, {"name": "policy_sample", "duration": 8.813457458047196, "wall_start": 0.06361937522888184, "wall_end": 8.877077579498291}, {"name": "policy_sample", "duration": 8.692045332980342, "wall_start": 0.1861867904663086, "wall_end": 8.878231763839722}, {"name": "policy_sample", "duration": 9.106306624948047, "wall_start": 0.04467964172363281, "wall_end": 9.150986909866333}, {"name": "policy_sample", "duration": 9.07508629199583, "wall_start": 0.07782316207885742, "wall_end": 9.152910232543945}, {"name": "policy_sample", "duration": 8.97610995802097, "wall_start": 0.18239545822143555, "wall_end": 9.158505201339722}, {"name": "policy_sample", "duration": 8.978709083981812, "wall_start": 0.18168139457702637, "wall_end": 9.16038990020752}, {"name": "policy_sample", "duration": 9.075081957969815, "wall_start": 0.08657121658325195, "wall_end": 9.16165280342102}, {"name": "policy_sample", "duration": 9.11814970895648, "wall_start": 0.044904232025146484, "wall_end": 9.163053512573242}, {"name": "policy_sample", "duration": 9.016303290962242, "wall_start": 0.14773130416870117, "wall_end": 9.164034128189087}, {"name": "policy_sample", "duration": 9.114821000024676, "wall_start": 0.050897836685180664, "wall_end": 9.165719270706177}, {"name": "env_step", "duration": 3.2240817920537665, "wall_start": 6.24316668510437, "wall_end": 9.467248916625977}, {"name": "policy_sample", "duration": 9.479506209027022, "wall_start": 0.05637097358703613, "wall_end": 9.535877704620361}, {"name": "policy_sample", "duration": 9.477923208032735, "wall_start": 0.0692598819732666, "wall_end": 9.547182559967041}, {"name": "policy_sample", "duration": 9.516613582964055, "wall_start": 0.04486703872680664, "wall_end": 9.56148099899292}, {"name": "policy_sample", "duration": 9.376461499952711, "wall_start": 0.18605327606201172, "wall_end": 9.562514543533325}, {"name": "env_step", "duration": 3.334728999994695, "wall_start": 6.244009733200073, "wall_end": 9.578739166259766}, {"name": "env_step", "duration": 3.3363544590538368, "wall_start": 6.243730545043945, "wall_end": 9.580084562301636}, {"name": "env_step", "duration": 3.34374979196582, "wall_start": 6.242040395736694, "wall_end": 9.585790634155273}, {"name": "policy_sample", "duration": 9.816530208918266, "wall_start": 0.08666753768920898, "wall_end": 9.903197288513184}, {"name": "policy_sample", "duration": 9.724328582989983, "wall_start": 0.18142437934875488, "wall_end": 9.905753374099731}, {"name": "policy_sample", "duration": 9.729736916953698, "wall_start": 0.1826920509338379, "wall_end": 9.912429571151733}, {"name": "policy_sample", "duration": 9.839433999964967, "wall_start": 0.07752656936645508, "wall_end": 9.916961193084717}, {"name": "policy_sample", "duration": 9.808663917006925, "wall_start": 0.1187293529510498, "wall_end": 9.927392721176147}, {"name": "policy_sample", "duration": 10.132877541007474, "wall_start": 0.18212366104125977, "wall_end": 10.315001726150513}, {"name": "policy_sample", "duration": 10.139099166961387, "wall_start": 0.18158483505249023, "wall_end": 10.320684432983398}, {"name": "policy_sample", "duration": 10.166376917040907, "wall_start": 0.15773391723632812, "wall_end": 10.324111461639404}, {"name": "env_step", "duration": 4.153963958960958, "wall_start": 6.245129108428955, "wall_end": 10.399093627929688}, {"name": "env_step", "duration": 4.2647356250090525, "wall_start": 6.246333122253418, "wall_end": 10.511069536209106}, {"name": "env_step", "duration": 4.266702582943253, "wall_start": 6.2480785846710205, "wall_end": 10.51478099822998}, {"name": "env_step", "duration": 4.270331459003501, "wall_start": 6.247483968734741, "wall_end": 10.517815351486206}, {"name": "policy_sample", "duration": 10.485323415952735, "wall_start": 0.18260645866394043, "wall_end": 10.667930126190186}, {"name": "policy_sample", "duration": 10.604210666031577, "wall_start": 0.07774615287780762, "wall_end": 10.681957483291626}, {"name": "policy_sample", "duration": 10.54575229191687, "wall_start": 0.14754295349121094, "wall_end": 10.693294525146484}, {"name": "policy_sample", "duration": 10.618022957933135, "wall_start": 0.07820868492126465, "wall_end": 10.696232557296753}, {"name": "policy_sample", "duration": 10.626400250010192, "wall_start": 0.07797884941101074, "wall_end": 10.704379796981812}, {"name": "policy_sample", "duration": 10.464943125029095, "wall_start": 0.24231171607971191, "wall_end": 10.707255363464355}, {"name": "policy_sample", "duration": 10.647301584016532, "wall_start": 0.06252884864807129, "wall_end": 10.709830522537231}, {"name": "policy_sample", "duration": 10.671936959028244, "wall_start": 0.045032501220703125, "wall_end": 10.716969013214111}, {"name": "env_step", "duration": 4.623966959072277, "wall_start": 6.249315977096558, "wall_end": 10.873282670974731}, {"name": "env_step", "duration": 4.719115749932826, "wall_start": 6.249730110168457, "wall_end": 10.968845844268799}, {"name": "env_step", "duration": 4.745241041993722, "wall_start": 6.249025344848633, "wall_end": 10.99426555633545}, {"name": "env_step", "duration": 4.762873708968982, "wall_start": 6.248811960220337, "wall_end": 11.011684894561768}, {"name": "policy_sample", "duration": 11.012098375009373, "wall_start": 0.05369067192077637, "wall_end": 11.065789222717285}, {"name": "policy_sample", "duration": 11.005216000019573, "wall_start": 0.06269049644470215, "wall_end": 11.067905902862549}, {"name": "policy_sample", "duration": 11.276979915914126, "wall_start": 0.18178343772888184, "wall_end": 11.458763599395752}, {"name": "policy_sample", "duration": 11.291776666068472, "wall_start": 0.18219614028930664, "wall_end": 11.473973035812378}, {"name": "env_step", "duration": 5.407014041906223, "wall_start": 6.250528335571289, "wall_end": 11.657542705535889}, {"name": "env_step", "duration": 5.1768192909657955, "wall_start": 6.548023223876953, "wall_end": 11.72484278678894}, {"name": "env_step", "duration": 5.479093499947339, "wall_start": 6.250172853469849, "wall_end": 11.729266881942749}, {"name": "env_step", "duration": 5.467221624916419, "wall_start": 6.264533996582031, "wall_end": 11.731755256652832}, {"name": "policy_sample", "duration": 11.592909458093345, "wall_start": 0.18463492393493652, "wall_end": 11.777543783187866}, {"name": "policy_sample", "duration": 12.108237624983303, "wall_start": 0.04531359672546387, "wall_end": 12.153551578521729}, {"name": "env_step", "duration": 5.669952791999094, "wall_start": 6.569086074829102, "wall_end": 12.239038228988647}, {"name": "env_step", "duration": 5.723013499984518, "wall_start": 6.594238758087158, "wall_end": 12.317252397537231}, {"name": "env_step", "duration": 5.729231167002581, "wall_start": 6.590944528579712, "wall_end": 12.320176124572754}, {"name": "compute_group_rewards", "duration": 0.0001004169462248683, "wall_start": 12.322153329849243, "wall_end": 12.322253942489624}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 12.310243666986935, "wall_start": 0.013994455337524414, "wall_end": 12.324238777160645}, {"name": "env_step", "duration": 5.729685959056951, "wall_start": 6.5962440967559814, "wall_end": 12.325930833816528}, {"name": "env_step", "duration": 6.638203207985498, "wall_start": 6.596798658370972, "wall_end": 13.235002040863037}, {"name": "env_step", "duration": 7.06908916705288, "wall_start": 6.600183963775635, "wall_end": 13.669273614883423}, {"name": "env_step", "duration": 7.076771583058871, "wall_start": 6.602260112762451, "wall_end": 13.67903208732605}, {"name": "env_step", "duration": 7.0778031250229105, "wall_start": 6.601290464401245, "wall_end": 13.679093360900879}, {"name": "policy_sample", "duration": 13.635218415991403, "wall_start": 0.044173240661621094, "wall_end": 13.679391145706177}, {"name": "policy_sample", "duration": 13.536047374946065, "wall_start": 0.1492290496826172, "wall_end": 13.68527603149414}, {"name": "policy_sample", "duration": 13.550839417031966, "wall_start": 0.18126821517944336, "wall_end": 13.732107877731323}, {"name": "policy_sample", "duration": 14.071840874967165, "wall_start": 0.04482102394104004, "wall_end": 14.11666202545166}, {"name": "policy_sample", "duration": 13.95555333304219, "wall_start": 0.18231773376464844, "wall_end": 14.13787055015564}, {"name": "policy_sample", "duration": 14.36692812491674, "wall_start": 0.050658226013183594, "wall_end": 14.41758680343628}, {"name": "policy_sample", "duration": 14.413764207973145, "wall_start": 0.03681802749633789, "wall_end": 14.450582504272461}, {"name": "env_step", "duration": 7.954554082942195, "wall_start": 6.9397132396698, "wall_end": 14.894267559051514}, {"name": "env_step", "duration": 8.433104458963498, "wall_start": 6.603797674179077, "wall_end": 15.03690218925476}, {"name": "env_step", "duration": 8.430769374943338, "wall_start": 6.606279611587524, "wall_end": 15.037049293518066}, {"name": "env_step", "duration": 8.126683374983259, "wall_start": 6.938164234161377, "wall_end": 15.064847707748413}, {"name": "env_step", "duration": 7.682868625037372, "wall_start": 7.402137994766235, "wall_end": 15.085006475448608}, {"name": "env_step", "duration": 8.765957750030793, "wall_start": 6.965713262557983, "wall_end": 15.73167109489441}, {"name": "env_step", "duration": 8.923607166972943, "wall_start": 6.941743850708008, "wall_end": 15.865351438522339}, {"name": "env_step", "duration": 8.495891207945533, "wall_start": 7.3722615242004395, "wall_end": 15.868153095245361}, {"name": "env_step", "duration": 8.484610041952692, "wall_start": 7.417540788650513, "wall_end": 15.902151346206665}, {"name": "env_step", "duration": 8.80918129091151, "wall_start": 7.5980634689331055, "wall_end": 16.407244205474854}, {"name": "env_step", "duration": 8.32092995790299, "wall_start": 8.18482494354248, "wall_end": 16.505754709243774}, {"name": "env_step", "duration": 8.318425874924287, "wall_start": 8.187392234802246, "wall_end": 16.505817890167236}, {"name": "env_step", "duration": 8.320882707950659, "wall_start": 8.195025444030762, "wall_end": 16.51590847969055}, {"name": "env_step", "duration": 8.698346375022084, "wall_start": 8.198453903198242, "wall_end": 16.89680004119873}, {"name": "env_step", "duration": 8.903407624922693, "wall_start": 8.20011830329895, "wall_end": 17.10352635383606}, {"name": "env_step", "duration": 8.943989374907687, "wall_start": 8.207720041275024, "wall_end": 17.151710033416748}, {"name": "env_step", "duration": 8.968429874978028, "wall_start": 8.210310220718384, "wall_end": 17.178741216659546}, {"name": "env_step", "duration": 9.562773166922852, "wall_start": 8.214044570922852, "wall_end": 17.77685856819153}, {"name": "env_step", "duration": 9.687275792006403, "wall_start": 8.219263792037964, "wall_end": 17.906540870666504}, {"name": "env_step", "duration": 9.698297875002027, "wall_start": 8.217535018920898, "wall_end": 17.915833234786987}, {"name": "env_step", "duration": 9.707688500056975, "wall_start": 8.216002702713013, "wall_end": 17.923691511154175}, {"name": "env_step", "duration": 10.277420417056419, "wall_start": 8.440781593322754, "wall_end": 18.718201637268066}, {"name": "env_step", "duration": 10.362657624995336, "wall_start": 8.450985193252563, "wall_end": 18.813642978668213}, {"name": "env_step", "duration": 10.365933540975675, "wall_start": 8.452804803848267, "wall_end": 18.81873869895935}, {"name": "env_step", "duration": 10.344043708057143, "wall_start": 8.475831508636475, "wall_end": 18.819875478744507}, {"name": "env_step", "duration": 10.706184500013478, "wall_start": 8.487371921539307, "wall_end": 19.193556785583496}, {"name": "env_step", "duration": 10.755941292038187, "wall_start": 8.494449377059937, "wall_end": 19.25039005279541}, {"name": "env_step", "duration": 10.769352082978003, "wall_start": 8.481199264526367, "wall_end": 19.25055170059204}, {"name": "env_step", "duration": 10.728451374918222, "wall_start": 8.532592296600342, "wall_end": 19.261043787002563}, {"name": "env_step", "duration": 10.891798167023808, "wall_start": 8.778281450271606, "wall_end": 19.670079231262207}, {"name": "env_step", "duration": 10.970794250024483, "wall_start": 8.799977540969849, "wall_end": 19.770772457122803}, {"name": "env_step", "duration": 10.97607783402782, "wall_start": 8.807914972305298, "wall_end": 19.78399348258972}, {"name": "env_step", "duration": 10.981762000010349, "wall_start": 8.81114387512207, "wall_end": 19.792906045913696}, {"name": "env_step", "duration": 11.488580459030345, "wall_start": 8.812809467315674, "wall_end": 20.301390171051025}, {"name": "env_step", "duration": 11.623800624976866, "wall_start": 8.818065643310547, "wall_end": 20.441866636276245}, {"name": "env_step", "duration": 11.624587749945931, "wall_start": 8.819549322128296, "wall_end": 20.44413661956787}, {"name": "env_step", "duration": 11.639241041964851, "wall_start": 8.814785242080688, "wall_end": 20.454025983810425}, {"name": "env_step", "duration": 12.536550916964188, "wall_start": 8.832861423492432, "wall_end": 21.369412422180176}, {"name": "env_step", "duration": 12.711528333020397, "wall_start": 8.820603847503662, "wall_end": 21.532132387161255}, {"name": "env_step", "duration": 12.698960458044894, "wall_start": 8.837090015411377, "wall_end": 21.53605079650879}, {"name": "env_step", "duration": 12.70077758305706, "wall_start": 8.83542776107788, "wall_end": 21.536205053329468}, {"name": "env_step", "duration": 12.700512083014473, "wall_start": 8.84578013420105, "wall_end": 21.546292781829834}, {"name": "compute_group_rewards", "duration": 9.80000477284193e-05, "wall_start": 21.547394275665283, "wall_end": 21.547491550445557}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 21.54359254206065, "wall_start": 0.007670402526855469, "wall_end": 21.551262855529785}, {"name": "env_step", "duration": 13.439463875023648, "wall_start": 8.857539892196655, "wall_end": 22.297003269195557}, {"name": "env_step", "duration": 13.457369041978382, "wall_start": 8.84281587600708, "wall_end": 22.30018424987793}, {"name": "env_step", "duration": 13.450223500025459, "wall_start": 8.850065231323242, "wall_end": 22.300289154052734}, {"name": "env_step", "duration": 13.458040041965432, "wall_start": 8.847273349761963, "wall_end": 22.3053138256073}, {"name": "compute_group_rewards", "duration": 2.5416957214474678e-05, "wall_start": 22.305525541305542, "wall_end": 22.305550575256348}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 22.291856625000946, "wall_start": 0.015553712844848633, "wall_end": 22.30740976333618}, {"name": "env_step", "duration": 13.782964458921924, "wall_start": 8.862353801727295, "wall_end": 22.645318746566772}, {"name": "env_step", "duration": 13.864147583022714, "wall_start": 8.864411115646362, "wall_end": 22.72855830192566}, {"name": "env_step", "duration": 13.880349582992494, "wall_start": 8.860084056854248, "wall_end": 22.74043321609497}, {"name": "env_step", "duration": 13.874838832998648, "wall_start": 8.865703344345093, "wall_end": 22.740542888641357}, {"name": "env_step", "duration": 13.893131833989173, "wall_start": 8.876030206680298, "wall_end": 22.769161224365234}, {"name": "env_step", "duration": 14.355408500065096, "wall_start": 8.867676496505737, "wall_end": 23.223084926605225}, {"name": "env_step", "duration": 14.495295542059466, "wall_start": 8.87711215019226, "wall_end": 23.37240719795227}, {"name": "env_step", "duration": 14.499021000112407, "wall_start": 8.874153137207031, "wall_end": 23.37317442893982}, {"name": "env_step", "duration": 14.508658041013405, "wall_start": 8.878248691558838, "wall_end": 23.38690733909607}, {"name": "compute_group_rewards", "duration": 2.4250010028481483e-05, "wall_start": 23.387359142303467, "wall_end": 23.387382984161377}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 23.37493283301592, "wall_start": 0.015110492706298828, "wall_end": 23.39004397392273}, {"name": "env_step", "duration": 15.342379458947107, "wall_start": 9.151185035705566, "wall_end": 24.49356484413147}, {"name": "env_step", "duration": 15.451187708997168, "wall_start": 9.160418033599854, "wall_end": 24.611606121063232}, {"name": "env_step", "duration": 15.469681499991566, "wall_start": 9.158518552780151, "wall_end": 24.62820053100586}, {"name": "env_step", "duration": 15.477712249965407, "wall_start": 9.15293288230896, "wall_end": 24.630645513534546}, {"name": "compute_group_rewards", "duration": 4.3042004108428955e-05, "wall_start": 24.63287353515625, "wall_end": 24.63291597366333}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 24.62312700005714, "wall_start": 0.012210845947265625, "wall_end": 24.635338068008423}, {"name": "env_step", "duration": 16.383236750029027, "wall_start": 9.1616849899292, "wall_end": 25.54492211341858}, {"name": "env_step", "duration": 16.47143358399626, "wall_start": 9.165739059448242, "wall_end": 25.637171745300293}, {"name": "env_step", "duration": 16.493220500065945, "wall_start": 9.164044618606567, "wall_end": 25.65726613998413}, {"name": "env_step", "duration": 16.495066624949686, "wall_start": 9.163065195083618, "wall_end": 25.658132553100586}, {"name": "env_step", "duration": 16.90101766702719, "wall_start": 9.535923719406128, "wall_end": 26.436941385269165}, {"name": "env_step", "duration": 16.995131292031147, "wall_start": 9.547204494476318, "wall_end": 26.542335033416748}, {"name": "env_step", "duration": 16.98236133402679, "wall_start": 9.561503887176514, "wall_end": 26.543864727020264}, {"name": "env_step", "duration": 16.989044665941037, "wall_start": 9.56252670288086, "wall_end": 26.551573753356934}, {"name": "env_step", "duration": 17.097854749998078, "wall_start": 9.905791997909546, "wall_end": 27.00364661216736}, {"name": "env_step", "duration": 17.236581458011642, "wall_start": 9.912465572357178, "wall_end": 27.149047136306763}, {"name": "env_step", "duration": 17.24591275001876, "wall_start": 9.903218746185303, "wall_end": 27.149131298065186}, {"name": "compute_group_rewards", "duration": 0.00030979199800640345, "wall_start": 27.154937505722046, "wall_end": 27.155247688293457}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 27.15136129106395, "wall_start": 0.013020992279052734, "wall_end": 27.164382457733154}, {"name": "env_step", "duration": 17.25237574998755, "wall_start": 9.916987419128418, "wall_end": 27.169362545013428}, {"name": "env_step", "duration": 18.873725292040035, "wall_start": 10.32071828842163, "wall_end": 29.194444179534912}, {"name": "env_step", "duration": 18.963175541954115, "wall_start": 10.315052509307861, "wall_end": 29.278228521347046}, {"name": "env_step", "duration": 19.382761334069073, "wall_start": 9.927420854568481, "wall_end": 29.310182332992554}, {"name": "env_step", "duration": 19.000546082970686, "wall_start": 10.324146509170532, "wall_end": 29.324692010879517}, {"name": "env_step", "duration": 19.334267709054984, "wall_start": 10.693311929702759, "wall_end": 30.027579307556152}, {"name": "compute_group_rewards", "duration": 6.058404687792063e-05, "wall_start": 30.02795696258545, "wall_end": 30.028017044067383}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 30.01745620800648, "wall_start": 0.013447761535644531, "wall_end": 30.030904531478882}, {"name": "env_step", "duration": 19.502678791061044, "wall_start": 10.68198299407959, "wall_end": 30.184662103652954}, {"name": "env_step", "duration": 19.500954666989855, "wall_start": 10.696292161941528, "wall_end": 30.19724726676941}, {"name": "env_step", "duration": 19.54113199992571, "wall_start": 10.667961597442627, "wall_end": 30.209094047546387}, {"name": "env_step", "duration": 20.02665637503378, "wall_start": 10.704424142837524, "wall_end": 30.731080055236816}, {"name": "compute_group_rewards", "duration": 2.2042077034711838e-05, "wall_start": 30.73127293586731, "wall_end": 30.731295585632324}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 30.72018449997995, "wall_start": 0.012636184692382812, "wall_end": 30.7328200340271}, {"name": "env_step", "duration": 20.195440124953166, "wall_start": 10.709850311279297, "wall_end": 30.905290126800537}, {"name": "env_step", "duration": 20.190257624955848, "wall_start": 10.716981649398804, "wall_end": 30.907239198684692}, {"name": "compute_group_rewards", "duration": 8.150003850460052e-05, "wall_start": 30.923272609710693, "wall_end": 30.923354387283325}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 30.92938124993816, "wall_start": 0.010813236236572266, "wall_end": 30.940195083618164}, {"name": "compute_group_rewards", "duration": 4.541699308902025e-05, "wall_start": 30.948427200317383, "wall_end": 30.948472499847412}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 30.962725041084923, "wall_start": 0.007054328918457031, "wall_end": 30.969779014587402}, {"name": "env_step", "duration": 20.282704624929465, "wall_start": 10.707272291183472, "wall_end": 30.98997735977173}, {"name": "compute_group_rewards", "duration": 2.8374954126775265e-05, "wall_start": 30.99141240119934, "wall_end": 30.991440296173096}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 30.97848316701129, "wall_start": 0.016193628311157227, "wall_end": 30.994676113128662}, {"name": "env_step", "duration": 19.537370041944087, "wall_start": 11.473996877670288, "wall_end": 31.011366605758667}, {"name": "env_step", "duration": 20.592958624940366, "wall_start": 11.067923784255981, "wall_end": 31.660881757736206}, {"name": "env_step", "duration": 20.393258666968904, "wall_start": 11.458780288696289, "wall_end": 31.852038621902466}, {"name": "env_step", "duration": 20.815203500096686, "wall_start": 11.065831422805786, "wall_end": 31.881035327911377}, {"name": "env_step", "duration": 20.10362458298914, "wall_start": 11.77756142616272, "wall_end": 31.88118600845337}, {"name": "compute_group_rewards", "duration": 2.2583059035241604e-05, "wall_start": 31.882454872131348, "wall_end": 31.88247799873352}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 31.87444670801051, "wall_start": 0.008881568908691406, "wall_end": 31.883328676223755}, {"name": "compute_group_rewards", "duration": 2.9041082598268986e-05, "wall_start": 31.88429546356201, "wall_end": 31.884324073791504}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 31.872447624919005, "wall_start": 0.014653205871582031, "wall_end": 31.887101650238037}, {"name": "env_step", "duration": 18.706809125025757, "wall_start": 13.679413318634033, "wall_end": 32.38622260093689}, {"name": "env_step", "duration": 18.918097750050947, "wall_start": 13.685747623443604, "wall_end": 32.60384511947632}, {"name": "env_step", "duration": 20.471230583963916, "wall_start": 12.153706312179565, "wall_end": 32.624937295913696}, {"name": "env_step", "duration": 19.279279417009093, "wall_start": 14.137896299362183, "wall_end": 33.417176246643066}, {"name": "env_step", "duration": 19.418652374995872, "wall_start": 14.116692781448364, "wall_end": 33.53534483909607}, {"name": "env_step", "duration": 19.117767332936637, "wall_start": 14.417648315429688, "wall_end": 33.53541541099548}, {"name": "compute_group_rewards", "duration": 5.058303941041231e-05, "wall_start": 33.535892486572266, "wall_end": 33.53594350814819}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 33.531581999966875, "wall_start": 0.008202075958251953, "wall_end": 33.5397834777832}, {"name": "env_step", "duration": 19.815695042023435, "wall_start": 13.732320070266724, "wall_end": 33.548014879226685}, {"name": "compute_group_rewards", "duration": 2.2833002731204033e-05, "wall_start": 33.54822611808777, "wall_end": 33.54824924468994}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 33.53518945898395, "wall_start": 0.014200210571289062, "wall_end": 33.54938983917236}, {"name": "env_step", "duration": 19.2669800829608, "wall_start": 14.450612545013428, "wall_end": 33.71759366989136}, {"name": "compute_group_rewards", "duration": 8.766702376306057e-05, "wall_start": 33.71784329414368, "wall_end": 33.71793055534363}, {"name": "do_group_rollout_and_filter_constant_reward", "duration": 33.71676083304919, "wall_start": 0.004178524017333984, "wall_end": 33.72094011306763}, {"name": "sampling", "duration": 33.85837887506932, "wall_start": 0.0, "wall_end": 33.85837912559509}, {"name": "assemble_training_data", "duration": 0.25433920801151544, "wall_start": 33.95280838012695, "wall_end": 34.207146883010864}, {"name": "prepare_minibatch", "duration": 0.3063175000716001, "wall_start": 33.90098738670349, "wall_end": 34.20730543136597}, {"name": "train_step", "duration": 6.102804542053491, "wall_start": 34.20763373374939, "wall_end": 40.310439109802246}, {"name": "compute_kl_sample_train", "duration": 0.007061542011797428, "wall_start": 40.31049561500549, "wall_end": 40.31755781173706}, {"name": "save_checkpoint", "duration": 5.738698332919739, "wall_start": 40.3175995349884, "wall_end": 46.05629873275757}, {"name": "save_checkpoint_and_get_sampling_client", "duration": 5.738751291995868, "wall_start": 40.31757926940918, "wall_end": 46.05633020401001}, {"name": "compute_full_batch_metrics_and_get_sampling_client", "duration": 5.745870833052322, "wall_start": 40.31047010421753, "wall_end": 46.05634021759033}, {"name": "do_train_step_and_get_sampling_client", "duration": 12.15910783293657, "wall_start": 33.900917530059814, "wall_end": 46.06002473831177}]}
