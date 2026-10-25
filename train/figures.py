@@ -256,13 +256,13 @@ def fig_test_bars() -> Path | None:
         return None
     s = json.loads(path.read_text())
     names = list(s["models"])
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 4.2))
     xs = list(range(len(names)))
     _ci_bar(a1, xs, [s["models"][n] for n in names], "pass_all_samples", BLUE)
     _ci_bar(a2, xs, [s["models"][n] for n in names], "leak_all_samples", ORANGE)
     for ax, t in ((a1, "Pass rate, all 120 test samples"), (a2, "Leak rate, all 120 test samples")):
         ax.set_xticks(xs)
-        ax.set_xticklabels(names, rotation=15, ha="right")
+        ax.set_xticklabels(names, rotation=25, ha="right", fontsize=8)
         ax.set_ylim(0, 100)
         ax.set_ylabel("%")
         ax.set_title(t)
@@ -277,7 +277,11 @@ def fig_test_by_tier() -> Path | None:
     s = json.loads(path.read_text())
     names = list(s["models"])
     tiers = ["1", "2", "3"]
-    fig, ax = plt.subplots(figsize=(8, 4))
+    extra = path.with_name("paired_and_tiers.json")
+    if "by_tier" not in next(iter(s["models"].values())) and extra.exists():
+        for n, d in json.loads(extra.read_text())["by_tier"].items():
+            s["models"][n]["by_tier"] = d
+    fig, ax = plt.subplots(figsize=(10, 4))
     w = 0.8 / len(names)
     colors = [MUTED, BLUE, ORANGE, AQUA, YELLOW, "#6250d6"]
     for i, n in enumerate(names):

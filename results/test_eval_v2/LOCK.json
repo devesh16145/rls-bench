@@ -1,0 +1,111 @@
+{
+  "models": [
+    {
+      "name": "base",
+      "label": "Qwen3.5-9B@base",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": null
+    },
+    {
+      "name": "sft",
+      "label": "Qwen3.5-9B@sft-20261025T184758Z",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/sampler_weights/final"
+    },
+    {
+      "name": "sft+rl",
+      "label": "Qwen3.5-9B@rl-rl_Qwen3.5-9B_lr4e-5_s50-000040",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000040"
+    },
+    {
+      "name": "sft+rl-seed1",
+      "label": "Qwen3.5-9B@rl-rl_Qwen3.5-9B_lr4e-5_s50_seed1-000040",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000040"
+    },
+    {
+      "name": "repair",
+      "label": "Qwen3.5-9B@rl-repair_Qwen3.5-9B_from40_s25-000005",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000005"
+    },
+    {
+      "name": "distil",
+      "label": "Qwen3.5-9B@distil-distil_Qwen3.5-9B_from397B_s40-000030",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://fc498f87-9683-55b5-80e9-e43b0220afb5:train:0/sampler_weights/000030"
+    },
+    {
+      "name": "nemotron-base",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@base",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": null
+    },
+    {
+      "name": "nemotron-sft",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@sft-20261025T190749Z",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/sampler_weights/final"
+    },
+    {
+      "name": "nemotron-sft+rl",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@rl-rl_Nemotron_lr6e-5_s50",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/final"
+    }
+  ],
+  "tasks": [
+    "T001",
+    "T002",
+    "T009",
+    "T012",
+    "T014",
+    "T026",
+    "T039",
+    "T043",
+    "T051",
+    "T058",
+    "T060",
+    "T061",
+    "T065",
+    "T077",
+    "T082",
+    "T084",
+    "T090",
+    "T095",
+    "T097",
+    "T099"
+  ],
+  "k": 5,
+  "max_tokens": 4096,
+  "repair_models": [
+    {
+      "name": "repair",
+      "label": "Qwen3.5-9B@rl-repair_Qwen3.5-9B_from40_s25-000005",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000005"
+    },
+    {
+      "name": "sft+rl",
+      "label": "Qwen3.5-9B@rl-rl_Qwen3.5-9B_lr4e-5_s50-000040",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000040"
+    }
+  ],
+  "repair_max_turns": 3,
+  "created": "2026-10-25T20:24:27+00:00",
+  "git_commit": "54bb76a422c86b45757364867a6f23b30c95afa1",
+  "version": 2
+}

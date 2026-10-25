@@ -30,7 +30,15 @@ app = typer.Typer(add_completion=False)
 
 
 def _eval_cost(paths: list[Path]) -> float:
-    return sum(r["cost_usd"] for p in paths for r in map(json.loads, p.read_text().splitlines()))
+    """Sum of per-sample costs; 3-try (repair) files carry their cost in the matching .summary.json instead."""
+    total = 0.0
+    for p in paths:
+        if p.name.endswith("@repair3.jsonl"):
+            summary = p.with_name(p.name.replace(".jsonl", ".summary.json"))
+            total += json.loads(summary.read_text()).get("est_spend_usd", 0.0) if summary.exists() else 0.0
+            continue
+        total += sum(r.get("cost_usd", 0.0) for r in map(json.loads, p.read_text().splitlines()))
+    return total
 
 
 @app.command()
