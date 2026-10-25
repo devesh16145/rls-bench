@@ -14,7 +14,7 @@ import datetime as dt
 import json
 import warnings
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import typer
 
@@ -90,6 +90,74 @@ def summarize(label: str, tasks: list[Task]) -> dict[str, Any]:
     return model_metrics(records, metas)
 
 
+def sample_and_grade(client, renderer, tasks: list[Task], *, label: str, model: str, model_path: str | None,
+                     renderer_name: str, k: int, max_tokens: int, max_spend: float,
+                     log: Callable[[str], None] = print) -> dict[str, Any]:
+    """Sample 1 greedy + k at temperature 0.7 per task from a Tinker SamplingClient, grade, append records.
+
+    Skips samples already recorded under the label; stops before a request whose worst case would pass max_spend.
+    """
+    import tinker
+    from tinker_cookbook.renderers import ParseTermination, get_text_content
+
+    out_path = results_path(label)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    done = _done_keys(out_path)
+    price = SAMPLE_PRICES[model]
+    messages = {t.id: build_messages(t) for t in tasks}
+    prompts = {tid: renderer.build_generation_prompt(m) for tid, m in messages.items()}
+    stop = renderer.get_stop_sequences()
+    run_date = dt.datetime.now(dt.timezone.utc).date().isoformat()
+
+    # One request per (task, temperature): greedy is index 0; sampled indices are 0..k-1 as in the baselines.
+    jobs = []
+    for t in tasks:
+        ph = prompt_hash(messages[t.id])
+        for temperature, indices in ((GREEDY_TEMPERATURE, [0]), (SAMPLE_TEMPERATURE, list(range(k)))):
+            todo = [i for i in indices if (t.id, temperature, i, ph, max_tokens) not in done]
+            if todo:
+                jobs.append((t, ph, temperature, todo))
+    log(f"{label}: {sum(len(j[3]) for j in jobs)} samples to run ({len(done)} already recorded)")
+
+    spent, graded, stopped = 0.0, 0, False
+    futures = []
+    for t, ph, temperature, todo in jobs:
+        prompt = prompts[t.id]
+        worst = (prompt.length * len(todo) * price["prefill"] + len(todo) * max_tokens * price["sample"]) / 1e6
+        if sum(w for *_, w in futures) + worst > max_spend:
+            stopped = True
+            log(f"spend cap ${max_spend:.2f} would be passed; not submitting the remaining requests")
+            break
+        params = tinker.SamplingParams(max_tokens=max_tokens, temperature=temperature, stop=stop, seed=todo[0])
+        futures.append((t, ph, temperature, todo, client.sample(prompt, num_samples=len(todo), sampling_params=params), worst))
+
+    for t, ph, temperature, todo, fut, _ in futures:
+        response = fut.result()
+        prompt_len = prompts[t.id].length
+        for index, seq in zip(todo, response.sequences):
+            message, termination = renderer.parse_response(seq.tokens)
+            text = get_text_content(message)
+            out_tokens = len(seq.tokens)
+            cost = (prompt_len * price["prefill"] + out_tokens * price["sample"]) / 1e6
+            spent += cost
+            finish = "length" if termination == ParseTermination.MALFORMED and out_tokens >= max_tokens else str(termination)
+            result = run_completion(t, text)
+            record = {
+                "model": label, "task_id": t.id, "temperature": temperature, "temperature_sent": True,
+                "reasoning": "off", "reasoning_tokens": 0, "index": index, "max_tokens": max_tokens,
+                "prompt_hash": ph, "tests_hash": tests_hash(t), "run_date": run_date, "provider": "tinker",
+                "model_path": model_path, "renderer": renderer_name, "finish_reason": finish,
+                "usage": {"prompt_tokens": prompt_len, "completion_tokens": out_tokens},
+                "cost_usd": round(cost, 6), "completion": text, "result": result.model_dump(),
+            }
+            with out_path.open("a") as f:
+                f.write(json.dumps(record) + "\n")
+            graded += 1
+            status = "PASS" if result.passed else ("LEAK" if result.leak else "FAIL")
+            log(f"  [{graded}] {t.id} t={temperature} #{index} {status}  est spend ${spent:.3f}")
+    return {"graded": graded, "spent_usd": spent, "stopped_at_cap": stopped}
+
+
 @app.command()
 def main(
     run_id: str = typer.Option(None, help="Checkpoint run_id from results/train/checkpoints.json; omit with --base."),
@@ -127,64 +195,13 @@ def main(
 
     load_tinker_key()
     import tinker
-    from tinker_cookbook.renderers import ParseTermination, get_text_content
 
-    out_path = results_path(label)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    done = _done_keys(out_path)
-    price = SAMPLE_PRICES[model]
     service = tinker.ServiceClient()
     client = (service.create_sampling_client(model_path=model_path) if model_path
               else service.create_sampling_client(base_model=model))
-    stop = renderer.get_stop_sequences()
-    run_date = dt.datetime.now(dt.timezone.utc).date().isoformat()
-
-    # One request per (task, temperature): greedy is index 0; sampled indices are 0..k-1 as in the baselines.
-    jobs = []
-    for t in tasks:
-        ph = prompt_hash(messages[t.id])
-        for temperature, indices in ((GREEDY_TEMPERATURE, [0]), (SAMPLE_TEMPERATURE, list(range(k)))):
-            todo = [i for i in indices if (t.id, temperature, i, ph, max_tokens) not in done]
-            if todo:
-                jobs.append((t, ph, temperature, todo))
-    typer.echo(f"{label}: {sum(len(j[3]) for j in jobs)} samples to run ({len(done)} already recorded)")
-
-    spent, graded, stopped = 0.0, 0, False
-    futures = []
-    for t, ph, temperature, todo in jobs:
-        prompt = prompts[t.id]
-        worst = (prompt.length * len(todo) * price["prefill"] + len(todo) * max_tokens * price["sample"]) / 1e6
-        if spent + sum(w for *_, w in futures) + worst > max_spend:
-            stopped = True
-            typer.echo(f"spend cap ${max_spend:.2f} would be passed; not submitting the remaining requests")
-            break
-        params = tinker.SamplingParams(max_tokens=max_tokens, temperature=temperature, stop=stop, seed=todo[0])
-        futures.append((t, ph, temperature, todo, client.sample(prompt, num_samples=len(todo), sampling_params=params), worst))
-
-    for t, ph, temperature, todo, fut, _ in futures:
-        response = fut.result()
-        prompt_len = prompts[t.id].length
-        for index, seq in zip(todo, response.sequences):
-            message, termination = renderer.parse_response(seq.tokens)
-            text = get_text_content(message)
-            out_tokens = len(seq.tokens)
-            cost = (prompt_len * price["prefill"] + out_tokens * price["sample"]) / 1e6
-            spent += cost
-            finish = "length" if termination == ParseTermination.MALFORMED and out_tokens >= max_tokens else str(termination)
-            result = run_completion(t, text)
-            record = {
-                "model": label, "task_id": t.id, "temperature": temperature, "temperature_sent": True,
-                "reasoning": "off", "reasoning_tokens": 0, "index": index, "max_tokens": max_tokens,
-                "prompt_hash": ph, "tests_hash": tests_hash(t), "run_date": run_date, "provider": "tinker",
-                "model_path": model_path, "renderer": renderer_name, "finish_reason": finish,
-                "usage": {"prompt_tokens": prompt_len, "completion_tokens": out_tokens},
-                "cost_usd": round(cost, 6), "completion": text, "result": result.model_dump(),
-            }
-            with out_path.open("a") as f:
-                f.write(json.dumps(record) + "\n")
-            graded += 1
-            status = "PASS" if result.passed else ("LEAK" if result.leak else "FAIL")
-            typer.echo(f"  [{graded}] {t.id} t={temperature} #{index} {status}  est spend ${spent:.3f}")
+    out = sample_and_grade(client, renderer, tasks, label=label, model=model, model_path=model_path,
+                           renderer_name=renderer_name, k=k, max_tokens=max_tokens, max_spend=max_spend, log=typer.echo)
+    spent, graded, stopped, out_path = out["spent_usd"], out["graded"], out["stopped_at_cap"], results_path(label)
 
     m = summarize(label, tasks)
     summary = {"label": label, "graded": graded, "est_spend_usd": round(spent, 4), "stopped_at_cap": stopped,

@@ -152,3 +152,11 @@
   - Tinker SFT: greedy pass@1 2/11 (18%), pass@5 27%; all samples 10/66 (15%, [8%, 26%]); leak 35%, apply error 32%.
   - OpenRouter reasoning-off (earlier run): all samples 10/66 (15%); leak 26%, apply error 55%. OpenRouter 16k reasoning: 13/66 (20%); 11 samples truncated.
 - Reading: SFT moved the base in the right direction (fewer apply errors; T074 0/6 → 3/6, T081 0/6 → 1/6), but the intervals overlap and leak rate barely changed (39% → 35%). SFT on passing answers does not teach the model to avoid leaks; the harness reward in GRPO targets exactly that. Tinker base scores below OpenRouter reasoning-off (9% vs 15%), so the like-for-like comparison is Tinker base vs Tinker SFT.
+
+## 2026-10-25 — GRPO script and dry run (no spend)
+
+- Refactored `train/eval_tinker.py` so its sample-and-grade loop is reusable (`sample_and_grade`); behaviour unchanged.
+- Added `train/rl_tinker.py`, following the cookbook's `rl_loop` recipe (group-centred rewards, constant-reward groups dropped, `importance_sampling` loss, no KL penalty = cookbook default). Starts from SFT run 20261025T125454Z's state. Commands: `filter` (sample the SFT model 8× per train task, keep tasks whose rewards are not all equal) and `train` (GRPO, dev eval with the baseline protocol every 5 steps on a saved checkpoint, early stop after 10 steps without dev improvement, spend cap). Rollouts, per-step metrics and checkpoint records go under `results/train/`.
+- Reward: 1 pass, 0 safe failure (block / apply error), −0.1 format error (spec §6.4), and −0.5 for a leak (added at the owner's request).
+- Deviations from v1 §8.3: max completion 2,048 tokens instead of 1,024 (18% of the SFT model's dev answers exceed 1,024; median 600, p90 1,067); LR 4e-5 (rl_loop default; no calibrated Nemotron LR); dev selection uses pass rate over all 66 dev samples rather than 11 greedy samples (less noisy); tasks that always fail but sometimes leak are kept, because the leak penalty gives them signal.
+- Dry run: all 72 references score 1.0; of 200 traps, 180 score −0.5 (leak) and 20 score 0.0, none 1.0. Estimates: filter $0.26 typical / $0.64 worst; smoke run (2 steps, group 2) ≤ $0.02; full run (50 steps × 8 tasks × 8 rollouts, 10 dev evals) $3.78 typical / $8.66 worst, before any task is dropped by the filter.
