@@ -199,26 +199,48 @@ def fig_rl_health() -> list[Path]:
     return out
 
 
+def _sft_dev_point(run: dict[str, Any]) -> tuple[float, float] | None:
+    """The parent SFT model's dev rates (step 0), from its standalone dev eval if it exists."""
+    parent = run.get("parent_run_id")
+    if not parent:
+        return None
+    path = RESULTS / "tinker_eval" / f"{run['model'].split('/')[-1]}@sft-{parent}.jsonl"
+    if not path.exists():
+        return None
+    latest: dict[tuple, dict] = {}
+    for r in _jsonl(path):
+        latest[(r["task_id"], r["temperature"], r["index"])] = r
+    rs = list(latest.values())
+    return (sum(r["result"]["passed"] for r in rs) / len(rs), sum(bool(r["result"]["leak"]) for r in rs) / len(rs))
+
+
 def fig_dev_curves() -> list[Path]:
     out = []
     for run in _rl_runs():
         evals = run.get("dev_evals") or []
-        if not evals:
+        if not evals or "dev/pass_all" not in evals[0]:
             continue
-        every = run["steps"] // max(1, len(evals) - 1) if len(evals) > 1 else run["steps"]
-        xs = [i * every for i in range(len(evals))]
+        every = run["steps"] // len(evals)  # the loop evaluates at every, 2*every, ..., steps
+        xs = [every * (i + 1) for i in range(len(evals))]
+        passes = [e["dev/pass_all"] * 100 for e in evals]
+        leaks = [e["dev/leak_all"] * 100 for e in evals]
+        ref = _sft_dev_point(run)
+        if ref:
+            xs, passes, leaks = [0] + xs, [ref[0] * 100] + passes, [ref[1] * 100] + leaks
         fig, ax = plt.subplots(figsize=(7, 3.8))
-        ax.plot(xs, [e["dev/pass_all"] * 100 for e in evals], color=BLUE, marker="o", linewidth=2, label="pass (all 66 samples)")
-        ax.plot(xs, [e["dev/leak_all"] * 100 for e in evals], color=ORANGE, marker="o", linewidth=2, label="leak (all 66 samples)")
+        ax.plot(xs, passes, color=BLUE, marker="o", linewidth=2, label="pass (all 66 dev samples)")
+        ax.plot(xs, leaks, color=ORANGE, marker="o", linewidth=2, label="leak (all 66 dev samples)")
         best = run.get("best_dev_eval")
         if best:
-            bx = xs[[e["label"] for e in evals].index(best["label"])]
+            bx = every * ([e["label"] for e in evals].index(best["label"]) + 1)
             ax.axvline(bx, color=MUTED, linestyle=":", linewidth=1)
-            ax.text(bx, ax.get_ylim()[1] * 0.98, f" best dev: step {bx}", color=MUTED, va="top", fontsize=8)
-        ax.set_xlabel("optimizer step")
+            ax.text(bx + 0.5, 2, f"best dev: step {bx}", color=MUTED, va="bottom", fontsize=8)
+        if ref:
+            ax.text(0.5, passes[0] + 2, "SFT", color=MUTED, fontsize=8)
+        ax.set_xlabel("optimizer step (0 = the SFT model it started from)")
         ax.set_ylabel("% of dev samples")
-        ax.set_ylim(0, max(50, ax.get_ylim()[1]))
-        ax.legend(fontsize=8)
+        ax.set_ylim(0, max(60, max(passes + leaks) + 8))
+        ax.legend(fontsize=8, loc="upper left")
         ax.set_title(f"Dev during GRPO: {run['name']}")
         out.append(_save(fig, f"dev_curve_{run['name']}"))
     return out
