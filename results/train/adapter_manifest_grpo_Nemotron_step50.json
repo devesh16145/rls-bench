@@ -1,0 +1,18 @@
+{
+  "run_id": "20261025T193419Z",
+  "checkpoint": "final",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+  "renderer": "nemotron3_ultra_disable_thinking",
+  "state_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/final",
+  "external_path": "tinker://fe68c07c-3f81-5b1e-baf5-5810ebf047a1:train:0/external_weights/hf_export",
+  "files": {
+    "adapter_config.json": {
+      "bytes": 934,
+      "sha256": "7c4821f8f443de1d52d092093c5bdb57bafcfe431bd83b0c28b51852283a86bd"
+    },
+    "adapter_model.safetensors": {
+      "bytes": 1544352119,
+      "sha256": "4ae5c07e1aeab58bb3c5db680632b25e088e3c3f2d2f67b5adaf52787be58ebc"
+    }
+  }
+}
