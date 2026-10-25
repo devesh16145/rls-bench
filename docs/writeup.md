@@ -36,13 +36,14 @@ The benchmark asks a direct question: given a schema and the access rules writte
 
 ## 3. How models do on the benchmark
 
-Eight models were run on all 103 tasks with the fixed prompt and protocol. The small open models and Kimi K2.6 were sampled on Tinker with their reasoning templates off and a 4,096-token cap; DeepSeek V4.1 Flash, Qwen3-14B and Nemotron-3.5-Lightning through OpenRouter at their default reasoning with a 16,000-token cap; Claude Opus 5.5 through the Anthropic API at its default effort with an 8,000-token cap. Numbers are from `results/leaderboard.json`; intervals are 95% Wilson.
+Nine models were run on all 103 tasks with the fixed prompt and protocol. The small open models and Kimi K2.6 were sampled on Tinker with their reasoning templates off and a 4,096-token cap; DeepSeek V4.1 Flash, Qwen3-14B and Nemotron-3.5-Lightning through OpenRouter at their default reasoning with a 16,000-token cap; Claude Opus 5.5 through the Anthropic API at its default effort with an 8,000-token cap. Numbers are from `results/leaderboard.json`; intervals are 95% Wilson.
 
 | Model | Greedy pass@1 | pass@5 | Leak rate | Pass by tier 1 / 2 / 3 |
 |---|---|---|---|---|
 | Claude Opus 5.5 (effort medium) | **87%** [79, 92] | 92% | **1%** | 97% / 100% / 54% |
 | DeepSeek V4.1 Flash (16k reasoning) | 55% [46, 65] | 83% | 1% | 81% / 46% / 42% |
 | Kimi K2.6 (thinking off) | 48% [39, 58] | 72% | 16% | 68% / 37% / 42% |
+| Qwen3.5-397B-A17B (thinking off) | 38% [29, 48] | 48% | 15% | 55% / 28% / 35% |
 | gpt-oss-120b (medium reasoning) | 29% [21, 38] | 37% | 10% | 58% / 15% / 19% |
 | Nemotron-3.5-Lightning (16k reasoning) | 18% [12, 27] | 35% | 17% | 42% / 13% / 0% |
 | Qwen3-14B (16k reasoning) | 14% [8, 22] | 25% | 17% | 35% / 4% / 4% |

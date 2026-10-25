@@ -46,7 +46,7 @@ Greedy pass@1 and leak rate with 95% Wilson intervals; pass@5 over 5 samples at 
 | Claude Opus 5.5 (effort medium) | Anthropic API | **87%** [79–92] | 92% | **1%** | 97% / 100% / 54% |
 | DeepSeek V4.1 Flash (16k reasoning) | OpenRouter | 55% [46–65] | 83% | 1% | 81% / 46% / 42% |
 | Kimi K2.6 (reasoning off) | Tinker | 48% [39–58] | 72% | 16% | 68% / 37% / 42% |
-| Qwen3.5-397B-A17B (reasoning off) | Tinker | 38% [29%–48%] | 48% | 15% | 55% / 28% / 35% |
+| Qwen3.5-397B-A17B (reasoning off) | Tinker | 38% [29–48] | 48% | 15% | 55% / 28% / 35% |
 | gpt-oss-120b (medium reasoning) | Tinker | 29% [21–38] | 37% | 10% | 58% / 15% / 19% |
 | Nemotron-3.5-Lightning (16k reasoning) | OpenRouter | 18% [12–27] | 35% | 17% | 42% / 13% / 0% |
 | Qwen3-14B (16k reasoning) | OpenRouter | 14% [8–22] | 25% | 17% | 35% / 4% / 4% |
