@@ -70,19 +70,28 @@ Even the best judge agrees with the database four times in five; the confusion i
 
 ### Training a small model on the harness
 
-Nemotron-3.5-Lightning (reasoning off), trained on Tinker:
-1. **SFT** on 427 answers that pass the harness, rejection-sampled from DeepSeek V4.1 Flash on 72 train tasks.
-2. **GRPO** from the SFT checkpoint, with reward 1 for a pass, 0 for a safe failure, −0.1 for a format error and −0.5 for a leak.
+Two students were trained on [Tinker](https://thinkingmachines.ai/tinker/) with the harness as the signal: Qwen3.5-9B and Nemotron-3.5-Lightning (30B, 3B active), both with their reasoning templates off.
 
-Checkpoints were selected on 11 dev tasks. The 20 test tasks were evaluated **once**, behind a lock file. Rates are over 120 samples per model; source: `results/train/report.json`.
+1. **SFT** on 427 answers that pass the harness (rejection-sampled from DeepSeek V4.1 Flash on the 72 train tasks), with a learning-rate sweep judged on held-out dev loss.
+2. **GRPO** on the cookbook's RL loop, the harness grading every rollout: 1 for a pass, 0 for a safe failure, −0.1 for a format error, −0.5 for a leak. Learning-rate sweeps first, then 50 steps × 16 tasks × 8 rollouts; two seeds for Qwen.
+3. **Repair RL**: up to three tries, with the failing tests and SQL errors fed back (never the expected rows).
+4. **Pure distillation** from Qwen3.5-397B as a third route from the base model, for comparison.
 
-| Model | Test pass | Test leak | Apply error |
-|---|---|---|---|
-| Base | 13% [8–21] | 29% [22–38] | 42% |
-| + SFT | 23% [17–32] | 19% [13–27] | 35% |
-| + SFT + GRPO | 24% [17–33] | 18% [12–25] | 26% |
+Checkpoints were chosen on the 11 dev tasks; the 20 test tasks were evaluated once, pre-registered in `docs/preregistration.md` and locked to a commit. Pass and leak rates over 120 test samples (20 tasks × 6), 95% intervals; source `results/test_eval_v2/summary.json`, figure `results/figures/methods_test.png`.
 
-**SFT did most of the work. GRPO did not add pass rate on test**, even though it doubled the pass rate on dev; the dev peak was chosen from five checkpoints on 11 tasks. Its gains were in tier 1, while tier 2 fell. With 20 test tasks, none of the differences is significant per task: base vs SFT + GRPO gives p = 0.12 for pass and p = 0.09 for leaks (sign test). The full account, with dev curves and caveats, is in `docs/writeup.md` §5. Total Tinker spend was $2.65 (`results/train/tinker_spend.json`).
+| Row | Test pass | Test leak |
+|---|---|---|
+| Qwen3.5-9B base | 9% [5–16] | 18% |
+| + SFT | **38%** [29–46] | 16% |
+| + SFT + GRPO, seed 0 | 38% [30–47] | 29% |
+| + SFT + GRPO, seed 1 | **41%** [32–50] | **14%** |
+| + repair-trained | 41% [32–50] | 18% |
+| distillation only | 31% [23–40] | 18% |
+| Nemotron base | 12% [7–19] | 22% |
+| + SFT | 26% [19–34] | 31% |
+| + SFT + GRPO | 29% [22–38] | **10%** |
+
+What held up: a tuned SFT is most of the gain (9% → 38%); Nemotron's GRPO cut its leak rate on 13 of 20 test tasks (31% → 10%, the one significant paired result); and harness feedback is the most reliable lever of all, taking the GRPO model from 35% to 63% within three tries. What did not: GRPO's dev gain for Qwen (24% → 52%) did not transfer to test (38% → 38–41%), and the two seeds disagree on the leak rate by 15 points, so at this scale run-to-run variance is as large as the effect. Every run's curves, dev evaluations and the training-health metrics are under `results/train/`; the full account, including the reward-hacking checks, is `docs/writeup.md` §5. The trained adapters are exported in Hugging Face format (`results/train/adapter_manifest_*.json`). Tinker spend for the whole project: $101.90 (`results/train/tinker_spend.json`).
 
 ## Run it
 
@@ -113,8 +122,8 @@ Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both i
 - The schemas are synthetic and in a Supabase flavour.
 - All tasks were written and reviewed by a single author.
 - Leaderboard rows mix three serving routes; the same model served two ways scored differently on the same tasks.
-- The dev and test splits are small (11 and 20 tasks).
-- The training results come from one run per stage.
+- The dev and test splits are small (11 and 20 tasks); the test split was evaluated twice (once per version of the write-up), with no training decision informed by it.
+- The training results come from one or two runs per stage; two seeds of the same GRPO recipe differ by 15 points of leak rate on test.
 - The OpenRouter baselines saw all tasks, test included, before the split was frozen.
 
 ## License
