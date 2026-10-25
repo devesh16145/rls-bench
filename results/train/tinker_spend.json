@@ -1,0 +1,13 @@
+{
+  "note": "estimates at list prices from token counts",
+  "items": {
+    "sft run 20261025T125454Z (78 steps)": 0.6588,
+    "rl run 20261025T133312Z (2 steps)": 0.0051,
+    "rl run 20261025T133618Z (25 steps)": 1.5124,
+    "GRPO filter pass rl_filter_20261025T125454Z": 0.2513,
+    "dev eval NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@base": 0.0302,
+    "dev eval NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@sft-20261025T125454Z": 0.0296,
+    "one-time test eval (3 models)": 0.1589
+  },
+  "total_usd": 2.6463
+}

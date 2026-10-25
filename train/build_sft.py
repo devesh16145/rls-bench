@@ -170,6 +170,42 @@ def sample(tasks: list[Task], *, model: str, samples: int, max_tokens: int, max_
     return {"graded": graded, "spent_usd": spent, "stopped_at_cap": stopped}
 
 
+def data_stats() -> dict[str, Any]:
+    """Counts behind the write-up: raw samples, pass/leak/cut-off rates and kept examples, overall and by tier."""
+    from eval.metrics import load_task_meta
+
+    meta = load_task_meta()
+    raw = [json.loads(line) for line in RAW_PATH.read_text().splitlines()]
+    sft = [json.loads(line) for line in SFT_PATH.read_text().splitlines()]
+
+    def block(raw_rows: list[dict[str, Any]], sft_rows: list[dict[str, Any]]) -> dict[str, Any]:
+        return {"tasks": len({r["task_id"] for r in raw_rows}), "samples": len(raw_rows),
+                "passed": sum(r["passed"] for r in raw_rows), "leaked": sum(bool(r["leak"]) for r in raw_rows),
+                "cut_off": sum(r["finish_reason"] == "length" for r in raw_rows),
+                "examples": len(sft_rows), "reference_examples": sum(r["source"] == "reference" for r in sft_rows)}
+
+    by_tier = {}
+    for tier in sorted({meta[r["task_id"]].tier for r in raw}):
+        by_tier[str(tier)] = block([r for r in raw if meta[r["task_id"]].tier == tier],
+                                   [r for r in sft if meta[r["task_id"]].tier == tier])
+    kept = {}
+    for r in sft:
+        if r["source"] != "reference":
+            kept[r["task_id"]] = kept.get(r["task_id"], 0) + 1
+    return {"model": sorted({r["model"] for r in raw}), "temperature": sorted({r["temperature"] for r in raw}),
+            "cost_usd": round(sum(r["cost_usd"] or 0 for r in raw), 4), **block(raw, sft), "by_tier": by_tier,
+            "tasks_at_cap": sum(v >= 6 for v in kept.values()),
+            "reference_only_tasks": sorted({r["task_id"] for r in raw} - set(kept))}
+
+
+@app.command()
+def stats() -> None:
+    """Write results/train/sft_data_stats.json from data/sft_raw.jsonl and data/sft.jsonl (no API calls)."""
+    out = ROOT / "results" / "train" / "sft_data_stats.json"
+    out.write_text(json.dumps(data_stats(), indent=2) + "\n")
+    typer.echo(out.read_text())
+
+
 @app.command()
 def main(
     limit: int = typer.Option(None, help="Only the first N train tasks (sorted by id), e.g. 5 for a dry run."),

@@ -47,3 +47,11 @@ def test_sft_checkpoint_rejects_unknown_run():
 
     with pytest.raises(typer.BadParameter):
         rl_tinker.sft_checkpoint("no-such-run")
+
+
+def test_sign_test_matches_exact_binomial():
+    from train.report import sign_test
+
+    assert sign_test(6, 1) == pytest.approx(16 / 128)
+    assert sign_test(3, 2) == 1.0
+    assert sign_test(0, 0) == 1.0

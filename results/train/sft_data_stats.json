@@ -1,0 +1,50 @@
+{
+  "model": [
+    "deepseek/deepseek-v4.1-flash-1017"
+  ],
+  "temperature": [
+    0.8
+  ],
+  "cost_usd": 6.4543,
+  "tasks": 72,
+  "samples": 1152,
+  "passed": 682,
+  "leaked": 40,
+  "cut_off": 295,
+  "examples": 427,
+  "reference_examples": 72,
+  "by_tier": {
+    "1": {
+      "tasks": 22,
+      "samples": 352,
+      "passed": 293,
+      "leaked": 30,
+      "cut_off": 10,
+      "examples": 145,
+      "reference_examples": 22
+    },
+    "2": {
+      "tasks": 32,
+      "samples": 512,
+      "passed": 278,
+      "leaked": 1,
+      "cut_off": 198,
+      "examples": 191,
+      "reference_examples": 32
+    },
+    "3": {
+      "tasks": 18,
+      "samples": 288,
+      "passed": 111,
+      "leaked": 9,
+      "cut_off": 87,
+      "examples": 91,
+      "reference_examples": 18
+    }
+  },
+  "tasks_at_cap": 50,
+  "reference_only_tasks": [
+    "T052",
+    "T102"
+  ]
+}
