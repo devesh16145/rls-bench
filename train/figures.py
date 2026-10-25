@@ -39,7 +39,7 @@ plt.rcParams.update({
     "font.family": "sans-serif", "font.size": 10, "axes.edgecolor": GRID, "axes.labelcolor": INK, "axes.titlesize": 11,
     "axes.titleweight": "bold", "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
     "grid.color": GRID, "grid.linewidth": 0.8, "xtick.color": MUTED, "ytick.color": MUTED, "legend.frameon": False,
-    "figure.dpi": 150, "savefig.bbox": "tight",
+    "figure.dpi": 150, "savefig.bbox": "tight", "figure.constrained_layout.use": True,
 })
 
 
@@ -61,8 +61,8 @@ def _ci_bar(ax, xs, rows, key, color, label=None, width=0.6, offset=0.0):
     hi = [r[key]["hi"] * 100 - r[key]["rate"] * 100 for r in rows]
     bars = ax.bar([x + offset for x in xs], rates, width=width, color=color, label=label, zorder=3)
     ax.errorbar([x + offset for x in xs], rates, yerr=[lo, hi], fmt="none", ecolor=INK, elinewidth=1, capsize=3, zorder=4)
-    for b, r in zip(bars, rates):
-        ax.text(b.get_x() + b.get_width() / 2, r + 1.5, f"{r:.0f}%", ha="center", va="bottom", fontsize=8, color=INK)
+    for b, r, h in zip(bars, rates, hi):
+        ax.text(b.get_x() + b.get_width() / 2, r + h + 1.5, f"{r:.0f}%", ha="center", va="bottom", fontsize=8, color=INK)
 
 
 # --- Leaderboard -------------------------------------------------------------------------------------
@@ -86,10 +86,10 @@ def fig_leaderboard() -> Path | None:
         hi = [v[key]["hi"] * 100 - v[key]["rate"] * 100 for _, v in rows]
         ax.barh(ys, vals, color=color, height=0.6, zorder=3)
         ax.errorbar(vals, ys, xerr=[lo, hi], fmt="none", ecolor=INK, elinewidth=1, capsize=3, zorder=4)
-        for y, v in zip(ys, vals):
-            ax.text(v + 1, y, f"{v:.0f}%", va="center", fontsize=8, color=INK)
+        for y, v, h in zip(ys, vals, hi):
+            ax.text(v + h + 1.5, y, f"{v:.0f}%", va="center", fontsize=8, color=INK)
         ax.set_title(title)
-        ax.set_xlim(0, 105)
+        ax.set_xlim(0, 110)
         ax.set_xlabel("% of 103 tasks, 95% Wilson interval")
     a1.set_yticks(ys)
     a1.set_yticklabels(names)
@@ -102,8 +102,11 @@ def fig_trap_heatmap() -> Path | None:
     if not path.exists():
         return None
     models = json.loads(path.read_text())["models"]
-    traps = sorted({t for m in models.values() for t in m["by_trap"]}, key=lambda t: -min(m["by_trap"].get(t, {"n": 0})["n"] for m in models.values()))
-    traps = [t for t in traps if all(t in m["by_trap"] and m["by_trap"][t]["n"] >= 3 for m in models.values())]
+    def n_of(m, t):
+        return m["by_trap"][t]["pass"]["n"] if t in m["by_trap"] else 0
+
+    traps = sorted({t for m in models.values() for t in m["by_trap"]}, key=lambda t: -min(n_of(m, t) for m in models.values()))
+    traps = [t for t in traps if all(n_of(m, t) >= 3 for m in models.values())]
     names = sorted(models, key=lambda k: -models[k]["pass_at_1"]["rate"])
     grid = [[models[k]["by_trap"][t]["pass"]["rate"] * 100 for t in traps] for k in names]
     fig, ax = plt.subplots(figsize=(0.42 * len(traps) + 3, 0.45 * len(names) + 1.5))
@@ -314,8 +317,8 @@ def fig_spend() -> Path | None:
     return _save(fig, "spend")
 
 
-@app.command()
-def all() -> None:  # noqa: A001
+@app.command("all")
+def make_all() -> None:
     made = [fig_leaderboard(), fig_trap_heatmap(), *fig_sft_sweeps(), *fig_rl_health(), *fig_dev_curves(), fig_test_bars(),
             fig_test_by_tier(), fig_judges(), fig_spend()]
     for p in made:
