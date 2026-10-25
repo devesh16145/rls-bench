@@ -131,3 +131,14 @@
 - Added `train/sft_tinker.py`, following the cookbook's `sl_loop` recipe: LoRA rank 32, 3 epochs, batch 16, max length 4,096, linear LR decay, Adam (0.9, 0.95), loss on the assistant answer only, final checkpoint (state + sampler) recorded in `results/train/checkpoints.json`, per-step metrics in `results/train/`. Refuses dev/test examples; stops before exceeding a spend cap.
 - Deviations from spec §8.2: (1) the renderer is `nemotron3_ultra_disable_thinking`, the cookbook's recommended reasoning-off renderer for Nemotron-3.5-Lightning; (2) there is no "cookbook default LR" for this model — `hyperparam_utils.get_lr` raises NotImplementedError for all Nemotron models — so the default is 1e-4, the cookbook's minimal-SFT recipe value, exposed as `--learning-rate`.
 - Dry run (local tokenization, no Tinker calls): 427 examples, 511,810 tokens per epoch, 277,265 trained tokens, 0 truncated (max 2,586), 78 steps; estimated training cost $0.66. Decoded one example: system + user + assistant turn with an empty `<think></think>`, loss only on the SQL answer and end token.
+
+## 2026-10-25 — SFT run 1 failed before training (no spend)
+
+- Failure: `sft_tinker.py --yes` raised `TinkerError: ... set the TINKER_API_KEY environment variable` when creating the ServiceClient. The key is in `.env`, but unlike `eval/openrouter.py` the script never loaded it. No training call was made, so nothing was billed; an empty `results/train/runs/` directory was left behind.
+- Fix: load `TINKER_API_KEY` from `.env` into the process environment (without printing it) before creating the Tinker client; verified with a free capabilities call before rerunning.
+
+## 2026-10-25 — SFT run 2 completed
+
+- `sft_tinker.py --yes --max-spend 5` with defaults (Nemotron-3.5-Lightning, LoRA rank 32, LR 1e-4 linear decay, 3 epochs, batch 16, seed 0, data hash 3804db6d4692dcc5): run `20261025T125454Z`, all 78 steps, not stopped at cap, estimated spend $0.66.
+- Train mean NLL per target token: step 0 0.364 → step 77 0.134; epoch means 0.251 / 0.157 / 0.127. Steepest drop in epoch 1, slow decline after; train loss only (no held-out loss was computed), so it says nothing yet about dev pass rate or overfitting.
+- Checkpoint (state + sampler) recorded in `results/train/checkpoints.json`; per-step metrics in `results/train/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T125454Z.jsonl`, plotted with `train/plot_loss.py` to the `.svg` beside it.

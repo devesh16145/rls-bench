@@ -43,6 +43,22 @@ log = logging.getLogger("sft_tinker")
 app = typer.Typer(add_completion=False)
 
 
+def load_tinker_key() -> None:
+    """Put TINKER_API_KEY from .env into the environment (the Tinker SDK only reads the env var)."""
+    import os
+
+    if os.environ.get("TINKER_API_KEY"):
+        return
+    env_file = ROOT / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            name, sep, value = line.partition("=")
+            if sep and name.strip() == "TINKER_API_KEY":
+                os.environ["TINKER_API_KEY"] = value.strip().strip('"').strip("'")
+                return
+    raise RuntimeError("TINKER_API_KEY is not set (add it to .env)")
+
+
 def load_examples(path: Path) -> list[dict[str, Any]]:
     rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     split = splitmod.load()
@@ -126,6 +142,7 @@ def main(
     if not yes:
         raise typer.BadParameter("this spends money: run with --dry-run first, then pass --yes")
 
+    load_tinker_key()
     import tinker
     from tinker_cookbook import checkpoint_utils
     from tinker_cookbook.supervised.common import compute_mean_nll

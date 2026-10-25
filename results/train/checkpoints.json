@@ -1,0 +1,22 @@
+[
+  {
+    "run_id": "20261025T125454Z",
+    "kind": "sft",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+    "renderer": "nemotron3_ultra_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.0001,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "seed": 0,
+    "data_hash": "3804db6d4692dcc5",
+    "examples": 427,
+    "steps": 78,
+    "stopped_at_cap": false,
+    "est_spend_usd": 0.6588,
+    "metrics": "results/train/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T125454Z.jsonl",
+    "state_path": "tinker://cab47254-fcd2-5b45-a166-1dee078ad2ea:train:0/weights/final",
+    "sampler_path": "tinker://cab47254-fcd2-5b45-a166-1dee078ad2ea:train:0/sampler_weights/final"
+  }
+]

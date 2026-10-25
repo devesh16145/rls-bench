@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" font-family="system-ui, sans-serif" font-size="12">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#1f2328">LoRA SFT, Nemotron-3.5-Lightning (r32, LR 1e-4, 3 epochs, 427 examples)</text>
+<line x1="64" x2="696" y1="344.0" y2="344.0" stroke="#e6e8eb"/>
+<text x="56" y="348.0" text-anchor="end" fill="#6e7781">0.00</text>
+<line x1="64" x2="696" y1="284.8" y2="284.8" stroke="#e6e8eb"/>
+<text x="56" y="288.8" text-anchor="end" fill="#6e7781">0.10</text>
+<line x1="64" x2="696" y1="225.6" y2="225.6" stroke="#e6e8eb"/>
+<text x="56" y="229.6" text-anchor="end" fill="#6e7781">0.20</text>
+<line x1="64" x2="696" y1="166.4" y2="166.4" stroke="#e6e8eb"/>
+<text x="56" y="170.4" text-anchor="end" fill="#6e7781">0.30</text>
+<line x1="64" x2="696" y1="107.2" y2="107.2" stroke="#e6e8eb"/>
+<text x="56" y="111.2" text-anchor="end" fill="#6e7781">0.40</text>
+<line x1="64" x2="696" y1="48.0" y2="48.0" stroke="#e6e8eb"/>
+<text x="56" y="52.0" text-anchor="end" fill="#6e7781">0.50</text>
+<text x="166.6" y="40" text-anchor="middle" fill="#6e7781">epoch 1 · mean 0.251</text>
+<line x1="273.3" x2="273.3" y1="48" y2="344" stroke="#6e7781" stroke-dasharray="3 4"/>
+<text x="380.0" y="40" text-anchor="middle" fill="#6e7781">epoch 2 · mean 0.157</text>
+<line x1="486.7" x2="486.7" y1="48" y2="344" stroke="#6e7781" stroke-dasharray="3 4"/>
+<text x="593.4" y="40" text-anchor="middle" fill="#6e7781">epoch 3 · mean 0.127</text>
+<polyline points="64.0,128.3 72.2,76.9 80.4,133.8 88.6,165.6 96.8,152.1 105.0,200.6 113.2,193.7 121.5,198.5 129.7,159.7 137.9,221.1 146.1,191.3 154.3,186.2 162.5,204.4 170.7,200.3 178.9,222.9 187.1,207.8 195.3,199.2 203.5,202.0 211.7,228.7 219.9,201.2 228.2,218.7 236.4,229.9 244.6,258.0 252.8,219.6 261.0,253.2 269.2,234.5 277.4,230.5 285.6,252.9 293.8,253.9 302.0,246.8 310.2,261.8 318.4,271.6 326.6,233.4 334.9,231.2 343.1,245.0 351.3,226.0 359.5,236.7 367.7,251.2 375.9,257.3 384.1,224.5 392.3,277.1 400.5,277.7 408.7,250.4 416.9,219.5 425.1,257.4 433.4,277.3 441.6,265.6 449.8,252.0 458.0,256.8 466.2,226.2 474.4,253.2 482.6,285.3 490.8,253.7 499.0,282.6 507.2,276.3 515.4,257.9 523.6,273.0 531.8,270.5 540.1,267.3 548.3,262.2 556.5,245.4 564.7,261.8 572.9,274.1 581.1,277.9 589.3,276.0 597.5,280.3 605.7,274.3 613.9,279.8 622.1,257.7 630.3,257.5 638.5,266.3 646.8,257.0 655.0,268.1 663.2,292.2 671.4,264.2 679.6,266.9 687.8,277.0 696.0,264.4" fill="none" stroke="#2a6fdb" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="64.0" cy="128.3" r="6" fill="transparent"><title>step 0: 0.3644</title></circle>
+<circle cx="72.2" cy="76.9" r="6" fill="transparent"><title>step 1: 0.4512</title></circle>
+<circle cx="80.4" cy="133.8" r="6" fill="transparent"><title>step 2: 0.3551</title></circle>
+<circle cx="88.6" cy="165.6" r="6" fill="transparent"><title>step 3: 0.3014</title></circle>
+<circle cx="96.8" cy="152.1" r="6" fill="transparent"><title>step 4: 0.3241</title></circle>
+<circle cx="105.0" cy="200.6" r="6" fill="transparent"><title>step 5: 0.2423</title></circle>
+<circle cx="113.2" cy="193.7" r="6" fill="transparent"><title>step 6: 0.2539</title></circle>
+<circle cx="121.5" cy="198.5" r="6" fill="transparent"><title>step 7: 0.2458</title></circle>
+<circle cx="129.7" cy="159.7" r="6" fill="transparent"><title>step 8: 0.3114</title></circle>
+<circle cx="137.9" cy="221.1" r="6" fill="transparent"><title>step 9: 0.2076</title></circle>
+<circle cx="146.1" cy="191.3" r="6" fill="transparent"><title>step 10: 0.2580</title></circle>
+<circle cx="154.3" cy="186.2" r="6" fill="transparent"><title>step 11: 0.2666</title></circle>
+<circle cx="162.5" cy="204.4" r="6" fill="transparent"><title>step 12: 0.2358</title></circle>
+<circle cx="170.7" cy="200.3" r="6" fill="transparent"><title>step 13: 0.2428</title></circle>
+<circle cx="178.9" cy="222.9" r="6" fill="transparent"><title>step 14: 0.2046</title></circle>
+<circle cx="187.1" cy="207.8" r="6" fill="transparent"><title>step 15: 0.2300</title></circle>
+<circle cx="195.3" cy="199.2" r="6" fill="transparent"><title>step 16: 0.2446</title></circle>
+<circle cx="203.5" cy="202.0" r="6" fill="transparent"><title>step 17: 0.2399</title></circle>
+<circle cx="211.7" cy="228.7" r="6" fill="transparent"><title>step 18: 0.1948</title></circle>
+<circle cx="219.9" cy="201.2" r="6" fill="transparent"><title>step 19: 0.2413</title></circle>
+<circle cx="228.2" cy="218.7" r="6" fill="transparent"><title>step 20: 0.2117</title></circle>
+<circle cx="236.4" cy="229.9" r="6" fill="transparent"><title>step 21: 0.1927</title></circle>
+<circle cx="244.6" cy="258.0" r="6" fill="transparent"><title>step 22: 0.1452</title></circle>
+<circle cx="252.8" cy="219.6" r="6" fill="transparent"><title>step 23: 0.2101</title></circle>
+<circle cx="261.0" cy="253.2" r="6" fill="transparent"><title>step 24: 0.1534</title></circle>
+<circle cx="269.2" cy="234.5" r="6" fill="transparent"><title>step 25: 0.1849</title></circle>
+<circle cx="277.4" cy="230.5" r="6" fill="transparent"><title>step 26: 0.1917</title></circle>
+<circle cx="285.6" cy="252.9" r="6" fill="transparent"><title>step 27: 0.1539</title></circle>
+<circle cx="293.8" cy="253.9" r="6" fill="transparent"><title>step 28: 0.1523</title></circle>
+<circle cx="302.0" cy="246.8" r="6" fill="transparent"><title>step 29: 0.1642</title></circle>
+<circle cx="310.2" cy="261.8" r="6" fill="transparent"><title>step 30: 0.1389</title></circle>
+<circle cx="318.4" cy="271.6" r="6" fill="transparent"><title>step 31: 0.1223</title></circle>
+<circle cx="326.6" cy="233.4" r="6" fill="transparent"><title>step 32: 0.1868</title></circle>
+<circle cx="334.9" cy="231.2" r="6" fill="transparent"><title>step 33: 0.1906</title></circle>
+<circle cx="343.1" cy="245.0" r="6" fill="transparent"><title>step 34: 0.1672</title></circle>
+<circle cx="351.3" cy="226.0" r="6" fill="transparent"><title>step 35: 0.1994</title></circle>
+<circle cx="359.5" cy="236.7" r="6" fill="transparent"><title>step 36: 0.1813</title></circle>
+<circle cx="367.7" cy="251.2" r="6" fill="transparent"><title>step 37: 0.1568</title></circle>
+<circle cx="375.9" cy="257.3" r="6" fill="transparent"><title>step 38: 0.1465</title></circle>
+<circle cx="384.1" cy="224.5" r="6" fill="transparent"><title>step 39: 0.2019</title></circle>
+<circle cx="392.3" cy="277.1" r="6" fill="transparent"><title>step 40: 0.1130</title></circle>
+<circle cx="400.5" cy="277.7" r="6" fill="transparent"><title>step 41: 0.1120</title></circle>
+<circle cx="408.7" cy="250.4" r="6" fill="transparent"><title>step 42: 0.1581</title></circle>
+<circle cx="416.9" cy="219.5" r="6" fill="transparent"><title>step 43: 0.2103</title></circle>
+<circle cx="425.1" cy="257.4" r="6" fill="transparent"><title>step 44: 0.1463</title></circle>
+<circle cx="433.4" cy="277.3" r="6" fill="transparent"><title>step 45: 0.1126</title></circle>
+<circle cx="441.6" cy="265.6" r="6" fill="transparent"><title>step 46: 0.1324</title></circle>
+<circle cx="449.8" cy="252.0" r="6" fill="transparent"><title>step 47: 0.1554</title></circle>
+<circle cx="458.0" cy="256.8" r="6" fill="transparent"><title>step 48: 0.1472</title></circle>
+<circle cx="466.2" cy="226.2" r="6" fill="transparent"><title>step 49: 0.1990</title></circle>
+<circle cx="474.4" cy="253.2" r="6" fill="transparent"><title>step 50: 0.1534</title></circle>
+<circle cx="482.6" cy="285.3" r="6" fill="transparent"><title>step 51: 0.0992</title></circle>
+<circle cx="490.8" cy="253.7" r="6" fill="transparent"><title>step 52: 0.1525</title></circle>
+<circle cx="499.0" cy="282.6" r="6" fill="transparent"><title>step 53: 0.1037</title></circle>
+<circle cx="507.2" cy="276.3" r="6" fill="transparent"><title>step 54: 0.1144</title></circle>
+<circle cx="515.4" cy="257.9" r="6" fill="transparent"><title>step 55: 0.1455</title></circle>
+<circle cx="523.6" cy="273.0" r="6" fill="transparent"><title>step 56: 0.1200</title></circle>
+<circle cx="531.8" cy="270.5" r="6" fill="transparent"><title>step 57: 0.1242</title></circle>
+<circle cx="540.1" cy="267.3" r="6" fill="transparent"><title>step 58: 0.1296</title></circle>
+<circle cx="548.3" cy="262.2" r="6" fill="transparent"><title>step 59: 0.1382</title></circle>
+<circle cx="556.5" cy="245.4" r="6" fill="transparent"><title>step 60: 0.1666</title></circle>
+<circle cx="564.7" cy="261.8" r="6" fill="transparent"><title>step 61: 0.1388</title></circle>
+<circle cx="572.9" cy="274.1" r="6" fill="transparent"><title>step 62: 0.1181</title></circle>
+<circle cx="581.1" cy="277.9" r="6" fill="transparent"><title>step 63: 0.1117</title></circle>
+<circle cx="589.3" cy="276.0" r="6" fill="transparent"><title>step 64: 0.1148</title></circle>
+<circle cx="597.5" cy="280.3" r="6" fill="transparent"><title>step 65: 0.1076</title></circle>
+<circle cx="605.7" cy="274.3" r="6" fill="transparent"><title>step 66: 0.1177</title></circle>
+<circle cx="613.9" cy="279.8" r="6" fill="transparent"><title>step 67: 0.1084</title></circle>
+<circle cx="622.1" cy="257.7" r="6" fill="transparent"><title>step 68: 0.1458</title></circle>
+<circle cx="630.3" cy="257.5" r="6" fill="transparent"><title>step 69: 0.1461</title></circle>
+<circle cx="638.5" cy="266.3" r="6" fill="transparent"><title>step 70: 0.1313</title></circle>
+<circle cx="646.8" cy="257.0" r="6" fill="transparent"><title>step 71: 0.1470</title></circle>
+<circle cx="655.0" cy="268.1" r="6" fill="transparent"><title>step 72: 0.1281</title></circle>
+<circle cx="663.2" cy="292.2" r="6" fill="transparent"><title>step 73: 0.0875</title></circle>
+<circle cx="671.4" cy="264.2" r="6" fill="transparent"><title>step 74: 0.1349</title></circle>
+<circle cx="679.6" cy="266.9" r="6" fill="transparent"><title>step 75: 0.1303</title></circle>
+<circle cx="687.8" cy="277.0" r="6" fill="transparent"><title>step 76: 0.1132</title></circle>
+<circle cx="696.0" cy="264.4" r="6" fill="transparent"><title>step 77: 0.1344</title></circle>
+<text x="64.0" y="362" text-anchor="middle" fill="#6e7781">0</text>
+<text x="146.1" y="362" text-anchor="middle" fill="#6e7781">10</text>
+<text x="228.2" y="362" text-anchor="middle" fill="#6e7781">20</text>
+<text x="310.2" y="362" text-anchor="middle" fill="#6e7781">30</text>
+<text x="392.3" y="362" text-anchor="middle" fill="#6e7781">40</text>
+<text x="474.4" y="362" text-anchor="middle" fill="#6e7781">50</text>
+<text x="556.5" y="362" text-anchor="middle" fill="#6e7781">60</text>
+<text x="638.5" y="362" text-anchor="middle" fill="#6e7781">70</text>
+<text x="380.0" y="386" text-anchor="middle" fill="#1f2328">step</text>
+<text x="16" y="196.0" text-anchor="middle" fill="#1f2328" transform="rotate(-90 16 196.0)">train mean NLL (per target token)</text>
+</svg>
