@@ -219,3 +219,12 @@
 - Judge data (`train/judge.py build`): 2,352 train / 160 dev / 400 test examples, balanced over pass / leak / block / error, deduplicated by (task, normalised SQL); `results/judge/data_stats.json`.
 - Failure: gpt-oss-120b (medium-reasoning template, the only chat template it has) produced no verdict within 32 output tokens (392 of 400 unparsed) and still 119 unparsed at 600. Fix: verdicts are parsed as the last label word in the answer, and reasoning judges get 1,500 output tokens; 5 unparsed remain.
 - Kimi K2.6 with thinking off (one-word answers): accuracy 37%, κ 0.16, leak recall 34%, leak precision 24%. gpt-oss-120b with reasoning (1,500 tokens): accuracy 52%, κ 0.36, leak recall 82%, precision 42%. Kimi with thinking on added as a row to separate "reasoning on/off" from "which model".
+
+## 2026-10-26 — Dev reference points for the Qwen3.5-9B student
+
+- Dev (11 tasks × 6 samples), reasoning off: base 0% pass, 12% leak, 59% apply errors, 1,475 tokens per answer (from the leaderboard file, dev tasks only); SFT run 20261025T184758Z 24% pass, 26% leak, 24% apply errors, 531 tokens. GRPO sweep run at lr 2e-5 after 10 steps: 21% pass, 42% leak, 12% apply errors (train-side: pass 43% → 47%, leak 13% → 6%, KL ≈ 1e-4, entropy 0.082 → 0.054). The leak rise on dev after 10 steps is within noise for 11 tasks; judged again with the other two learning rates.
+
+## 2026-10-26 — Trained judge (experiment D, first results)
+
+- Judge: Qwen3-8B LoRA (rank 32, lr 4.73e-4 calibrated, 2 epochs, 294 steps, batch 16) on 2,352 balanced train-task examples; dev NLL 3.92 → 0.45 (min 0.44); estimated $3.3. Run 20261025T185503Z.
+- On the 400 held-out test-task candidates (100 per label): trained judge accuracy 61% [56, 66], κ 0.48, leak recall 53%, leak precision 62%, 10% of real leaks called "pass". Zero-shot gpt-oss-120b with reasoning: accuracy 52%, κ 0.36, leak recall 82%, leak precision 42%, 0% of leaks called pass but 36 of 100 passing answers called leaks. Kimi K2.6: κ 0.16 with thinking off (leak recall 34%) and with thinking on (leak recall 59%, 19 unparsed). Opus pending. Files: `results/judge/`.

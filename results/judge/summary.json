@@ -1,4 +1,198 @@
 {
+  "trained_Qwen3-8B_20261025T185503Z": {
+    "n": 400,
+    "unparsed": 0,
+    "accuracy": {
+      "rate": 0.61,
+      "lo": 0.5613714064462345,
+      "hi": 0.6565358888002202,
+      "n": 400
+    },
+    "kappa_4class": 0.48,
+    "pass_precision": {
+      "rate": 0.6666666666666666,
+      "lo": 0.5691204267519376,
+      "hi": 0.7517618358921199,
+      "n": 99
+    },
+    "pass_recall": {
+      "rate": 0.66,
+      "lo": 0.5627772885472462,
+      "hi": 0.7453847920265184,
+      "n": 100
+    },
+    "leak_precision": {
+      "rate": 0.6235294117647059,
+      "lo": 0.5172990783621897,
+      "hi": 0.7190770491661035,
+      "n": 85
+    },
+    "leak_recall": {
+      "rate": 0.53,
+      "lo": 0.4328885697009936,
+      "hi": 0.6248918204065872,
+      "n": 100
+    },
+    "block_precision": {
+      "rate": 0.4895833333333333,
+      "lo": 0.3919286123125563,
+      "hi": 0.5880396291011453,
+      "n": 96
+    },
+    "block_recall": {
+      "rate": 0.47,
+      "lo": 0.3751081795934127,
+      "hi": 0.5671114302990063,
+      "n": 100
+    },
+    "error_precision": {
+      "rate": 0.65,
+      "lo": 0.561213245977243,
+      "hi": 0.729481004097146,
+      "n": 120
+    },
+    "error_recall": {
+      "rate": 0.78,
+      "lo": 0.6892964648501421,
+      "hi": 0.8499871761539459,
+      "n": 100
+    },
+    "unsafe_as_pass": {
+      "rate": 0.1,
+      "lo": 0.0552291370606751,
+      "hi": 0.17436566150491345,
+      "n": 100
+    },
+    "confusion": {
+      "pass": {
+        "leak": 11,
+        "pass": 66,
+        "error": 2,
+        "block": 21
+      },
+      "leak": {
+        "leak": 53,
+        "pass": 10,
+        "error": 22,
+        "block": 15
+      },
+      "block": {
+        "block": 47,
+        "error": 18,
+        "leak": 15,
+        "pass": 20
+      },
+      "error": {
+        "error": 78,
+        "block": 13,
+        "leak": 6,
+        "pass": 3
+      }
+    },
+    "leak_recall_by_task_trap": {
+      "aggregate-limit": {
+        "recall": 0.0,
+        "n": 4
+      },
+      "anon-vs-authenticated": {
+        "recall": 0.0,
+        "n": 4
+      },
+      "anon-write-spoof": {
+        "recall": 0.94,
+        "n": 16
+      },
+      "column-grant-blocks-client": {
+        "recall": 0.25,
+        "n": 4
+      },
+      "duplicate-approval": {
+        "recall": 0.0,
+        "n": 6
+      },
+      "forgot-enable": {
+        "recall": 0.4,
+        "n": 5
+      },
+      "negative-condition": {
+        "recall": 0.79,
+        "n": 33
+      },
+      "null-owner": {
+        "recall": 0.94,
+        "n": 16
+      },
+      "old-vs-new": {
+        "recall": 0.25,
+        "n": 4
+      },
+      "over-broad-for-all": {
+        "recall": 0.75,
+        "n": 4
+      },
+      "overdraft": {
+        "recall": 0.0,
+        "n": 1
+      },
+      "ownership-change": {
+        "recall": 0.11,
+        "n": 9
+      },
+      "private-row-leak": {
+        "recall": 0.33,
+        "n": 18
+      },
+      "privilege-escalation": {
+        "recall": 0.78,
+        "n": 27
+      },
+      "recursive-policy": {
+        "recall": 0.0,
+        "n": 7
+      },
+      "reference-check": {
+        "recall": 0.61,
+        "n": 18
+      },
+      "restrictive-vs-permissive": {
+        "recall": 0.0,
+        "n": 5
+      },
+      "rpc-missing-auth-check": {
+        "recall": 0.0,
+        "n": 3
+      },
+      "self-approval": {
+        "recall": 0.67,
+        "n": 6
+      },
+      "sequence-bypass": {
+        "recall": 0.0,
+        "n": 6
+      },
+      "soft-delete-leak": {
+        "recall": 0.4,
+        "n": 5
+      },
+      "state-transition": {
+        "recall": 0.21,
+        "n": 28
+      },
+      "time-window": {
+        "recall": 0.53,
+        "n": 36
+      },
+      "upsert-needs-update": {
+        "recall": 0.4,
+        "n": 5
+      },
+      "weak-with-check": {
+        "recall": 0.43,
+        "n": 14
+      }
+    },
+    "est_spend_usd": 0.0897
+  },
   "zeroshot_Kimi-K2.6+kimi_k26": {
     "n": 400,
     "unparsed": 19,

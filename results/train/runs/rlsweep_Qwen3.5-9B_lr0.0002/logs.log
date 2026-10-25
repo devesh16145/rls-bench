@@ -1,0 +1,9 @@
+root:687 [INFO] Command line invocation: /Users/Devesh/Documents/VIBE/Handshake/train/rl_cookbook.py train --from-run 20261025T184758Z --steps 10 --tasks-per-step 16 --group-size 8 --learning-rate 0.0002 --eval-every 10 --name rlsweep_Qwen3.5-9B_lr0.0002 --max-spend 10 --yes
+tinker_cookbook.utils.ml_log:625 [INFO] Logging to: /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/rlsweep_Qwen3.5-9B_lr0.0002
+tinker_cookbook.checkpoint_utils:396 [INFO] No checkpoints found at /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/rlsweep_Qwen3.5-9B_lr0.0002/checkpoints.jsonl
+tinker_cookbook.checkpoint_utils:427 [INFO] No checkpoints found with key state_path in /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/rlsweep_Qwen3.5-9B_lr0.0002
+tinker_cookbook.checkpoint_utils:180 [INFO] Renderer metadata matches for checkpoint tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final: qwen3_5_disable_thinking
+tinker.lib.public_interfaces.service_client:156 [INFO] ServiceClient initialized for session 6e7e6bf7-4dd0-519c-a670-edc2763d6a2a
+tinker.lib.public_interfaces.service_client:438 [INFO] TrainingClient initialized for model 6e7e6bf7-4dd0-519c-a670-edc2763d6a2a:train:0 via load_weights
+tinker_cookbook.rl.train:1975 [INFO] Loaded weights from tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final
+tinker_cookbook.rl.train:2002 [INFO] Will train on 10 batches

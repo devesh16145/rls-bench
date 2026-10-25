@@ -792,5 +792,288 @@
     "metrics": "results/train/runs/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0001/metrics.jsonl",
     "state_path": "tinker://52f4e7a8-5258-5667-9f92-955d291be0ec:train:0/weights/final",
     "sampler_path": "tinker://52f4e7a8-5258-5667-9f92-955d291be0ec:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T185503Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "judge_Qwen3-8B_20261025T185503Z",
+    "model": "Qwen/Qwen3-8B",
+    "renderer": "qwen3_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.00047297908091376354,
+    "epochs": 2,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_judge",
+    "train_path": "data/judge_train.jsonl",
+    "data_hash": "c0747faa16078d57",
+    "dev_data_hash": "8b4ff5f5f6bd3382",
+    "steps": 294,
+    "dev_nll": [
+      [
+        0,
+        3.9199321269989014
+      ],
+      [
+        10,
+        0.7314132452011108
+      ],
+      [
+        20,
+        0.6715571880340576
+      ],
+      [
+        30,
+        0.6325353384017944
+      ],
+      [
+        40,
+        0.6213540434837341
+      ],
+      [
+        50,
+        0.6343656778335571
+      ],
+      [
+        60,
+        0.6331299543380737
+      ],
+      [
+        70,
+        0.7100505232810974
+      ],
+      [
+        80,
+        0.6142150163650513
+      ],
+      [
+        90,
+        0.5675182342529297
+      ],
+      [
+        100,
+        0.6492391228675842
+      ],
+      [
+        110,
+        0.6074193716049194
+      ],
+      [
+        120,
+        0.5852224230766296
+      ],
+      [
+        130,
+        0.543010413646698
+      ],
+      [
+        140,
+        0.5318451523780823
+      ],
+      [
+        150,
+        0.5500407814979553
+      ],
+      [
+        160,
+        0.5383403301239014
+      ],
+      [
+        170,
+        0.4988398551940918
+      ],
+      [
+        180,
+        0.49244099855422974
+      ],
+      [
+        190,
+        0.4957974851131439
+      ],
+      [
+        200,
+        0.4867544174194336
+      ],
+      [
+        210,
+        0.47299185395240784
+      ],
+      [
+        220,
+        0.4934607446193695
+      ],
+      [
+        230,
+        0.4888710379600525
+      ],
+      [
+        240,
+        0.4709136486053467
+      ],
+      [
+        250,
+        0.4412957727909088
+      ],
+      [
+        260,
+        0.4415072500705719
+      ],
+      [
+        270,
+        0.4540725648403168
+      ],
+      [
+        280,
+        0.45688509941101074
+      ],
+      [
+        290,
+        0.45342904329299927
+      ]
+    ],
+    "final_dev_nll": 0.45342904329299927,
+    "min_dev_nll": 0.4412957727909088,
+    "first_train_nll": 3.404672622680664,
+    "last_train_nll": 0.23432254791259766,
+    "log_path": "results/train/runs/judge_Qwen3-8B_20261025T185503Z",
+    "metrics": "results/train/runs/judge_Qwen3-8B_20261025T185503Z/metrics.jsonl",
+    "state_path": "tinker://96b234b9-9dbe-5363-afb0-13faa5fead81:train:0/weights/final",
+    "sampler_path": "tinker://96b234b9-9dbe-5363-afb0-13faa5fead81:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T190553Z",
+    "kind": "rl",
+    "framework": "cookbook",
+    "name": "rlsweep_Qwen3.5-9B_lr0.00006",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "parent_run_id": "20261025T184758Z",
+    "load_checkpoint_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final",
+    "lora_rank": 32,
+    "learning_rate": 6e-05,
+    "steps": 10,
+    "tasks_per_step": 16,
+    "group_size": 8,
+    "max_tokens": 2048,
+    "max_turns": 1,
+    "leak_penalty": 0.5,
+    "turn_penalty": 0.05,
+    "seed": 0,
+    "tasks": [
+      "T003",
+      "T004",
+      "T005",
+      "T006",
+      "T007",
+      "T008",
+      "T010",
+      "T011",
+      "T013",
+      "T015",
+      "T016",
+      "T017",
+      "T018",
+      "T019",
+      "T020",
+      "T021",
+      "T022",
+      "T023",
+      "T024",
+      "T025",
+      "T027",
+      "T029",
+      "T030",
+      "T031",
+      "T032",
+      "T034",
+      "T035",
+      "T036",
+      "T037",
+      "T038",
+      "T040",
+      "T041",
+      "T044",
+      "T045",
+      "T046",
+      "T047",
+      "T048",
+      "T049",
+      "T050",
+      "T052",
+      "T053",
+      "T054",
+      "T056",
+      "T057",
+      "T059",
+      "T063",
+      "T066",
+      "T068",
+      "T069",
+      "T070",
+      "T071",
+      "T072",
+      "T075",
+      "T076",
+      "T078",
+      "T079",
+      "T080",
+      "T083",
+      "T085",
+      "T086",
+      "T087",
+      "T088",
+      "T089",
+      "T091",
+      "T092",
+      "T093",
+      "T094",
+      "T096",
+      "T100",
+      "T101",
+      "T102",
+      "T103"
+    ],
+    "est_spend_usd": 3.122,
+    "log_path": "results/train/runs/rlsweep_Qwen3.5-9B_lr0.00006",
+    "metrics": "results/train/runs/rlsweep_Qwen3.5-9B_lr0.00006/metrics.jsonl",
+    "checkpoints": [
+      {
+        "name": "000010",
+        "batch": 10,
+        "state_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/000010",
+        "sampler_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/000010"
+      },
+      {
+        "name": "final",
+        "batch": 10,
+        "state_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/final",
+        "sampler_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/final"
+      }
+    ],
+    "dev_evals": [
+      {
+        "eval": 1,
+        "label": "Qwen3.5-9B@rlsweep_Qwen3.5-9B_lr0.00006-eval001",
+        "dev/pass_all": 0.21212121212121213,
+        "dev/leak_all": 0.3939393939393939,
+        "dev/apply_error_all": 0.19696969696969696,
+        "dev/pass_at_1": 0.2727272727272727,
+        "dev/mean_completion_tokens": 508.1363636363636,
+        "dev/spend_usd": 0.03845835899999998
+      }
+    ],
+    "best_dev_eval": {
+      "eval": 1,
+      "label": "Qwen3.5-9B@rlsweep_Qwen3.5-9B_lr0.00006-eval001",
+      "dev/pass_all": 0.21212121212121213,
+      "dev/leak_all": 0.3939393939393939,
+      "dev/apply_error_all": 0.19696969696969696,
+      "dev/pass_at_1": 0.2727272727272727,
+      "dev/mean_completion_tokens": 508.1363636363636,
+      "dev/spend_usd": 0.03845835899999998
+    },
+    "state_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/final",
+    "sampler_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/final"
   }
 ]
