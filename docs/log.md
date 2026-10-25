@@ -232,3 +232,4 @@
 ## 2026-10-26 — SFT sweep, Nemotron-3.5-Lightning (cookbook loop)
 
 - Same recipe as the Qwen sweep; no calibrated rate exists for Nemotron, so lr 3e-5 / 1e-4 / 3e-4. Final dev NLL 0.205 / 0.159 / **0.153** (min 0.148 at 3e-4); training loss 0.18 / 0.11 / 0.066. The best point sits at the top of the sweep, so a higher rate might do slightly better; not pursued (about $0.7 per run, small expected gain). SFT model: run 20261025T190749Z. GRPO mini-sweep (2e-5, 6e-5; 10 steps × 16 × 8) started from it, plus its dev reference eval.
+- Nemotron dev reference (11 tasks × 6 samples): base 9% pass / 39% leak; v1 SFT (hand loop, lr 1e-4) 15% / 35%; v2 SFT (cookbook loop, lr 3e-4) 30% / 44%, apply errors 44% → 12%, 584 tokens per answer. Tuning the learning rate alone doubled the dev pass rate; the leak rate did not improve, which is GRPO's job.
