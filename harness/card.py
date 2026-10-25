@@ -1,4 +1,4 @@
-"""Review card the owner reads before setting verified: true (spec §9)."""
+"""Review card read before a task is set to verified: true (spec §9)."""
 
 from __future__ import annotations
 

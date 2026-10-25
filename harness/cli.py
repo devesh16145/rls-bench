@@ -216,7 +216,7 @@ def card(
     paths: list[Path] = typer.Argument(None),
     all_: bool = typer.Option(False, "--all"),
 ) -> None:
-    """Validate and print the owner's review card for each task."""
+    """Validate and print the review card for each task."""
     for path in _resolve(paths, all_):
         task = Task.load(path)
         checks, _ = validate_task(task)
