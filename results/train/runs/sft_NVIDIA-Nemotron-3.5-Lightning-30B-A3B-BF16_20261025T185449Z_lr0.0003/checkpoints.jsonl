@@ -1,0 +1,1 @@
+{"name": "final", "batch": 0, "epoch": 3, "state_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/weights/final", "sampler_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/sampler_weights/final", "elapsed_tokens": 1502180}

@@ -1075,5 +1075,65 @@
     },
     "state_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/final",
     "sampler_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T190749Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0003",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+    "renderer": "nemotron3_ultra_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.0003,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft.jsonl",
+    "data_hash": "3804db6d4692dcc5",
+    "dev_data_hash": "2a330dbf7a69be2f",
+    "steps": 78,
+    "dev_nll": [
+      [
+        0,
+        0.37185484170913696
+      ],
+      [
+        10,
+        0.19398751854896545
+      ],
+      [
+        20,
+        0.16368795931339264
+      ],
+      [
+        30,
+        0.15329454839229584
+      ],
+      [
+        40,
+        0.1537885069847107
+      ],
+      [
+        50,
+        0.14773710072040558
+      ],
+      [
+        60,
+        0.15045985579490662
+      ],
+      [
+        70,
+        0.1531277298927307
+      ]
+    ],
+    "final_dev_nll": 0.1531277298927307,
+    "min_dev_nll": 0.14773710072040558,
+    "first_train_nll": 0.37295791506767273,
+    "last_train_nll": 0.06591540575027466,
+    "log_path": "results/train/runs/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0003",
+    "metrics": "results/train/runs/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0003/metrics.jsonl",
+    "state_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/weights/final",
+    "sampler_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/sampler_weights/final"
   }
 ]

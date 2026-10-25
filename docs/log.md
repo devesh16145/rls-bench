@@ -228,3 +228,7 @@
 
 - Judge: Qwen3-8B LoRA (rank 32, lr 4.73e-4 calibrated, 2 epochs, 294 steps, batch 16) on 2,352 balanced train-task examples; dev NLL 3.92 → 0.45 (min 0.44); estimated $3.3. Run 20261025T185503Z.
 - On the 400 held-out test-task candidates (100 per label): trained judge accuracy 61% [56, 66], κ 0.48, leak recall 53%, leak precision 62%, 10% of real leaks called "pass". Zero-shot gpt-oss-120b with reasoning: accuracy 52%, κ 0.36, leak recall 82%, leak precision 42%, 0% of leaks called pass but 36 of 100 passing answers called leaks. Kimi K2.6: κ 0.16 with thinking off (leak recall 34%) and with thinking on (leak recall 59%, 19 unparsed). Opus pending. Files: `results/judge/`.
+
+## 2026-10-26 — SFT sweep, Nemotron-3.5-Lightning (cookbook loop)
+
+- Same recipe as the Qwen sweep; no calibrated rate exists for Nemotron, so lr 3e-5 / 1e-4 / 3e-4. Final dev NLL 0.205 / 0.159 / **0.153** (min 0.148 at 3e-4); training loss 0.18 / 0.11 / 0.066. The best point sits at the top of the sweep, so a higher rate might do slightly better; not pursued (about $0.7 per run, small expected gain). SFT model: run 20261025T190749Z. GRPO mini-sweep (2e-5, 6e-5; 10 steps × 16 × 8) started from it, plus its dev reference eval.

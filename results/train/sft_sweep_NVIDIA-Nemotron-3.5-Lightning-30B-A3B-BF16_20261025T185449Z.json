@@ -1,0 +1,33 @@
+{
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+  "sweep_id": "20261025T185449Z",
+  "runs": [
+    {
+      "run_id": "20261025T185449Z",
+      "name": "sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr3e-05",
+      "learning_rate": 3e-05,
+      "final_dev_nll": 0.20473290979862213,
+      "min_dev_nll": 0.20473290979862213,
+      "last_train_nll": 0.18195374310016632
+    },
+    {
+      "run_id": "20261025T190030Z",
+      "name": "sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0001",
+      "learning_rate": 0.0001,
+      "final_dev_nll": 0.15851575136184692,
+      "min_dev_nll": 0.15851575136184692,
+      "last_train_nll": 0.11105211824178696
+    },
+    {
+      "run_id": "20261025T190749Z",
+      "name": "sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr0.0003",
+      "learning_rate": 0.0003,
+      "final_dev_nll": 0.1531277298927307,
+      "min_dev_nll": 0.14773710072040558,
+      "last_train_nll": 0.06591540575027466
+    }
+  ],
+  "best_run_id": "20261025T190749Z",
+  "best_learning_rate": 0.0003,
+  "best_final_dev_nll": 0.1531277298927307
+}
