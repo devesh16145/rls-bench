@@ -138,8 +138,9 @@ def spend_guard(name: str, **prices: float) -> SpendGuard | None:
 class RlsMessageEnv(MessageEnv):
     def __init__(self, task: Task, renderer: renderers.Renderer, *, max_turns: int = 1,
                  leak_penalty: float = LEAK_PENALTY, format_penalty: float = FORMAT_PENALTY,
-                 turn_penalty: float = TURN_PENALTY, guard: SpendGuard | None = None):
+                 turn_penalty: float = TURN_PENALTY, guard: SpendGuard | None = None, reward_scale: float = 1.0):
         self.task, self.renderer = task, renderer
+        self.reward_scale = reward_scale  # 0 for pure distillation: metrics are still logged, the reward is not used
         self.max_turns, self.leak_penalty, self.format_penalty, self.turn_penalty = max_turns, leak_penalty, format_penalty, turn_penalty
         self.guard = guard
         self.convo: list[dict[str, Any]] = list(task_messages(task.id))
@@ -159,6 +160,7 @@ class RlsMessageEnv(MessageEnv):
             r = -self.format_penalty
         if self.turn > 1:
             r -= self.turn_penalty
+        r *= self.reward_scale
         done = result.passed or self.turn >= self.max_turns
         self.convo = self.convo + [message]
         if self.guard is not None:
@@ -190,6 +192,7 @@ class RlsEnvGroupBuilder(EnvGroupBuilder):
     turn_penalty: float = TURN_PENALTY
     max_tokens: int = 2048
     guard_name: str | None = None
+    reward_scale: float = 1.0
 
     async def make_envs(self) -> Sequence[Env]:
         task = load_task(self.task_id)
@@ -199,7 +202,8 @@ class RlsEnvGroupBuilder(EnvGroupBuilder):
             EnvFromMessageEnv(
                 renderer,
                 RlsMessageEnv(task, renderer, max_turns=self.max_turns, leak_penalty=self.leak_penalty,
-                              format_penalty=self.format_penalty, turn_penalty=self.turn_penalty, guard=guard),
+                              format_penalty=self.format_penalty, turn_penalty=self.turn_penalty, guard=guard,
+                              reward_scale=self.reward_scale),
                 failed_parse_reward=-self.format_penalty,
                 max_generation_tokens=self.max_tokens,
             )
@@ -251,6 +255,7 @@ class RlsDatasetBuilder(RLDatasetBuilder):
     turn_penalty: float = TURN_PENALTY
     max_tokens: int = 2048
     guard_name: str | None = None
+    reward_scale: float = 1.0
 
     async def __call__(self) -> tuple[RLDataset, RLDataset | None]:
         builders = {
@@ -258,7 +263,7 @@ class RlsDatasetBuilder(RLDatasetBuilder):
                                     model_name=self.model_name, renderer_name=self.renderer_name,
                                     max_turns=self.max_turns, leak_penalty=self.leak_penalty,
                                     format_penalty=self.format_penalty, turn_penalty=self.turn_penalty,
-                                    max_tokens=self.max_tokens, guard_name=self.guard_name)
+                                    max_tokens=self.max_tokens, guard_name=self.guard_name, reward_scale=self.reward_scale)
             for tid in self.task_ids
         }
         return RlsDataset(builders, plan_batches(self.task_ids, self.tasks_per_step, self.steps, self.seed)), None
