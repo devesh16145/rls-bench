@@ -1,14 +1,14 @@
-# RLS-Bench: write-up (draft)
+# RLS-Bench: write-up
 
-Outline from `docs/spec.md` §11. Only the training section is drafted; the other sections are not yet written.
+Outline from `docs/spec.md` §11. Every number is produced by code in this repository and stored under `results/`; the figures are in `results/figures/`.
 
-1. Why RLS (below)
-2. Benchmark design (below)
-3. Results (below)
-4. Judge calibration (below)
-5. Training a small model on the harness (below)
-6. Limitations (below)
-7. What's next (below)
+1. Why RLS
+2. Benchmark design
+3. Results
+4. Judge calibration
+5. Training a small model on the harness
+6. Limitations
+7. What's next
 
 ---
 
