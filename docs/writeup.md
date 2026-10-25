@@ -7,8 +7,8 @@ Outline from `docs/spec.md` §11. Only the training section is drafted; the othe
 3. Results (below)
 4. Judge calibration (below)
 5. Training a small model on the harness (below)
-6. Limitations — *not yet written*
-7. What's next — *not yet written*
+6. Limitations (below)
+7. What's next (below)
 
 ---
 
@@ -218,3 +218,21 @@ The SFT data cost $6.45 on OpenRouter.
 - "Base" in the tables means the base model sampled on Tinker with the same chat template as training. Nemotron served through OpenRouter scored differently on the same dev tasks (reasoning off: 15% pass over all samples), so OpenRouter numbers are not the training baseline.
 
 *Sources: `results/train/sft_data_stats.json`, `results/train/checkpoints.json`, `results/train/sft_*.jsonl`, `results/train/rl_filter_20261025T125454Z.jsonl`, `results/train/rl_*_20261025T133618Z*.jsonl`, `results/tinker_eval/`, `results/test_eval/`, `results/train/report.json` (dev and test tables, tiers and paired sign tests, from `train/report.py`), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json` (from `train/build_sft.py stats`).*
+
+## 6. Limitations
+
+- **Synthetic schemas, one flavour of Postgres.** Every task was written for this benchmark, in the Supabase dialect (its `auth` and `storage` shims, its default privileges). Real schemas are larger, messier and come with history; a policy that passes here may still be wrong for an app with triggers, views and migrations the task never mentions.
+- **One author, with model help in drafting.** The tasks were drafted quickly and reviewed by hand against a checklist; the traps and tests reflect one person's sense of what goes wrong. Several traps were only caught for the wrong reason the first time round, and were fixed; others may still be caught for the wrong reason.
+- **Small splits.** 11 dev and 20 test tasks. A single task is 9 points of greedy pass@1 on dev and 5 on test, which is why every rate here carries an interval and why differences between trained models are reported with paired tests rather than as point estimates.
+- **The test split was looked at twice.** Once for version 1 and once for version 2, with no training decision in between informed by it. Both evaluations are locked to a git commit and recorded.
+- **Serving differences.** The leaderboard mixes three routes (OpenRouter, the Anthropic API, Tinker). The same model served two ways scored differently on the same dev tasks (Nemotron: 15% through OpenRouter, 9% through Tinker, both with reasoning off), so rows are comparable within a route more than across.
+- **Reasoning budgets confound the ranking.** DeepSeek V4.1 Flash's 16,000-token cap cut off 37% of its answers; a larger budget would raise its score and its cost. Opus ran at its default effort.
+- **Contamination.** The tasks are public with a canary string. Models released after October 2026 may have seen them.
+- **The judge set is balanced**, so its accuracies are not the accuracies you would see on real traffic, and the trained judge was trained on candidates from the same model families it was tested on.
+
+## 7. What's next
+
+- **More tasks.** The train split is 72 tasks; RL cycles through it eleven times in a 50-step run. A larger train set, and a test set of 40+ tasks, would make both the training and the test numbers much sharper. Tasks are cheap to draft and slow to verify; the review checklist is the bottleneck worth automating partly, with the harness doing the mechanical checks it already does.
+- **Judge-in-the-loop training.** The trained judge is cheap enough to grade every rollout; whether a judge-shaped reward reproduces the harness-trained behaviour, or just the judge's blind spots, is a direct test of how much executable grading is worth.
+- **A real-schema track.** Policies written against a few open-source Supabase apps, graded by the same harness, would show how much of the benchmark transfers.
+- **Longer repair chains with tools.** The repair environment gives the model the failing test names; giving it a `psql` tool to query the database as any user would make the task closer to how a person debugs a policy.
