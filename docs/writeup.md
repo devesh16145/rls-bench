@@ -177,7 +177,9 @@ Then training on it: 25 steps × 16 tasks × 4 rollouts from the GRPO step-40 ch
 
 ### 5.7 Pure distillation
 
-_Pending: the on-policy distillation run (Qwen3.5-9B from Qwen3.5-397B, environment reward off) is in progress; its dev results and the SFT / GRPO / distillation comparison go here._
+A third route from the base model, with no correctness signal at all: the student samples its own answers and is trained to match a teacher's per-token distribution (the cookbook's on-policy distillation recipe). The teacher has to share the student's tokenizer, which on Tinker means Qwen3.5-397B, a model that scores 38% pass@1 with a 15% leak rate on the benchmark. 40 steps × 16 tasks × 4 rollouts, teacher KL coefficient 1.0, the environment's reward scaled to zero, $12.11 including the teacher's scoring.
+
+The student's answers changed shape fast: apply errors 60% → 18%, format errors 25% → 4%, length 1,182 → 669 tokens, teacher KL 0.18 → 0.10 per token. On dev it went 0% pass / 8% leak at step 10 (answers still mostly failing to apply) to 27% / 35% at step 20, **29% / 35%** at step 30 and 21% / 47% at step 40. So pure distillation from this teacher reaches the SFT model's pass rate (24%) with a higher leak rate, and stays far below GRPO (52% / 6%): it inherits the teacher's leaks and has no way to learn that a leak is worse than a block. The three routes are compared on test in §5.8.
 
 ### 5.8 Test (evaluated once for version 2)
 
