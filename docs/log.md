@@ -265,3 +265,7 @@
 ## 2026-10-26 — Claude Opus 5.5 baseline (Anthropic API)
 
 - All 103 tasks, 618 samples, effort medium (the model's default), 8,000-token cap, no temperature parameter (the API rejects one; recorded as `temperature_sent: false`). Estimated $27.96 on the Anthropic credit. Greedy pass@1 87%, pass@5 92%, leak 1%. Merged into `results/leaderboard.json` (8 complete rows).
+
+## 2026-10-26 — Adapter export
+
+- `train/export.py` loads a checkpoint's state, asks Tinker for Hugging Face-format weights (`save_weights_external`), and downloads them to `results/train/adapters/<name>/` (gitignored; a manifest with sizes and SHA-256 hashes is committed as `results/train/adapter_manifest_<name>.json`). The export is a standard PEFT LoRA adapter (`adapter_config.json`, `adapter_model.safetensors`); the base-model field is filled from the run record. First export: the judge (Qwen3-8B, 369 MB).
