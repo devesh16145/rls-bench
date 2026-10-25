@@ -143,3 +143,49 @@ class RepairDevEvaluator:
         with (self.log_path / "dev_evals.jsonl").open("a") as f:
             f.write(json.dumps({"eval": self.n, "label": label, **metrics}) + "\n")
         return metrics
+
+
+import typer  # noqa: E402
+
+app = typer.Typer(add_completion=False)
+
+
+@app.callback()
+def _cli() -> None:
+    """Subcommands below."""
+
+
+@app.command()
+def main(run_id: str = typer.Option(None), checkpoint: str = typer.Option(None), base: bool = typer.Option(False, "--base"),
+         model: str = typer.Option("Qwen/Qwen3.5-9B"), split_name: str = typer.Option("dev", "--split"),
+         max_turns: int = typer.Option(3), max_spend: float = typer.Option(2.0), yes: bool = typer.Option(False, "--yes")) -> None:
+    """3-try dev eval of a base model or a checkpoint (run_id, optional checkpoint name)."""
+    from train import eval_tinker
+    from train.rl_cookbook import DEFAULT_RENDERERS
+    from train.sft_tinker import load_tinker_key, make_renderer
+    from train.test_eval_v2 import resolve
+
+    if split_name == "test":
+        raise typer.BadParameter("the test split is reserved for the pre-registered test eval")
+    row = resolve("row", model if base else (run_id + (f"#{checkpoint}" if checkpoint else "")))
+    label = row["label"] + f"@repair{max_turns}"
+    tasks = eval_tinker.split_tasks(split_name)
+    if not yes:
+        raise typer.BadParameter(f"{len(tasks) * 6} conversations × up to {max_turns} tries on {row['model']} (cents to ~$1); pass --yes")
+    load_tinker_key()
+    import tinker
+
+    service = tinker.ServiceClient()
+    client = service.create_sampling_client(model_path=row["model_path"]) if row["model_path"] else service.create_sampling_client(base_model=row["model"])
+    renderer, _ = make_renderer(row["model"], row["renderer"])
+    out = repair_sample_and_grade(client, renderer, tasks, label=label, model=row["model"], model_path=row["model_path"],
+                                  renderer_name=row["renderer"], k=5, max_turns=max_turns, max_tokens=4096, max_spend=max_spend, log=typer.echo)
+    s = summarize(label, tasks)
+    (REPAIR_DIR / f"{label}.summary.json").write_text(json.dumps({**s, "est_spend_usd": round(out["spent_usd"], 4)}, indent=2) + "\n")
+    typer.echo(json.dumps({"label": label, "pass_by_try": [round(w["rate"], 3) for w in s["pass_by_try"]],
+                           "leak_any_try": round(s["leak_any_try"]["rate"], 3), "final_leak": round(s["final_leak"]["rate"], 3),
+                           "mean_tries": round(s["mean_tries"], 2), "est_spend_usd": round(out["spent_usd"], 4)}))
+
+
+if __name__ == "__main__":
+    app()
