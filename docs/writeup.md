@@ -36,7 +36,7 @@ The benchmark asks a direct question: given a schema and the access rules writte
 
 ## 3. How models do on the benchmark
 
-Nine models were run on all 103 tasks with the fixed prompt and protocol. The small open models and Kimi K2.6 were sampled on Tinker with their reasoning templates off and a 4,096-token cap; DeepSeek V4.1 Flash, Qwen3-14B and Nemotron-3.5-Lightning through OpenRouter at their default reasoning with a 16,000-token cap; Claude Opus 5.5 through the Anthropic API at its default effort with an 8,000-token cap. Numbers are from `results/leaderboard.json`; intervals are 95% Wilson.
+Nine models were run on all 103 tasks with the fixed prompt and protocol. Qwen3.5-9B, Qwen3.5-397B, Kimi K2.6 and gpt-oss-120b were sampled on Tinker with their reasoning templates off (gpt-oss has none; it ran at its medium default) and a 4,096-token cap; DeepSeek V4.1 Flash, Qwen3-14B and Nemotron-3.5-Lightning through OpenRouter at their default reasoning with a 16,000-token cap; Claude Opus 5.5 through the Anthropic API at its default effort with an 8,000-token cap. Numbers are from `results/leaderboard.json`; intervals are 95% Wilson.
 
 | Model | Greedy pass@1 | pass@5 | Leak rate | Pass by tier 1 / 2 / 3 |
 |---|---|---|---|---|
