@@ -124,3 +124,10 @@
 
 - After the key limit was raised to $30, resumed sampling: 279 remaining samples, $1.46, no errors. All 1,152 samples (72 train tasks × 16) are recorded; total sampling cost $6.45.
 - Final `data/sft.jsonl`: 427 examples (355 DeepSeek answers + 72 references) over all 72 train tasks; no dev/test task present (asserted). By tier: 1 → 145 examples (pass rate 83%), 2 → 191 (54%), 3 → 91 (39%). 50 tasks reached the 6-answer cap; T052 and T102 (both tier 3) have only the reference. 295 samples (26%) were cut off at 16k tokens, mostly tier 2–3. Examples are ~1,170 tokens (max ~2,800), ~0.52M tokens in total.
+
+## 2026-10-25 — Tinker SFT script and dry run
+
+- Added pinned deps `tinker==0.35.0` and `tinker-cookbook==0.5.8`. Tinker lists both training candidates (`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16`, `Qwen/Qwen3-8B`); prices from the official page as of 2026-10-19: Nemotron-3.5-Lightning $0.184 prefill / $0.495 sample / $0.44 train per 1M tokens (64K context, shown 50% off), Qwen3-8B $0.195 / $0.60 / $0.44.
+- Added `train/sft_tinker.py`, following the cookbook's `sl_loop` recipe: LoRA rank 32, 3 epochs, batch 16, max length 4,096, linear LR decay, Adam (0.9, 0.95), loss on the assistant answer only, final checkpoint (state + sampler) recorded in `results/train/checkpoints.json`, per-step metrics in `results/train/`. Refuses dev/test examples; stops before exceeding a spend cap.
+- Deviations from spec §8.2: (1) the renderer is `nemotron3_ultra_disable_thinking`, the cookbook's recommended reasoning-off renderer for Nemotron-3.5-Lightning; (2) there is no "cookbook default LR" for this model — `hyperparam_utils.get_lr` raises NotImplementedError for all Nemotron models — so the default is 1e-4, the cookbook's minimal-SFT recipe value, exposed as `--learning-rate`.
+- Dry run (local tokenization, no Tinker calls): 427 examples, 511,810 tokens per epoch, 277,265 trained tokens, 0 truncated (max 2,586), 78 steps; estimated training cost $0.66. Decoded one example: system + user + assistant turn with an empty `<think></think>`, loss only on the SQL answer and end token.
