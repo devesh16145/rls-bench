@@ -23,7 +23,7 @@ Chosen checkpoints (filled in before running):
 | base | Qwen/Qwen3.5-9B | — | — |
 | sft | 20261025T184758Z (sft_Qwen3.5-9B lr 4.73e-4) | final | lowest final dev loss of the three sweep runs (0.1413) |
 | sft+rl | 20261025T191833Z (rl_Qwen3.5-9B_lr4e-5_s50) | step 40 | highest dev pass rate of the five evals (52%) |
-| sft+rl, seed 2 | _pending_ | | |
+| sft+rl, seed 2 | rl_Qwen3.5-9B_lr4e-5_s50_seed1 | step 40 | highest dev pass rate of the five evals (53%) |
 | repair | 20261025T194632Z (repair_Qwen3.5-9B_from40_s25) | step 5 | highest dev pass after 3 tries of the five evals (67%) |
 | base (Nemotron) | nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16 | — | — |
 | sft (Nemotron) | 20261025T190749Z (sft lr 3e-4) | final | lowest final dev loss of the three sweep runs (0.153) |

@@ -31,9 +31,9 @@ def _cli() -> None:
 
 
 def resolve_state(run_id: str, checkpoint: str | None) -> tuple[dict, str]:
-    rec = next((r for r in json.loads(CHECKPOINTS_PATH.read_text()) if r["run_id"] == run_id), None)
-    if rec is None:
-        raise typer.BadParameter(f"no run {run_id} in {CHECKPOINTS_PATH.name}")
+    from train.rl_cookbook import checkpoint_record
+
+    rec = checkpoint_record(run_id)  # a run name or a run_id
     if checkpoint:
         c = next((c for c in rec.get("checkpoints", []) if c.get("name") == checkpoint), None)
         if c is None or not c.get("state_path"):

@@ -39,9 +39,9 @@ def resolve(name: str, ref: str) -> dict[str, Any]:
     if "/" in ref:  # a base model
         return {"name": name, "label": f"{ref.split('/')[-1]}@base", "model": ref, "renderer": DEFAULT_RENDERERS[ref], "model_path": None}
     run_id, _, ckpt = ref.partition("#")
-    rec = next((r for r in json.loads(CHECKPOINTS_PATH.read_text()) if r["run_id"] == run_id), None)
-    if rec is None:
-        raise typer.BadParameter(f"no run {run_id} in {CHECKPOINTS_PATH.name}")
+    from train.rl_cookbook import checkpoint_record
+
+    rec = checkpoint_record(run_id)  # a run name or a run_id
     path = rec["sampler_path"]
     if ckpt:
         c = next((c for c in rec.get("checkpoints", []) if c.get("name") == ckpt), None)

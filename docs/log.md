@@ -289,3 +289,8 @@
 ## 2026-10-26 — Adapters exported
 
 - Six LoRA adapters exported in Hugging Face format to `results/train/adapters/` (gitignored; manifests with SHA-256 hashes committed): Qwen3.5-9B SFT, Qwen3.5-9B GRPO step 40, Qwen3.5-9B repair step 5, Nemotron SFT, Nemotron GRPO step 50, and the Qwen3-8B judge. Each is `adapter_config.json` + `adapter_model.safetensors` (369–378 MB for the 8–9B students; see manifests for Nemotron).
+
+## 2026-10-26 — Second seed of the Qwen GRPO run (rl_Qwen3.5-9B_lr4e-5_s50_seed1)
+
+- Same settings as seed 0, seed 1; estimated $15.98. Train: reward 0.31 → 0.50, pass 41% → 53%, leak 21% → 6%, answer length 638 → 918 tokens, entropy 0.073 → 0.022, KL ≤ 5e-4. Dev: step 10 21% pass / 32% leak, step 20 26% / 32%, step 30 32% / 20%, **step 40 53% / 21%**, step 50 38% / 35%. Best checkpoint: step 40, as in seed 0 (52% / 6%). Both seeds peak at step 40 and fall back by step 50 while train reward keeps rising, so step 50 looks like the start of overfitting to the 72 train tasks.
+- The second seed and the repair run were started within the same second and share `run_id` 20261025T194632Z; run records are now resolved by their unique `name` first (`checkpoint_record`), and the pre-registration names runs.

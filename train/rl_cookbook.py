@@ -54,7 +54,9 @@ def default_lr(model: str) -> float | None:
 
 
 def checkpoint_record(run_id: str) -> dict[str, Any]:
-    records = [r for r in json.loads(CHECKPOINTS_PATH.read_text()) if r["run_id"] == run_id]
+    """The run record for a run name (unique) or a run_id (last record with that id)."""
+    all_records = json.loads(CHECKPOINTS_PATH.read_text())
+    records = [r for r in all_records if r.get("name") == run_id] or [r for r in all_records if r["run_id"] == run_id]
     if not records:
         raise typer.BadParameter(f"no run {run_id} in {CHECKPOINTS_PATH.relative_to(ROOT)}")
     return records[-1]
