@@ -185,7 +185,23 @@ A frontier judge sees requirement + candidate SQL (never tests) and returns `pas
 
 ## 8. Training on Tinker (required, Phase 4–5)
 
-Same as v1: rejection-sampled SFT then GRPO on Tinker with the harness as reward, test split evaluated once. Before starting, confirm model availability and prices on Tinker's current list, filter out train tasks where every sample passes or every sample fails, and report confidence intervals (a 40-task test split has roughly ±15 pp).
+Rejection-sampled SFT then RL on Tinker with the harness as reward, test split evaluated once per version of the write-up. Before starting, confirm model availability and prices on Tinker's current list and report confidence intervals (a 20-task test split has roughly ±15 pp).
+
+### 8.1 Version 1 (done 2026-10-25)
+
+Nemotron-3.5-Lightning: LoRA SFT on 427 passing answers, then a hand-rolled GRPO loop (25 steps, 1,600 rollouts). Results in `docs/writeup.md` §5. The RL stage was too small to conclude anything; version 2 redoes it properly.
+
+### 8.2 Version 2 plan
+
+Tinker's purpose here is training; inference on Tinker is kept to what training needs (evals, one teacher, one leaderboard pass). Main student Qwen3.5-9B (calibrated learning rate in the cookbook), second student Nemotron-3.5-Lightning. Prices in `train/prices.py`; every run is dry-run and estimated first and refuses to start if its worst case passes its cap.
+
+- **Leaderboard.** Base models on all 103 tasks with the baseline protocol, reasoning off, through Tinker (`train/leaderboard.py`); Claude Opus 5.5 through the Anthropic API (`eval/anthropic_client.py`). Merged into `results/leaderboard.json`.
+- **A. GRPO done properly.** The harness as a cookbook RL environment (`train/rl_env.py`), trained with the cookbook loop (`train/rl_cookbook.py`): group-centred rewards, constant-reward groups dropped, importance-sampling loss, no KL penalty, temperature 1.0, 2,048-token answers. Reward: 1 pass, 0 safe failure, −0.1 format error, −0.5 leak. SFT first on the cookbook supervised loop with a dev-loss evaluator and a 3-point learning-rate sweep (`train/sft_cookbook.py`); the lowest-dev-loss run is the SFT model. GRPO: 2-point learning-rate sweep (10 steps), then 50 steps × 16 tasks × 8 rollouts (6,400 rollouts, ~11 epochs), dev eval every 10 steps, best dev checkpoint kept.
+- **B. Repair RL.** Same environment with up to 3 turns: a failing answer gets harness feedback (failing tests, rules, SQL error; never expected rows or test queries). Trained from the best A checkpoint; measured as pass rate after 1, 2 and 3 tries.
+- **C. On-policy distillation** (if budget remains): the cookbook recipe with DeepSeek V4.1 Flash as teacher; compared with SFT and RL at equal compute.
+- **D. Trained judge.** Fine-tune a model to label requirement + candidate SQL as pass / leak / block / error from harness-labelled samples of train tasks; compared on held-out tasks with zero-shot judges (Kimi K2.6, gpt-oss-120b on Tinker; Opus via the Anthropic API) on agreement with the harness and leak recall.
+- **Test.** Pre-registered in `docs/preregistration.md` before it runs; evaluated once for version 2 and disclosed as the second evaluation of the split.
+- **Figures** (`train/figures.py`, from `results/` only): leaderboard; model × trap heatmap; SFT sweep and loss curves; RL training health (reward, KL, entropy, length); dev curves; test bars by tier; per-trap before/after; repair pass-by-try; SFT vs RL vs distillation; judge agreement and misses; spend.
 
 ## 9. Review process
 
@@ -205,6 +221,8 @@ Done when `rls validate --all` and `pytest` pass, a candidate run twice gives id
 **Phase 4 — scale for training (week 3).** Grow to at least 100 verified tasks (target 200) in batches of 10 with review stops; freeze `tasks/split.json`; baseline the open candidates for rejection sampling. **Stop.**
 
 **Phase 5 — training on Tinker (week 4).** Confirm models and prices on Tinker first. `build_sft.py` (dry run on 5 tasks, then full), LoRA SFT, dev eval, GRPO (dry run 2 steps, group 2, then the real run), test evaluated once with the best dev checkpoint, adapter export. **Stop** with untrained / SFT / SFT+RL test numbers and curves in `results/train/`.
+
+**Phase 5b — version 2 (§8.2).** Leaderboard → A → D → B → C → pre-registered test evals → figures, write-up, export. Caps: $40 per Tinker run, OpenRouter unused, Claude through the Anthropic API.
 
 **Phase 6 — publish.** Leaderboard site, HF dataset and adapter, write-up with the training section.
 

@@ -195,3 +195,10 @@
 ## 2026-10-25 — Training section of the write-up drafted
 
 - Created `docs/writeup.md` with the §11 outline; only §5 (training) is drafted. Every number in it is produced by repo code and stored under `results/`: added `train/build_sft.py stats` → `results/train/sft_data_stats.json`, `train/spend.py` → `results/train/tinker_spend.json` (total Tinker spend $2.65, estimated at list prices; the filter pass cost is recomputed from token counts), and `train/report.py` → `results/train/report.json` (dev/test tables with Wilson intervals, test by tier, paired sign tests). These replace earlier one-off snippets.
+
+## 2026-10-26 — Version 2 training plan started
+
+- Plan in `docs/spec.md` §8.2. Dependencies added and pinned: `anthropic==2.3.0` (Claude through the Anthropic API instead of OpenRouter) and `matplotlib==3.11.2` (figures).
+- New code: `train/rl_env.py` (harness as a cookbook RL environment, single- or multi-turn with feedback, spend guard, dev evaluator), `train/rl_cookbook.py` (GRPO on the cookbook loop), `train/sft_cookbook.py` (SFT on the cookbook loop with a dev-loss evaluator and learning-rate sweep), `train/prices.py`, `train/leaderboard.py`, `eval/anthropic_client.py`, `build_sft.py dev-set` (57 dev examples: 11 references + 46 passing DeepSeek baseline samples on dev tasks).
+- Dry runs (no spend): all 72 references score 1 through the environment; traps score −0.5 (180) or 0 (20). SFT sweep on Qwen3.5-9B: 78 steps per run, 1.57M train tokens, $2.47 per learning rate. GRPO on Qwen3.5-9B at 60 steps × 24 tasks × 8 rollouts has a worst case of $67, over the $40 cap, so the run is sized at 50 × 16 × 8 (6,400 rollouts; typical $17, worst $36). Opus 5.5 on 103 tasks: typical $38 at 8,000 max tokens, run with a $45 cap on the Anthropic credit. Tinker leaderboard: Qwen3.5-9B, gpt-oss-120b, DeepSeek V4.1 Flash, Kimi K2.6, reasoning off, 4,096 tokens, $7 cap per model (Qwen3.8-27B dropped: $5.4 typical for a model already on the 13-task table).
+- Concurrency check: 12 harness grades in parallel (4 at a time) all passed in 1.2 s; the RL environment grades 4 rollouts at a time.

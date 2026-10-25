@@ -363,5 +363,121 @@
     "best_dev_pass_all_samples": 0.30303030303030304,
     "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/final",
     "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T184329Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.0001577",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.0001577,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "data_hash": "3804db6d4692dcc5",
+    "dev_data_hash": "2a330dbf7a69be2f",
+    "steps": 78,
+    "dev_nll": [
+      [
+        0,
+        0.3374381959438324
+      ],
+      [
+        10,
+        0.19052650034427643
+      ],
+      [
+        20,
+        0.16294802725315094
+      ],
+      [
+        30,
+        0.15272599458694458
+      ],
+      [
+        40,
+        0.1491166055202484
+      ],
+      [
+        50,
+        0.14602208137512207
+      ],
+      [
+        60,
+        0.14339065551757812
+      ],
+      [
+        70,
+        0.14463725686073303
+      ]
+    ],
+    "final_dev_nll": 0.14463725686073303,
+    "min_dev_nll": 0.14339065551757812,
+    "first_train_nll": 0.33771929144859314,
+    "last_train_nll": 0.08318901062011719,
+    "log_path": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0001577",
+    "metrics": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0001577/metrics.jsonl",
+    "state_path": "tinker://98b591aa-ccdb-5b72-b0be-e0d59a8ec041:train:0/weights/final",
+    "sampler_path": "tinker://98b591aa-ccdb-5b72-b0be-e0d59a8ec041:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T184758Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.000473",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.000473,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "data_hash": "3804db6d4692dcc5",
+    "dev_data_hash": "2a330dbf7a69be2f",
+    "steps": 78,
+    "dev_nll": [
+      [
+        0,
+        0.33754265308380127
+      ],
+      [
+        10,
+        0.17825879156589508
+      ],
+      [
+        20,
+        0.15434406697750092
+      ],
+      [
+        30,
+        0.14567060768604279
+      ],
+      [
+        40,
+        0.1447516679763794
+      ],
+      [
+        50,
+        0.14007243514060974
+      ],
+      [
+        60,
+        0.14549456536769867
+      ],
+      [
+        70,
+        0.14131636917591095
+      ]
+    ],
+    "final_dev_nll": 0.14131636917591095,
+    "min_dev_nll": 0.14007243514060974,
+    "first_train_nll": 0.33771929144859314,
+    "last_train_nll": 0.06055184081196785,
+    "log_path": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.000473",
+    "metrics": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.000473/metrics.jsonl",
+    "state_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final",
+    "sampler_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/sampler_weights/final"
   }
 ]

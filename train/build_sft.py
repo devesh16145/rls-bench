@@ -198,6 +198,45 @@ def data_stats() -> dict[str, Any]:
             "reference_only_tasks": sorted({r["task_id"] for r in raw} - set(kept))}
 
 
+DEV_PATH = ROOT / "data" / "sft_dev.jsonl"
+DEV_BASELINE = ROOT / "results" / "baselines" / "deepseek__deepseek-v4.1-flash-1017.jsonl"
+
+
+def build_dev_set(max_keep: int = 6, log: Callable[[str], None] = print) -> dict[str, Any]:
+    """Held-out loss set: dev tasks' references plus their passing baseline samples (never trained on)."""
+    from eval.metrics import _latest
+
+    dev_ids = sorted(splitmod.load()["dev"])
+    latest = _latest(json.loads(line) for line in DEV_BASELINE.read_text().splitlines())
+    rows, kept = [], {}
+    for tid in dev_ids:
+        task = Task.load(next(TASKS_DIR.glob(f"{tid}-*")))
+        messages = build_messages(task)
+        seen = {normalise_sql(task.solution_sql)}
+        rows.append({"task_id": tid, "source": "reference", "messages": messages + [{"role": "assistant", "content": _assistant(task.solution_sql)}]})
+        kept[tid] = 0
+        for (t, temp, idx), r in sorted(latest.items()):
+            if t != tid or not r["result"]["passed"] or kept[tid] >= max_keep:
+                continue
+            sql = extract_sql_block(r["completion"])
+            key = normalise_sql(sql)
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append({"task_id": tid, "source": r["model"], "messages": messages + [{"role": "assistant", "content": _assistant(sql)}]})
+            kept[tid] += 1
+    DEV_PATH.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    log(f"wrote {DEV_PATH}: {len(rows)} examples over {len(dev_ids)} dev tasks")
+    return {"examples": len(rows), "per_task": kept}
+
+
+@app.command("dev-set")
+def dev_set(max_keep: int = typer.Option(6)) -> None:
+    """Write data/sft_dev.jsonl from the dev tasks (references + passing DeepSeek baseline samples)."""
+    out = build_dev_set(max_keep, log=typer.echo)
+    typer.echo(json.dumps(out))
+
+
 @app.command()
 def stats() -> None:
     """Write results/train/sft_data_stats.json from data/sft_raw.jsonl and data/sft.jsonl (no API calls)."""

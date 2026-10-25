@@ -31,9 +31,9 @@ from train.sft_tinker import CHECKPOINTS_PATH, DEFAULT_MODEL, DEFAULT_RENDERER, 
 
 TASKS_DIR = ROOT / "tasks"
 EVAL_DIR = ROOT / "results" / "tinker_eval"
-# Tinker list prices, USD per 1M tokens, from thinkingmachines.ai/tinker/pricing as of 2026-10-19
-# (Nemotron-3.5-Lightning shown at 50% off). Recheck before large runs.
-SAMPLE_PRICES = {"nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {"prefill": 0.184, "sample": 0.495}}
+from train.prices import PRICES  # noqa: E402
+
+SAMPLE_PRICES = {m: {"prefill": p["prefill"], "sample": p["sample"]} for m, p in PRICES.items()}
 TYPICAL_OUTPUT_TOKENS = 1500
 
 app = typer.Typer(add_completion=False)
