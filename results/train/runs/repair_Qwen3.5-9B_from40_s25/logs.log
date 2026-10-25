@@ -99648,3 +99648,116 @@ using (public.is_org_admin(org_id) and deleted_at is null)
 with check (public.is_org_admin(org_id));
 ```<|im_end|>
 ====== End Trajectory Group ======
+tinker_cookbook.checkpoint_utils:467 [INFO] Saved checkpoints: {'state_path': 'tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000025', 'sampler_path': 'tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000025'}
+tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/repair_Qwen3.5-9B_from40_s25/metrics.jsonl
+tinker_cookbook.utils.ml_log:279 [INFO] 
+                                 Step 24                                 
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ Metric                                                  ┃ Value       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ env/all/ac_tokens_per_turn                              │ 846.065574  │
+│ env/all/apply_error                                     │ 0.377049    │
+│ env/all/block                                           │ 0.213115    │
+│ env/all/by_group/frac_all_bad                           │ 0.000000    │
+│ env/all/by_group/frac_all_good                          │ 0.000000    │
+│ env/all/by_group/frac_mixed                             │ 1.000000    │
+│ env/all/format_error                                    │ 0.000000    │
+│ env/all/grade_ms                                        │ 225.983607  │
+│ env/all/leak                                            │ 0.016393    │
+│ env/all/ob_tokens_per_turn                              │ 1240.114754 │
+│ env/all/pass                                            │ 0.393443    │
+│ env/all/pass_final                                      │ 0.750000    │
+│ env/all/reward/total                                    │ 0.689063    │
+│ env/all/total_ac_tokens                                 │ 51610       │
+│ env/all/total_episodes                                  │ 32          │
+│ env/all/total_ob_tokens                                 │ 75647       │
+│ env/all/total_turns                                     │ 61          │
+│ env/all/turns                                           │ 1.906250    │
+│ env/all/turns_per_episode                               │ 1.906250    │
+│ env/tier1/ac_tokens_per_turn                            │ 831.850000  │
+│ env/tier1/apply_error                                   │ 0.450000    │
+│ env/tier1/block                                         │ 0.350000    │
+│ env/tier1/by_group/frac_all_bad                         │ 0.000000    │
+│ env/tier1/by_group/frac_all_good                        │ 0.000000    │
+│ env/tier1/by_group/frac_mixed                           │ 1.000000    │
+│ env/tier1/format_error                                  │ 0.000000    │
+│ env/tier1/grade_ms                                      │ 220.800000  │
+│ env/tier1/leak                                          │ 0.000000    │
+│ env/tier1/ob_tokens_per_turn                            │ 1336.750000 │
+│ env/tier1/pass                                          │ 0.200000    │
+│ env/tier1/pass_final                                    │ 0.500000    │
+│ env/tier1/reward/total                                  │ 0.425000    │
+│ env/tier1/total_ac_tokens                               │ 16637       │
+│ env/tier1/total_episodes                                │ 8           │
+│ env/tier1/total_ob_tokens                               │ 26735       │
+│ env/tier1/total_turns                                   │ 20          │
+│ env/tier1/turns                                         │ 2.500000    │
+│ env/tier1/turns_per_episode                             │ 2.500000    │
+│ env/tier2/ac_tokens_per_turn                            │ 759.800000  │
+│ env/tier2/apply_error                                   │ 0.300000    │
+│ env/tier2/block                                         │ 0.100000    │
+│ env/tier2/by_group/frac_all_bad                         │ 0.000000    │
+│ env/tier2/by_group/frac_all_good                        │ 0.000000    │
+│ env/tier2/by_group/frac_mixed                           │ 1.000000    │
+│ env/tier2/format_error                                  │ 0.000000    │
+│ env/tier2/grade_ms                                      │ 219.450000  │
+│ env/tier2/leak                                          │ 0.050000    │
+│ env/tier2/ob_tokens_per_turn                            │ 1009.000000 │
+│ env/tier2/pass                                          │ 0.550000    │
+│ env/tier2/pass_final                                    │ 0.916667    │
+│ env/tier2/reward/total                                  │ 0.841667    │
+│ env/tier2/total_ac_tokens                               │ 15196       │
+│ env/tier2/total_episodes                                │ 12          │
+│ env/tier2/total_ob_tokens                               │ 20180       │
+│ env/tier2/total_turns                                   │ 20          │
+│ env/tier2/turns                                         │ 1.666667    │
+│ env/tier2/turns_per_episode                             │ 1.666667    │
+│ env/tier3/ac_tokens_per_turn                            │ 941.761905  │
+│ env/tier3/apply_error                                   │ 0.380952    │
+│ env/tier3/block                                         │ 0.190476    │
+│ env/tier3/by_group/frac_all_bad                         │ 0.000000    │
+│ env/tier3/by_group/frac_all_good                        │ 0.000000    │
+│ env/tier3/by_group/frac_mixed                           │ 1.000000    │
+│ env/tier3/format_error                                  │ 0.000000    │
+│ env/tier3/grade_ms                                      │ 237.142857  │
+│ env/tier3/leak                                          │ 0.000000    │
+│ env/tier3/ob_tokens_per_turn                            │ 1368.190476 │
+│ env/tier3/pass                                          │ 0.428571    │
+│ env/tier3/pass_final                                    │ 0.750000    │
+│ env/tier3/reward/total                                  │ 0.712500    │
+│ env/tier3/total_ac_tokens                               │ 19777       │
+│ env/tier3/total_episodes                                │ 12          │
+│ env/tier3/total_ob_tokens                               │ 28732       │
+│ env/tier3/total_turns                                   │ 21          │
+│ env/tier3/turns                                         │ 1.750000    │
+│ env/tier3/turns_per_episode                             │ 1.750000    │
+│ optim/entropy                                           │ 0.013808    │
+│ optim/kl_sample_train_v1                                │ 0.000306    │
+│ optim/kl_sample_train_v2                                │ 0.000329    │
+│ optim/lr                                                │ 0.000040    │
+│ progress/batch                                          │ 24          │
+│ progress/done_frac                                      │ 1.000000    │
+│ time/assemble_training_data                             │ 0.111450    │
+│ time/compute_full_batch_metrics_and_get_sampling_client │ 7.627809    │
+│ time/compute_group_rewards:max                          │ 0.000026    │
+│ time/compute_group_rewards:mean                         │ 0.000015    │
+│ time/compute_kl_sample_train                            │ 0.004947    │
+│ time/do_group_rollout_and_filter_constant_reward:max    │ 19.192074   │
+│ time/do_group_rollout_and_filter_constant_reward:mean   │ 11.240988   │
+│ time/do_train_step_and_get_sampling_client              │ 12.753532   │
+│ time/env_initial_observation:max                        │ 0.056260    │
+│ time/env_initial_observation:mean                       │ 0.030081    │
+│ time/env_step:max                                       │ 1.411548    │
+│ time/env_step:mean                                      │ 0.553152    │
+│ time/policy_sample:max                                  │ 9.579819    │
+│ time/policy_sample:mean                                 │ 4.940248    │
+│ time/prepare_minibatch                                  │ 0.177035    │
+│ time/sampling                                           │ 19.259779   │
+│ time/save_checkpoint                                    │ 7.209682    │
+│ time/save_checkpoint_and_get_sampling_client            │ 7.622815    │
+│ time/save_checkpoint_async                              │ 7.209638    │
+│ time/total                                              │ 32.030927   │
+│ time/train_step                                         │ 4.944004    │
+└─────────────────────────────────────────────────────────┴─────────────┘
+tinker_cookbook.checkpoint_utils:467 [INFO] Saved checkpoints: {'state_path': 'tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/final', 'sampler_path': 'tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/final'}
+tinker_cookbook.rl.train:2063 [INFO] Training completed successfully

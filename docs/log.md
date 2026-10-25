@@ -279,3 +279,9 @@
 
 - 50 steps × 16 × 8 from the v2 SFT model, lr 6e-5; estimated $5.64. Train side (first 5 → last 5 steps): reward 0.33 → 0.49, pass 43% → 53%, leak 20% → 7%, answer length 620 → 832 tokens, entropy 0.072 → 0.017, KL ≤ 5e-3.
 - Dev (66 samples): SFT 30% pass / 44% leak → step 10 27% / 49%, step 20 29% / 42%, step 30 27% / 36%, step 40 23% / 23%, **step 50 38% / 17%**. Best checkpoint by the pre-registered rule: step 50 (the final one). The leak rate fell at every evaluation; the pass rate moved within noise until the last one.
+
+## 2026-10-26 — Repair RL, Qwen3.5-9B (run 20261025T194632Z, experiment B)
+
+- From the step-40 GRPO checkpoint: 25 steps × 16 tasks × 4 rollouts, up to 3 tries with harness feedback, 1,536-token answers, lr 4e-5, dev eval every 5 steps; estimated $8.07. Train side: reward flat (0.59 → 0.57), pass by the final try 72% → 72%, first-try pass 42% → 38%, tries per episode 1.8 → 1.9, entropy already 0.011 at the start (inherited from the GRPO parent).
+- Dev, pass after 1 / 2 / 3 tries: step 5 **52% / 64% / 67%**, step 10 39% / 62% / 65%, step 15 35% / 47% / 55%, step 20 32% / 44% / 58%, step 25 33% / 49% / 58%. Leak on the final try 14% → 21%.
+- Reading: the feedback itself is worth a lot (a third of the GRPO model's failures are fixed within three tries at step 5, when the policy is still essentially the GRPO checkpoint), but training on the repair task made the first try worse and did not raise the third-try rate. Best checkpoint by the pre-registered rule (highest dev pass after 3 tries): step 5. To separate "feedback helps" from "repair training helps", the base, SFT and GRPO-40 models are evaluated with the same 3-try protocol.
