@@ -291,6 +291,40 @@ def fig_test_by_tier() -> Path | None:
     return _save(fig, "test_by_tier")
 
 
+# --- Repair --------------------------------------------------------------------------------------
+
+def fig_repair() -> Path | None:
+    """Pass rate after 1, 2 and 3 tries with harness feedback, per model, on dev (summary files from train/repair_eval.py)."""
+    rdir = RESULTS / "repair_eval"
+    files = sorted(rdir.glob("*.summary.json")) if rdir.exists() else []
+    if not files:
+        return None
+    rows = []
+    for f in files:
+        s = json.loads(f.read_text())
+        label = f.name.replace(".summary.json", "")
+        name = ("base" if "@base" in label else "SFT" if "@sft-" in label else "repair-trained" if "@rl-" in label and "repair" in label.split("@")[1]
+                else "SFT + GRPO")
+        rows.append((name, [w["rate"] * 100 for w in s["pass_by_try"]], s["leak_any_try"]["rate"] * 100))
+    order = {"base": 0, "SFT": 1, "SFT + GRPO": 2, "repair-trained": 3}
+    rows.sort(key=lambda r: order.get(r[0], 9))
+    fig, ax = plt.subplots(figsize=(7.5, 4))
+    colors = [MUTED, BLUE, ORANGE, AQUA]
+    w = 0.8 / len(rows)
+    for i, (name, by_try, _) in enumerate(rows):
+        xs = [j + i * w for j in range(len(by_try))]
+        ax.bar(xs, by_try, width=w, color=colors[i % len(colors)], label=name, zorder=3)
+        for x, v in zip(xs, by_try):
+            ax.text(x, v + 1, f"{v:.0f}", ha="center", va="bottom", fontsize=7, color=INK)
+    ax.set_xticks([j + w * (len(rows) - 1) / 2 for j in range(3)])
+    ax.set_xticklabels(["after 1 try", "after 2 tries", "after 3 tries"])
+    ax.set_ylabel("% of dev samples passing")
+    ax.set_ylim(0, 100)
+    ax.legend(fontsize=8, loc="upper left")
+    ax.set_title("Repairing with harness feedback (11 dev tasks × 6 samples)")
+    return _save(fig, "repair")
+
+
 # --- Judges and spend --------------------------------------------------------------------------------
 
 def judge_name(stem: str) -> str:
@@ -354,7 +388,7 @@ def fig_spend() -> Path | None:
 @app.command("all")
 def make_all() -> None:
     made = [fig_leaderboard(), fig_trap_heatmap(), *fig_sft_sweeps(), *fig_rl_health(), *fig_dev_curves(), fig_test_bars(),
-            fig_test_by_tier(), fig_judges(), fig_spend()]
+            fig_test_by_tier(), fig_repair(), fig_judges(), fig_spend()]
     for p in made:
         if p:
             typer.echo(str(p.relative_to(ROOT)))
