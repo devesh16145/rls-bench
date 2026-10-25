@@ -58,8 +58,8 @@ def checkpoint(run_id: str) -> dict[str, Any]:
     return matches[-1]
 
 
-def results_path(label: str) -> Path:
-    return EVAL_DIR / f"{label}.jsonl"
+def results_path(label: str, out_dir: Path = EVAL_DIR) -> Path:
+    return out_dir / f"{label}.jsonl"
 
 
 def estimate(prompt_tokens: dict[str, int], model: str, k: int, max_tokens: int) -> dict[str, Any]:
@@ -84,14 +84,14 @@ def _done_keys(path: Path) -> set[tuple[str, float, int, str, int]]:
             for r in map(json.loads, path.read_text().splitlines())}
 
 
-def summarize(label: str, tasks: list[Task]) -> dict[str, Any]:
-    records = [json.loads(line) for line in results_path(label).read_text().splitlines()]
+def summarize(label: str, tasks: list[Task], out_dir: Path = EVAL_DIR) -> dict[str, Any]:
+    records = [json.loads(line) for line in results_path(label, out_dir).read_text().splitlines()]
     metas = {tid: m for tid, m in load_task_meta().items() if tid in {t.id for t in tasks}}
     return model_metrics(records, metas)
 
 
 def sample_and_grade(client, renderer, tasks: list[Task], *, label: str, model: str, model_path: str | None,
-                     renderer_name: str, k: int, max_tokens: int, max_spend: float,
+                     renderer_name: str, k: int, max_tokens: int, max_spend: float, out_dir: Path = EVAL_DIR,
                      log: Callable[[str], None] = print) -> dict[str, Any]:
     """Sample 1 greedy + k at temperature 0.7 per task from a Tinker SamplingClient, grade, append records.
 
@@ -100,7 +100,7 @@ def sample_and_grade(client, renderer, tasks: list[Task], *, label: str, model: 
     import tinker
     from tinker_cookbook.renderers import ParseTermination, get_text_content
 
-    out_path = results_path(label)
+    out_path = results_path(label, out_dir)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     done = _done_keys(out_path)
     price = SAMPLE_PRICES[model]

@@ -173,3 +173,9 @@
 - Dev, all 66 samples (95% Wilson): SFT 15% pass [8, 26], leak 35% [24, 47] → step 5 17% / 29% → step 10 15% / 24% → **step 15 30% [21, 42] / 21% [13, 33]** → step 20 24% / 18% → step 25 15% / 18% [11, 29]. Greedy pass@1: 2/11 at SFT, 3/11 at step 15. Format errors fell to 0 from step 10; mean answer length 695 → ~440–480 tokens.
 - Reading: the leak rate fell steadily (35% → 18%), which is what the leak penalty targets. The pass-rate peak at step 15 comes from three tasks (T028 0→3/6, T074 3→5/6, T081 1→6/6) that swing between evals, so it is noisy; and because the best of five evals was picked on dev, 30% is optimistic. Shorter answers are a reward-hacking signal to watch; format errors went to 0 without reward rising, so not conclusive. The test split is still untouched.
 - Best dev checkpoint: step 15, sampler `results/train/checkpoints.json` → run 20261025T133618Z → `dev_evals[step 15].sampler_path`.
+
+## 2026-10-25 — One-time test eval script (not run)
+
+- Added `train/test_eval.py`: base, SFT 20261025T125454Z and the RL run 20261025T133618Z's best dev checkpoint (step 15) on the 20 test tasks, same protocol as dev (1 greedy + 5 at temperature 0.7, max 4,096 tokens). Guards: `--estimate` makes no calls and writes nothing; a real run needs `--yes --once` and a clean git tree, and writes `results/test_eval/LOCK.json` (models, paths, protocol, commit) before the first sample; with a lock, only the identical evaluation may rerun (to finish a crash). `eval_tinker` gained an `out_dir` parameter so test records live in `results/test_eval/`; the dev eval still refuses the test split.
+- Estimate: 120 samples per model, 68,550 prompt tokens; $0.10 typical / $0.26 worst per model, $0.31 / $0.77 for all three.
+- Note: the OpenRouter baselines (Phase 2–4) already ran on all 103 tasks, test included, before the split was frozen; no training choice (data, hyperparameters, checkpoint) used test results.
