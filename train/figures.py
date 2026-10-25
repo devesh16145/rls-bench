@@ -234,7 +234,9 @@ def fig_dev_curves() -> list[Path]:
         if best:
             bx = every * ([e["label"] for e in evals].index(best["label"]) + 1)
             ax.axvline(bx, color=MUTED, linestyle=":", linewidth=1)
-            ax.text(bx + 0.5, 2, f"best dev: step {bx}", color=MUTED, va="bottom", fontsize=8)
+            at_edge = bx >= 0.8 * max(xs)
+            ax.text(bx - 0.5 if at_edge else bx + 0.5, 2, f"best dev: step {bx}", color=MUTED, va="bottom", fontsize=8,
+                    ha="right" if at_edge else "left")
         if ref:
             ax.text(0.5, passes[0] + 2, "SFT", color=MUTED, fontsize=8)
         ax.set_xlabel("optimizer step (0 = the SFT model it started from)")
