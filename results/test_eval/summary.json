@@ -1,0 +1,473 @@
+{
+  "git_commit": "1bc690473ae5f9d4130e0ccd0decca9ebc5c04e7",
+  "models": {
+    "base": {
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@base",
+      "samples": 120,
+      "pass_all_samples": {
+        "rate": 0.13333333333333333,
+        "lo": 0.08376608962687311,
+        "hi": 0.20564796574684285,
+        "n": 120
+      },
+      "leak_all_samples": {
+        "rate": 0.2916666666666667,
+        "lo": 0.2178156362103854,
+        "hi": 0.3784423497974078,
+        "n": 120
+      },
+      "apply_error_all_samples": {
+        "rate": 0.425,
+        "lo": 0.34023039219273576,
+        "hi": 0.5144224827700699,
+        "n": 120
+      },
+      "format_error_all_samples": {
+        "rate": 0.03333333333333333,
+        "lo": 0.0130375510983506,
+        "hi": 0.082580337559106,
+        "n": 120
+      },
+      "pass_at_1": {
+        "rate": 0.15,
+        "lo": 0.052368745896216595,
+        "hi": 0.36041886474075696,
+        "n": 20
+      },
+      "leak_at_1": {
+        "rate": 0.25,
+        "lo": 0.11186170140766569,
+        "hi": 0.468700877618744,
+        "n": 20
+      },
+      "mean_completion_tokens": 848.4833333333333,
+      "est_spend_usd": 0.063
+    },
+    "sft": {
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@sft-20261025T125454Z",
+      "samples": 120,
+      "pass_all_samples": {
+        "rate": 0.23333333333333334,
+        "lo": 0.16665575133182917,
+        "hi": 0.31655447075814613,
+        "n": 120
+      },
+      "leak_all_samples": {
+        "rate": 0.19166666666666668,
+        "lo": 0.13125025924950934,
+        "hi": 0.27121156004202457,
+        "n": 120
+      },
+      "apply_error_all_samples": {
+        "rate": 0.35,
+        "lo": 0.2705189959028541,
+        "hi": 0.438786754022757,
+        "n": 120
+      },
+      "format_error_all_samples": {
+        "rate": 0.016666666666666666,
+        "lo": 0.004582564565921141,
+        "hi": 0.0587359629721589,
+        "n": 120
+      },
+      "pass_at_1": {
+        "rate": 0.3,
+        "lo": 0.1454772448676043,
+        "hi": 0.5189728183535235,
+        "n": 20
+      },
+      "leak_at_1": {
+        "rate": 0.25,
+        "lo": 0.11186170140766569,
+        "hi": 0.468700877618744,
+        "n": 20
+      },
+      "mean_completion_tokens": 677.6583333333333,
+      "est_spend_usd": 0.0529
+    },
+    "sft+rl": {
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@rl-20261025T133618Z-step0015",
+      "samples": 120,
+      "pass_all_samples": {
+        "rate": 0.24166666666666667,
+        "lo": 0.1738584121753525,
+        "hi": 0.325501490474311,
+        "n": 120
+      },
+      "leak_all_samples": {
+        "rate": 0.175,
+        "lo": 0.11740535944566463,
+        "hi": 0.25275709872649266,
+        "n": 120
+      },
+      "apply_error_all_samples": {
+        "rate": 0.25833333333333336,
+        "lo": 0.18837396318660649,
+        "hi": 0.3432853005824337,
+        "n": 120
+      },
+      "format_error_all_samples": {
+        "rate": 0.008333333333333333,
+        "lo": 0.0014725557333420923,
+        "hi": 0.045696291245049675,
+        "n": 120
+      },
+      "pass_at_1": {
+        "rate": 0.25,
+        "lo": 0.11186170140766569,
+        "hi": 0.468700877618744,
+        "n": 20
+      },
+      "leak_at_1": {
+        "rate": 0.35,
+        "lo": 0.18119182410108206,
+        "hi": 0.5671457233147638,
+        "n": 20
+      },
+      "mean_completion_tokens": 512.5666666666667,
+      "est_spend_usd": 0.0431
+    }
+  },
+  "per_task": {
+    "T001": {
+      "base": {
+        "passed": 4,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T002": {
+      "base": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 2,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T009": {
+      "base": {
+        "passed": 0,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      }
+    },
+    "T012": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 5,
+        "samples": 6
+      }
+    },
+    "T014": {
+      "base": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T026": {
+      "base": {
+        "passed": 5,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 1,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T039": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 3,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T043": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T051": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T058": {
+      "base": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      }
+    },
+    "T060": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T061": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 1,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T065": {
+      "base": {
+        "passed": 0,
+        "leaked": 6,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 5,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      }
+    },
+    "T077": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T082": {
+      "base": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 2,
+        "samples": 6
+      }
+    },
+    "T084": {
+      "base": {
+        "passed": 0,
+        "leaked": 6,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T090": {
+      "base": {
+        "passed": 1,
+        "leaked": 2,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T095": {
+      "base": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 2,
+        "leaked": 4,
+        "samples": 6
+      }
+    },
+    "T097": {
+      "base": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 3,
+        "samples": 6
+      }
+    },
+    "T099": {
+      "base": {
+        "passed": 0,
+        "leaked": 3,
+        "samples": 6
+      },
+      "sft": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      },
+      "sft+rl": {
+        "passed": 0,
+        "leaked": 1,
+        "samples": 6
+      }
+    }
+  }
+}

@@ -179,3 +179,15 @@
 - Added `train/test_eval.py`: base, SFT 20261025T125454Z and the RL run 20261025T133618Z's best dev checkpoint (step 15) on the 20 test tasks, same protocol as dev (1 greedy + 5 at temperature 0.7, max 4,096 tokens). Guards: `--estimate` makes no calls and writes nothing; a real run needs `--yes --once` and a clean git tree, and writes `results/test_eval/LOCK.json` (models, paths, protocol, commit) before the first sample; with a lock, only the identical evaluation may rerun (to finish a crash). `eval_tinker` gained an `out_dir` parameter so test records live in `results/test_eval/`; the dev eval still refuses the test split.
 - Estimate: 120 samples per model, 68,550 prompt tokens; $0.10 typical / $0.26 worst per model, $0.31 / $0.77 for all three.
 - Note: the OpenRouter baselines (Phase 2–4) already ran on all 103 tasks, test included, before the split was frozen; no training choice (data, hyperparameters, checkpoint) used test results.
+
+## 2026-10-25 — One-time test eval (20 test tasks)
+
+- `train/test_eval.py --yes --once --max-spend 1` at commit 1bc6904; lock written 2026-10-25T14:33:25Z. 120 samples per model, no errors; estimated spend $0.063 (base) + $0.053 (SFT) + $0.043 (SFT+RL step 15) = $0.16.
+- All samples (95% Wilson; samples are clustered by task, so these intervals are too narrow):
+  - base: pass 13% [8, 21] (16/120), leak 29% [22, 38], apply error 42%, mean 848 tokens.
+  - SFT: pass 23% [17, 32] (28/120), leak 19% [13, 27], apply error 35%, 678 tokens.
+  - SFT+RL: pass 24% [17, 33] (29/120), leak 18% [12, 25], apply error 26%, 513 tokens.
+  - Greedy pass@1 (n = 20): 15% / 30% / 25%; greedy leak: 25% / 25% / 35%.
+- Task-level paired sign tests (pass count out of 6; leak count out of 6): SFT vs base, pass better on 4 tasks / worse on 2 (p = 0.69), leak lower on 10 / higher on 6 (p = 0.45). SFT+RL vs SFT: 3 / 2 (p = 1.00), leak 7 / 3 (p = 0.34). SFT+RL vs base: 6 / 1 (p = 0.12), leak 10 / 3 (p = 0.09).
+- By tier, pass / leak: base 42% / 42%, 2% / 31%, 0% / 10%; SFT 53% / 14%, 17% / 17%, 0% / 30%; SFT+RL 72% / 22%, 4% / 9%, 3% / 27% (tiers 1 / 2 / 3).
+- Reading: SFT is where most of the gain came from (pass 13% → 23%, leak 29% → 19%). GRPO did not add pass rate on test (23% → 24%); the dev jump at step 15 (15% → 30%) did not hold, as expected from picking the best of five dev evals on 11 tasks. GRPO did cut apply errors (35% → 26%) and shortened answers (678 → 513 tokens), and its pass gains sit in tier 1 (53% → 72%) while tier 2 fell (17% → 4%) — the "tier 1 improving while traps don't" pattern from spec §8.3. No difference is significant at task level with 20 tasks; base → SFT+RL is the strongest (pass p = 0.12, leak p = 0.09).

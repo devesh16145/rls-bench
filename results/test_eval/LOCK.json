@@ -1,0 +1,51 @@
+{
+  "models": [
+    {
+      "name": "base",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@base",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": null
+    },
+    {
+      "name": "sft",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@sft-20261025T125454Z",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": "tinker://cab47254-fcd2-5b45-a166-1dee078ad2ea:train:0/sampler_weights/final"
+    },
+    {
+      "name": "sft+rl",
+      "label": "NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@rl-20261025T133618Z-step0015",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+      "renderer": "nemotron3_ultra_disable_thinking",
+      "model_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0015"
+    }
+  ],
+  "tasks": [
+    "T001",
+    "T002",
+    "T009",
+    "T012",
+    "T014",
+    "T026",
+    "T039",
+    "T043",
+    "T051",
+    "T058",
+    "T060",
+    "T061",
+    "T065",
+    "T077",
+    "T082",
+    "T084",
+    "T090",
+    "T095",
+    "T097",
+    "T099"
+  ],
+  "k": 5,
+  "max_tokens": 4096,
+  "created": "2026-10-25T14:33:25+00:00",
+  "git_commit": "1bc690473ae5f9d4130e0ccd0decca9ebc5c04e7"
+}
