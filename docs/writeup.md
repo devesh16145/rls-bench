@@ -4,7 +4,7 @@ Outline from `docs/spec.md` §11. Only the training section is drafted; the othe
 
 1. Why RLS (below)
 2. Benchmark design (below)
-3. Results — *not yet written*
+3. Results (below)
 4. Judge calibration (below)
 5. Training a small model on the harness (below)
 6. Limitations — *not yet written*
@@ -33,6 +33,49 @@ The benchmark asks a direct question: given a schema and the access rules writte
 **Prompt and protocol.** Models see one fixed prompt: a short system instruction, the schema, the row counts of the fixture (never the rows), and the requirements verbatim. Zero-shot, no tools, no retries. Each model is sampled once greedily and five times at temperature 0.7 per task, which gives pass@1 and pass@5. Every rate is reported with a 95% Wilson interval. Models whose API ignores temperature are recorded as such.
 
 **Split.** The tasks were split once, stratified by tier with a fixed seed, into 72 train, 11 dev and 20 test. Training data comes from train tasks only; checkpoints are chosen on dev; the test split is evaluated once per version of this write-up and the evaluation is locked to a git commit.
+
+## 3. How models do on the benchmark
+
+Eight models were run on all 103 tasks with the fixed prompt and protocol. The small open models and Kimi K2.6 were sampled on Tinker with their reasoning templates off and a 4,096-token cap; DeepSeek V4.1 Flash, Qwen3-14B and Nemotron-3.5-Lightning through OpenRouter at their default reasoning with a 16,000-token cap; Claude Opus 5.5 through the Anthropic API at its default effort with an 8,000-token cap. Numbers are from `results/leaderboard.json`; intervals are 95% Wilson.
+
+| Model | Greedy pass@1 | pass@5 | Leak rate | Pass by tier 1 / 2 / 3 |
+|---|---|---|---|---|
+| Claude Opus 5.5 (effort medium) | **87%** [79, 92] | 92% | **1%** | 97% / 100% / 54% |
+| DeepSeek V4.1 Flash (16k reasoning) | 55% [46, 65] | 83% | 1% | 81% / 46% / 42% |
+| Kimi K2.6 (thinking off) | 48% [39, 58] | 72% | 16% | 68% / 37% / 42% |
+| gpt-oss-120b (medium reasoning) | 29% [21, 38] | 37% | 10% | 58% / 15% / 19% |
+| Nemotron-3.5-Lightning (16k reasoning) | 18% [12, 27] | 35% | 17% | 42% / 13% / 0% |
+| Qwen3-14B (16k reasoning) | 14% [8, 22] | 25% | 17% | 35% / 4% / 4% |
+| Nemotron-3.5-Lightning (reasoning off) | 12% [7, 19] | 20% | 25% | — |
+| Qwen3.5-9B (reasoning off) | 7% [3, 13] | 7% | 25% | 13% / 2% / 8% |
+
+**The frontier model fails closed; small models fail open.** Opus misses 13 of 103 tasks and leaks on one (T072, an escrow state machine); the other twelve failures are blocks: a legitimate user is denied. The small open models leak on 17–25% of tasks, as often as or more often than they pass. For a security property that asymmetry is the whole story: the same pass rate can mean "mostly harmless" or "mostly exposed".
+
+**Tier 3 separates everyone.** Opus is near-perfect on tiers 1 and 2 and at 54% on tier 3. Its failures concentrate on tasks where the policy is not enough and the logic lives in a security-definer RPC: `rpc-input-validation` (0 of 4 tasks), `rpc-missing-auth-check` (3 of 8), `self-approval` (5 of 10), `state-transition` (14 of 19). Eleven of its twelve blocks are RPC or approval-workflow tasks (T022, T043, T053, T061, T081, T082, T092, T101, T102, T103 and T027). The remaining task, T021, is the only one where its SQL failed to apply.
+
+**Reasoning budgets matter as much as reasoning.** DeepSeek V4.1 Flash passes 55% greedily and 83% with five tries, with a 1% leak rate, but 38% of its greedy answers are format errors: in 37% of samples the 16,000-token budget ran out before the answer, almost all on tier 2–3 tasks. The same model with thinking off cannot be measured on Tinker (sampling is not offered there). gpt-oss-120b has the opposite problem: half of its answers fail to apply at all.
+
+**Where the open models fail.** Kimi K2.6 with thinking off is the strongest open model that answers within budget (48%), and its weakest patterns are the ones that need Postgres semantics rather than reading the rules: `view-bypass` (1 of 5), `old-vs-new` and `aggregate-limit` (2 of 8 each), `restrictive-vs-permissive` (1 of 4), `state-transition` (5 of 19). The per-trap heatmap (`results/figures/trap_heatmap.png`) shows the same shape across models: single-owner and public/private rules are mostly solved; anything where two policies interact, or where the rule compares the row before and after an update, is not.
+
+**Two quoted failures.** *A policy with no audience* (T001, Nemotron-3.5-Lightning): the rules say signed-in users may read public notes but anonymous visitors may not. The answer was
+
+```sql
+create policy "Users can read public notes" on public.notes
+  for select using (is_public = true);
+```
+
+With no `to authenticated`, the policy applies to every role, so the `anon` test that expects a denial gets the two public notes back. Nothing in the SQL looks wrong until it is run as the wrong user.
+
+*A check that cannot fail* (T009, Kimi K2.6): a file's owner must never change. The update policy on `files` ends with
+
+```sql
+  with check (
+    owner_id = files.owner_id  -- prevent owner change
+    and public.can_edit_file(files)
+  );
+```
+
+Inside a `with check`, `files.owner_id` *is* the new row's `owner_id`, so the comparison is always true; the comment says what the author meant, the SQL does something else. An editor can rename a file and set `owner_id` to themselves in the same statement, and `editor_cannot_take_ownership` fails with one row updated. Comparing the old and new row needs a trigger, which is why `old-vs-new` is its own trap in the taxonomy.
 
 ## 4. Can a judge replace the harness?
 
