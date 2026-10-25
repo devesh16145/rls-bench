@@ -334,8 +334,8 @@ def fig_spend() -> Path | None:
     items = json.loads(path.read_text())["items"]
     groups: dict[str, float] = defaultdict(float)
     for k, v in items.items():
-        key = ("GRPO" if k.startswith("rl ") or "GRPO" in k else "SFT" if k.startswith("sft") else "judge" if "judge" in k
-               else "evals" if "eval" in k else "other")
+        key = ("judge" if "judge" in k else "leaderboard" if "leaderboard" in k else "GRPO" if k.startswith("rl ") or "GRPO" in k
+               else "SFT" if k.startswith("sft") else "evals" if "eval" in k else "other")
         groups[key] += v
     fig, ax = plt.subplots(figsize=(6, 3.2))
     names = sorted(groups, key=lambda k: -groups[k])
