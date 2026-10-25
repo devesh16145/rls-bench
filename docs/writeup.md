@@ -183,11 +183,60 @@ The student's answers changed shape fast: apply errors 60% → 18%, format error
 
 ### 5.8 Test (evaluated once for version 2)
 
-_Pending: the pre-registered test evaluation (`docs/preregistration.md`) runs after the distillation row is chosen._
+The pre-registered rows (`docs/preregistration.md`) were evaluated once, at commit 54bb76a, with the same protocol as dev: 20 tasks × (1 greedy + 5 samples) = 120 samples per row. The Qwen rows all start from the same base model; Nemotron rows are the second student.
+
+| Row | Pass, all samples | Leak, all samples | Greedy pass@1 (n = 20) | Apply errors | Tokens per answer |
+|---|---|---|---|---|---|
+| Qwen3.5-9B base | 9% [5, 16] | 18% [12, 26] | 5% | 48% | 1,626 |
+| SFT | **38%** [29, 46] | 16% [10, 23] | 45% | 22% | 673 |
+| SFT + GRPO, seed 0 (step 40) | 38% [30, 47] | 29% [22, 38] | 30% | 15% | 690 |
+| SFT + GRPO, seed 1 (step 40) | **41%** [32, 50] | **14%** [9, 22] | 40% | 18% | 731 |
+| repair-trained (step 5) | 41% [32, 50] | 18% [12, 25] | 35% | 17% | 697 |
+| distillation (step 30) | 31% [23, 40] | 18% [12, 25] | 45% | 18% | 738 |
+| Nemotron base | 12% [7, 19] | 22% [16, 31] | 10% | 52% | 818 |
+| Nemotron SFT | 26% [19, 34] | 31% [23, 40] | 30% | 17% | 651 |
+| Nemotron SFT + GRPO (step 50) | 29% [22, 38] | **10%** [6, 17] | 30% | 33% | 676 |
+
+With feedback (pass after 1 / 2 / 3 tries, same 120 conversations): SFT + GRPO seed 0 35% / 58% / **63%**; repair-trained 41% / 59% / 62%.
+
+Paired by task (pass count out of 6, leak count out of 6; two-sided sign test on the tasks that differ):
+
+| Comparison | Pass: better / worse tasks | p | Leak: lower / higher tasks | p |
+|---|---|---|---|---|
+| SFT vs base | 7 / 1 | 0.07 | 5 / 4 | 1.00 |
+| GRPO seed 0 vs SFT | 2 / 3 | 1.00 | 2 / 6 | 0.29 |
+| GRPO seed 1 vs SFT | 6 / 4 | 0.75 | 5 / 4 | 1.00 |
+| repair-trained vs GRPO seed 0 | 4 / 1 | 0.38 | 4 / 1 | 0.38 |
+| distillation vs SFT | 2 / 4 | 0.69 | 4 / 2 | 0.69 |
+| Nemotron SFT vs base | 6 / 2 | 0.29 | 6 / 10 | 0.45 |
+| **Nemotron GRPO vs SFT** | 5 / 3 | 0.73 | **13 / 1** | **0.002** |
+
+**What held up and what did not.**
+
+- *SFT with a tuned learning rate is most of the gain.* 9% → 38% pass for Qwen, with the leak rate unchanged; 7 of 8 tasks that moved, moved up. The version-1 SFT, with an untuned rate, had reached 23% on the same split for Nemotron; the sweep is worth more than any later stage.
+- *GRPO's dev gain did not transfer for Qwen.* Dev went 24% → 52%; test went 38% → 38% (seed 0) and 41% (seed 1). Both seeds were chosen at the step where 66 dev samples peaked, and 11 tasks is a small place to pick a peak. Leaks went both ways: seed 0 leaks more than SFT, mostly on tier 3 (57% of its tier-3 samples), seed 1 less (14%, and no leaks at all on tier 1). Two seeds of the same recipe disagreeing by 15 points of leak rate is the actual finding: at this scale, run-to-run variance is as large as the effect.
+- *For Nemotron, GRPO did what the reward asked.* The leak rate fell from 31% to 10% and fell on 13 of 20 tasks, the one comparison in the table that is significant. Pass moved 26% → 29%, within noise. The reward penalises leaks and not blocks, and that is what changed.
+- *Feedback beats more training.* Three tries with the harness's failing-test names take the GRPO model from 35% to 63%, nearly double; the repair-trained checkpoint does the same thing (62%) without being better at the first try. Training the model to use feedback added nothing that the feedback did not already give.
+- *Pure distillation is worse than SFT on the same data budget* (31% vs 38%, leaks equal), and inherits the teacher's leak rate; it never sees a correctness signal.
+- *Reward-hacking signals, reported as promised.* Answers under GRPO got longer on train (664 → 907 tokens) but not on test (673 → 690–731); entropy collapsed to near zero in every run; tier 1 improved while tiers 2–3 did not for seed 0 (83% / 20% / 17% vs SFT's 83% / 13% / 27%), the pattern the plan flagged. Greedy and all-sample leak rates moved together.
 
 ### 5.9 Cost
 
-_Pending: final Tinker spend by stage from `results/train/tinker_spend.json`._
+Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$101.90** of a $150 credit:
+
+| Stage | Spend |
+|---|---|
+| Leaderboard rows (Qwen3.5-9B, gpt-oss-120b, Kimi K2.6, Qwen3.5-397B) | $10.22 |
+| SFT sweeps (Qwen 3 runs, Nemotron 3 runs) and the judge | $13.39 |
+| GRPO sweeps (5 short runs) | $11.46 |
+| GRPO full runs (Qwen seeds 0 and 1, Nemotron) | $37.40 |
+| Repair RL | $8.07 |
+| Distillation (incl. teacher scoring) | $12.11 |
+| Zero-shot judges on Tinker | $5.82 |
+| Dev, repair and test evaluations | $1.66 |
+| Version 1 (SFT, hand-rolled GRPO, filter, evals) | $2.62 |
+
+Of that, the three stages that produced the headline numbers (SFT sweeps, GRPO full runs, test evaluation) cost about $52. The Anthropic API credit paid for the Opus baseline ($27.96) and the Opus judge ($7.34); OpenRouter paid for the SFT sampling and the version-1 baselines ($21.49 in all).
 
 ### 5.10 Caveats specific to training
 
@@ -197,7 +246,7 @@ _Pending: final Tinker spend by stage from `results/train/tinker_spend.json`._
 - Answers got about 40% longer under GRPO. Longer is not better or worse in itself here (the cap was not reached), but it is the kind of drift a reward with no length term allows.
 - The leak penalty is not symmetric with the pass reward, and tasks that always fail still train the policy to fail closed; on dev this showed up as apply errors turning into leaks early in training before the leak rate fell.
 
-*Sources: `results/train/sft_data_stats.json`, `results/train/checkpoints.json`, `results/train/sft_*.jsonl`, `results/train/rl_filter_20261025T125454Z.jsonl`, `results/train/rl_*_20261025T133618Z*.jsonl`, `results/tinker_eval/`, `results/test_eval/`, `results/train/report.json` (dev and test tables, tiers and paired sign tests, from `train/report.py`), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json` (from `train/build_sft.py stats`).*
+*Sources: `results/train/checkpoints.json` (every run with its curves under `results/train/runs/`), `results/train/sft_sweep_*.json`, `results/tinker_eval/` (dev evals), `results/repair_eval/`, `results/test_eval_v2/` (the version-2 test eval, its lock, `summary.json` and `paired_and_tiers.json`), `results/test_eval/` (version 1), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json`. Figures: `results/figures/`, from `train/figures.py`.*
 
 ## 6. Limitations
 

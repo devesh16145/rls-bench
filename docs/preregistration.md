@@ -1,7 +1,8 @@
 # Pre-registration: version 2 test evaluation
 
-Written before the version 2 test evaluation runs. Filled in with the chosen checkpoints at that point and
-not edited after the evaluation starts; the test eval script records the git commit it ran at.
+Written before the version 2 test evaluation ran. The checkpoints were filled in as each run finished and
+the file was not edited after the evaluation started. The evaluation ran on 2026-10-26 at commit 54bb76a
+(`results/test_eval_v2/LOCK.json`).
 
 ## What is evaluated
 
