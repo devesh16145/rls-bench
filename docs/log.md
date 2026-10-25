@@ -254,3 +254,10 @@
 
 - 400 judgements, effort medium, 2,000 output tokens, estimated $7.34 on the Anthropic credit. Accuracy 79% [75, 83], κ 0.72, leak recall 97%, leak precision 67%, 2% of real leaks called "pass". Confusion: pass 79/100 right (15 called leak); leak 97/100; block 41/100 (32 called leak, 26 called pass); error 99/100. Lowest leak recall by task trap: recursive-policy 57% (n 7), restrictive-vs-permissive 60% (n 5), ownership-change 78% (n 9); 100% on anon-write-spoof, null-owner, negative-condition, weak-with-check, state-transition and others.
 - Ranking on κ: Opus 0.72 > trained Qwen3-8B 0.48 > gpt-oss-120b with reasoning 0.36 > Kimi K2.6 0.16 (thinking on or off). Reasoning helps leak recall (Kimi 34% → 59%, gpt-oss 82%) but not agreement; the trained 8B judge is the most precise non-Opus judge (62%) and the cheapest ($0.09 for 400 judgements).
+
+## 2026-10-26 — Full GRPO run, Qwen3.5-9B (run 20261025T191833Z)
+
+- 50 steps × 16 tasks × 8 rollouts from the SFT model, lr 4e-5, temperature 1.0, 2,048-token answers, dev eval and checkpoint every 10 steps; estimated $15.77. Train side (first 5 → last 5 steps): reward 0.34 → 0.63, pass 44% → 65%, leak 18% → 2.6%, apply errors 20% → 14%, answer length 664 → 907 tokens, entropy 0.068 → 0.015, sampler–trainer KL ≤ 6e-4.
+- Dev (66 samples): step 10 21% pass / 38% leak, step 20 29% / 39%, step 30 45% / 18%, **step 40 52% / 6%**, step 50 47% / 18%; greedy pass@1 3/11 → 5/11 from step 30. SFT reference 24% / 26%. Best checkpoint by the pre-registered rule: step 40.
+- Watch items for the write-up: entropy near zero by the end (the policy is close to deterministic at temperature 1), answers 37% longer, and the dev leak rate bouncing between 6% and 18% on 66 samples.
+- Started: repair RL (experiment B) from the step-40 checkpoint, 25 steps × 16 × 4, 3 tries, 1,536-token answers, dev eval every 5 steps; and a second seed of the full single-turn run (seed 1) for error bars on the headline.
