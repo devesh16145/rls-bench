@@ -107,3 +107,9 @@
 - `summary.json` now has `by_split` (train/dev/test, from the frozen split) with the same rates plus pass@5.
 - Nemotron reasoning-off (the training base), all 103 tasks: pass@1 12%, leak 25%, apply errors 50% (most common: syntax errors 131/618 samples, references to missing tables or columns 112/618). Train split pass@5 is 18%, so plain GRPO would see few rewarded groups; SFT first, as planned.
 - DeepSeek V4.1 Flash is the strongest open model (pass@1 55%, train pass@5 85%, leak 1%) and is the natural source for rejection-sampled SFT data (spec §8.1). 37% of its answers were cut off at 16k tokens.
+
+## 2026-10-25 — SFT data builder and dry run
+
+- Added `train/build_sft.py`: rejection sampling from DeepSeek V4.1 Flash on the frozen train split only (dev/test refused by assertion), 16 samples per task at temperature 0.8, keep passing answers, dedupe by normalised SQL (comments, case and whitespace ignored), keep at most 6 per task, plus the reference solution. Raw samples go to `data/sft_raw.jsonl`, training rows to `data/sft.jsonl` in the exact §7.1 chat format. Offline tests cover the split guard, dedupe and the output shape.
+- Dry run on 5 train tasks (T003–T007): 80 samples, $0.30. 69/80 passed, 0 leaked; every task reached the 6-answer cap; T007 lost 7/16 samples to the 16k-token cut-off. Examples are ~1,000 tokens (max ~2,400), within the planned 4,096 training length. 35 examples written.
+- Full-run estimate: the script's formula says $2.17 typical / $11.16 worst for all 1,152 samples, but the dry run's actual cost ($0.00375/sample) implies ≈ $4.02 for the remaining 1,072. Expected yield is at most 72 × 7 = 504 examples, below the spec's 600–1,200 (written for 140 train tasks).
