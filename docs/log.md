@@ -269,3 +269,8 @@
 ## 2026-10-26 — Adapter export
 
 - `train/export.py` loads a checkpoint's state, asks Tinker for Hugging Face-format weights (`save_weights_external`), and downloads them to `results/train/adapters/<name>/` (gitignored; a manifest with sizes and SHA-256 hashes is committed as `results/train/adapter_manifest_<name>.json`). The export is a standard PEFT LoRA adapter (`adapter_config.json`, `adapter_model.safetensors`); the base-model field is filled from the run record. First export: the judge (Qwen3-8B, 369 MB).
+
+## 2026-10-26 — Qwen3.5-397B leaderboard row; distillation started
+
+- Qwen3.5-397B-A17B, reasoning off, all 103 tasks on Tinker: pass@1 38%, pass@5 48%, leak 15%; estimated $4.35. It is the only sampleable Tinker model that shares the student's tokenizer, so it is the distillation teacher despite scoring below Kimi K2.6 and below the GRPO student's dev numbers; the experiment measures what pure distillation from such a teacher gives, against SFT and GRPO.
+- Experiment C started: `train/distill_cookbook.py`, student Qwen3.5-9B from the base model, teacher Qwen3.5-397B, 40 steps × 16 tasks × 4 rollouts (2,560 rollouts), lr 1e-4, KL coefficient 1.0, environment reward scaled to 0, dev eval every 10 steps; typical $12.5, worst $26.7, cap $30.
