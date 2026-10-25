@@ -269,6 +269,16 @@ def fig_test_by_tier() -> Path | None:
 
 # --- Judges and spend --------------------------------------------------------------------------------
 
+def judge_name(stem: str) -> str:
+    names = {"zeroshot_Kimi-K2.6": "Kimi K2.6, thinking off", "zeroshot_Kimi-K2.6+kimi_k26": "Kimi K2.6, thinking on",
+             "zeroshot_gpt-oss-120b": "gpt-oss-120b, reasoning", "zeroshot_claude-opus-5-5": "Claude Opus 5.5, effort medium"}
+    if stem in names:
+        return names[stem]
+    if stem.startswith("trained_"):
+        return "trained " + stem.split("_")[1] + " (LoRA)"
+    return stem
+
+
 def fig_judges() -> Path | None:
     path = RESULTS / "judge" / "summary.json"
     if not path.exists():
@@ -280,17 +290,17 @@ def fig_judges() -> Path | None:
     a1.barh(ys, [s[n]["kappa_4class"] for n in names], color=BLUE, height=0.6, zorder=3)
     for y, n in zip(ys, names):
         a1.text(s[n]["kappa_4class"] + 0.01, y, f"{s[n]['kappa_4class']:.2f}", va="center", fontsize=8)
-    a1.set_title("Agreement with the harness (Cohen's κ, 4 labels)")
+    a1.set_title("Agreement with the harness (Cohen's κ)")
     a1.set_xlim(0, 1)
     rec = [s[n]["leak_recall"]["rate"] * 100 if s[n]["leak_recall"] else 0 for n in names]
     prec = [s[n]["leak_precision"]["rate"] * 100 if s[n]["leak_precision"] else 0 for n in names]
     a2.barh([y + 0.17 for y in ys], rec, color=ORANGE, height=0.32, label="leak recall", zorder=3)
     a2.barh([y - 0.17 for y in ys], prec, color=BLUE_LIGHT, height=0.32, label="leak precision", zorder=3)
     a2.set_xlim(0, 105)
-    a2.set_title("Leaks caught (recall) and leak calls that were right (precision)")
+    a2.set_title("Leak recall and precision (%)")
     a2.legend(fontsize=8, loc="lower right")
     a1.set_yticks(ys)
-    a1.set_yticklabels([n.replace("zeroshot_", "zero-shot ").replace("trained_", "trained ") for n in names], fontsize=8)
+    a1.set_yticklabels([judge_name(n) for n in names], fontsize=8)
     fig.suptitle("Judges on 400 held-out test-task candidates (100 per label)", x=0.02, ha="left", fontweight="bold")
     return _save(fig, "judges")
 
