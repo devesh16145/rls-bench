@@ -142,3 +142,13 @@
 - `sft_tinker.py --yes --max-spend 5` with defaults (Nemotron-3.5-Lightning, LoRA rank 32, LR 1e-4 linear decay, 3 epochs, batch 16, seed 0, data hash 3804db6d4692dcc5): run `20261025T125454Z`, all 78 steps, not stopped at cap, estimated spend $0.66.
 - Train mean NLL per target token: step 0 0.364 → step 77 0.134; epoch means 0.251 / 0.157 / 0.127. Steepest drop in epoch 1, slow decline after; train loss only (no held-out loss was computed), so it says nothing yet about dev pass rate or overfitting.
 - Checkpoint (state + sampler) recorded in `results/train/checkpoints.json`; per-step metrics in `results/train/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T125454Z.jsonl`, plotted with `train/plot_loss.py` to the `.svg` beside it.
+
+## 2026-10-25 — Dev eval of SFT run 20261025T125454Z on Tinker
+
+- Added `train/eval_tinker.py`: samples a Tinker checkpoint or base model with the baseline protocol (fixed prompt, 1 greedy + 5 at temperature 0.7, max 4,096 tokens, reasoning-off renderer), grades with the harness, writes baseline-format records to `results/tinker_eval/<label>.jsonl` plus `<label>.summary.json`. Refuses the test split.
+- Ran the SFT checkpoint and the untrained base model on the 11 dev tasks, $1 cap each: 66 samples each, estimated spend $0.030 each, no errors.
+- Dev results (from the records; 95% Wilson intervals):
+  - Tinker base: greedy pass@1 1/11 (9%), pass@5 9%; all samples 6/66 (9%, [4%, 18%]); leak 39%, apply error 44%.
+  - Tinker SFT: greedy pass@1 2/11 (18%), pass@5 27%; all samples 10/66 (15%, [8%, 26%]); leak 35%, apply error 32%.
+  - OpenRouter reasoning-off (earlier run): all samples 10/66 (15%); leak 26%, apply error 55%. OpenRouter 16k reasoning: 13/66 (20%); 11 samples truncated.
+- Reading: SFT moved the base in the right direction (fewer apply errors; T074 0/6 → 3/6, T081 0/6 → 1/6), but the intervals overlap and leak rate barely changed (39% → 35%). SFT on passing answers does not teach the model to avoid leaks; the harness reward in GRPO targets exactly that. Tinker base scores below OpenRouter reasoning-off (9% vs 15%), so the like-for-like comparison is Tinker base vs Tinker SFT.
