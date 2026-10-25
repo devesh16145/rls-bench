@@ -291,6 +291,29 @@ def fig_test_by_tier() -> Path | None:
     return _save(fig, "test_by_tier")
 
 
+def fig_methods() -> Path | None:
+    """SFT vs GRPO vs distillation (and repair) on test: pass and leak over all 120 samples, Qwen rows only."""
+    path = RESULTS / "test_eval_v2" / "summary.json"
+    if not path.exists():
+        return None
+    s = json.loads(path.read_text())["models"]
+    order = [("base", "base"), ("sft", "SFT"), ("distil", "distillation"), ("sft+rl", "SFT + GRPO"), ("sft+rl-seed1", "SFT + GRPO, seed 1"), ("repair", "repair-trained")]
+    rows = [(label, s[k]) for k, label in order if k in s]
+    if not rows:
+        return None
+    fig, ax = plt.subplots(figsize=(8, 4))
+    xs = list(range(len(rows)))
+    _ci_bar(ax, [x - 0.2 for x in xs], [r for _, r in rows], "pass_all_samples", BLUE, label="pass", width=0.38)
+    _ci_bar(ax, [x + 0.2 for x in xs], [r for _, r in rows], "leak_all_samples", ORANGE, label="leak", width=0.38)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([l for l, _ in rows], rotation=12, ha="right")
+    ax.set_ylim(0, 100)
+    ax.set_ylabel("% of 120 test samples")
+    ax.legend(fontsize=8, loc="upper left")
+    ax.set_title("Three ways to train the same 9B model, on the test split")
+    return _save(fig, "methods_test")
+
+
 # --- Repair --------------------------------------------------------------------------------------
 
 def fig_repair() -> Path | None:
@@ -387,7 +410,7 @@ def fig_spend() -> Path | None:
 @app.command("all")
 def make_all() -> None:
     made = [fig_leaderboard(), fig_trap_heatmap(), *fig_sft_sweeps(), *fig_rl_health(), *fig_dev_curves(), fig_test_bars(),
-            fig_test_by_tier(), fig_repair(), fig_judges(), fig_spend()]
+            fig_test_by_tier(), fig_methods(), fig_repair(), fig_judges(), fig_spend()]
     for p in made:
         if p:
             typer.echo(str(p.relative_to(ROOT)))
