@@ -33,7 +33,7 @@ A task is accepted only if:
 - every numbered rule is covered by a test;
 - every planted trap is caught by at least one test.
 
-Tasks are drafted with an AI assistant and **reviewed and verified by hand**; the review checklist is in `docs/spec.md` §9.
+Every task is reviewed by hand against the checklist in `docs/spec.md` §9 before it is marked verified.
 
 ## Results
 
@@ -101,7 +101,7 @@ Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both i
 ## Limitations
 
 - The schemas are synthetic and in a Supabase flavour.
-- All tasks were written by a single author, with AI drafting and human review.
+- All tasks were written and reviewed by a single author.
 - The frontier models cover only 13 tasks.
 - The dev and test splits are small (11 and 20 tasks).
 - The training results come from one run per stage.

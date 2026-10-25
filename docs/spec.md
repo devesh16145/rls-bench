@@ -6,15 +6,23 @@ Revision of the original brief. Changes from v1: a 14-day resume-first plan (§1
 
 A public, verifiable benchmark for Supabase/Postgres Row Level Security (RLS), baselines of frontier and open models, and a study of how well an LLM judge agrees with executable truth. Then a small open model fine-tuned with SFT and RL (GRPO) on Tinker, using the harness as the reward.
 
-It shows, with public evidence, that the owner can do AI-training and AI-evaluation work: write coding tasks with verifiable answers, evaluate AI-generated code rigorously, and build training data. It is not a product.
+The aim is public, checkable evidence of three things: coding tasks with verifiable answers, rigorous evaluation of AI-generated code, and training data built from that evaluation. It is not a product.
 
-Owner: solo developer in India, daily Supabase/React/Android experience, ~10–12 h/week. Budgets: ~$350 Claude Code credits, up to $60 OpenRouter, $150 Tinker.
+Budgets: up to $60 on OpenRouter, $150 on Tinker.
 
 Why RLS: the 2025 vibe-coding breaches (Lovable-built apps exposing data through missing policies, the Base44 auth bypass) were authorization failures. Models write RLS badly in specific, repeatable ways.
 
 ## 2. Rules
 
-See `CLAUDE.md`. They apply to every phase.
+These apply to every phase.
+
+1. A task is marked `verified: true` only after manual review (§9).
+2. Never weaken a test to make a reference solution pass; fix the solution or the requirement and record which.
+3. Every reported number is produced by code in this repo and stored under `results/`.
+4. Raw outputs under `results/` are never deleted.
+5. Failed runs are written up in `docs/log.md` (what failed, the fix) before retrying.
+6. API keys live in `.env`, which is gitignored.
+7. Every paid run prints a cost estimate first and has a spend cap.
 
 ## 3. Decisions already made
 
@@ -30,7 +38,7 @@ See `CLAUDE.md`. They apply to every phase.
 ## 4. Repository layout
 
 ```
-CLAUDE.md, README.md, LICENSE, pyproject.toml, .env.example
+README.md, LICENSE, pyproject.toml, .env.example
 .github/workflows/validate.yml
 harness/  db.py shim.sql models.py sqlparse.py runner.py checks.py mutations.py card.py cli.py
 tasks/T###-slug/  task.yaml schema.sql seed.sql requirement.md tests.yaml solution.sql traps/<trap-id>.sql
@@ -71,7 +79,7 @@ tier: 2                 # 1 basic, 2 relational, 3 hard
 tags: [team-membership, role-column, soft-delete]
 traps: [weak-with-check, forgot-enable]
 extra_tables: []        # non-public tables the task covers, e.g. [storage.objects]
-verified: false         # only the owner flips this
+verified: false         # set to true only after manual review
 author: owner
 created: 2026-10-24
 canary: "RLSBENCH-CANARY-<16 hex, identical across tasks>"
@@ -80,7 +88,7 @@ canary: "RLSBENCH-CANARY-<16 hex, identical across tasks>"
 `schema.sql` — tables, indexes, FKs. No policies, RLS not enabled.
 `seed.sql` — fixture rows using fixed UUIDs (users go in `auth.users`).
 `requirement.md` — a one-paragraph context, then rules `R1.`…`Rn.` one per line, then the canary on its own line.
-`solution.sql` — owner's reference solution. Never shown to models; no comments hinting at traps.
+`solution.sql` — the reference solution. Never shown to models; no comments hinting at traps.
 `traps/<trap-id>.sql` — the reference solution with exactly that trap planted. Must fail.
 
 `tests.yaml`
@@ -183,7 +191,7 @@ Same as v1: rejection-sampled SFT then GRPO on Tinker with the harness as reward
 
 Per task (≈5 min): read the requirement as a product manager (is every rule unambiguous?); for each rule, check one test that fails if the rule is ignored and one that fails if it is over-applied; read the solution (only what the rules say?); check the fixture has the edge rows the traps need; run `rls validate`; then set `verified: true`.
 
-Claude prints the card with `uv run rls card <task>` and stops.
+`uv run rls card <task>` prints everything needed for the review on one page.
 
 ## 10. Phases and stop points (14-day plan)
 

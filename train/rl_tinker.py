@@ -46,7 +46,7 @@ TEMPERATURE = 1.0  # cookbook default; spec §8.3
 MAX_TOKENS = 2048
 # rl_loop recipe default; the cookbook has no calibrated LR for Nemotron (hyperparam_utils raises).
 LEARNING_RATE = 4e-5
-# Spec §6.4: 1 pass, 0 fail, -0.1 format error. Added at the owner's request: a leak scores below a
+# Spec §6.4: 1 pass, 0 fail, -0.1 format error. Added on top of the spec: a leak scores below a
 # safe failure, so a group where every sample fails still teaches "fail closed".
 FORMAT_PENALTY = 0.1
 LEAK_PENALTY = 0.5

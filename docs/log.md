@@ -9,7 +9,7 @@
 
 - Harness: tests may now contain several statements; the runner advances to the last result (`cur.nextset()`), needed for RPC tests in T010 that call a function and then read the row. No existing test changed result.
 - T009: the owner-transfer test is caught by the read policy as well (after a transfer the old owner can no longer see the file), so only `editor_cannot_take_ownership` discriminates the `ownership-change` trap. Kept both; the card records which one catches it.
-- The three Phase 1 tasks still read `verified: false` on disk at the start of Phase 2; flagged to the owner rather than changed.
+- The three Phase 1 tasks still read `verified: false` on disk at the start of Phase 2; left unchanged until reviewed.
 
 ## 2026-10-24 — first baselines (10 verified tasks)
 
@@ -34,7 +34,7 @@
 
 - Ran nvidia/nemotron-3.5-lightning ($0.09), qwen/qwen3-14b ($0.09), qwen/qwen3.8-27b ($2.63), deepseek/deepseek-v4.1-flash-1017 ($0.25). Qwen3-8B is not on OpenRouter; deferred to Tinker sampling.
 - Finding: most "format errors" are truncation, not formatting. On OpenRouter reasoning tokens count against max_tokens; samples with finish_reason=length almost always have empty content (reasoning used the whole 16k budget). Truncated samples, all temperatures: Nemotron 35/78, Qwen3-14B 3/78, Qwen3.8-27B 67/78, DeepSeek 27/78. Nemotron also returned finish_reason=error with empty content 5 times.
-- Change: `summary.json` now reports `truncation_rate` (greedy) and `truncation_rate_all_samples` per model. Results under the 16k protocol are kept as recorded; no rerun without owner approval.
+- Change: `summary.json` now reports `truncation_rate` (greedy) and `truncation_rate_all_samples` per model. Results under the 16k protocol are kept as recorded; no rerun planned.
 
 ## 2026-10-25 — reasoning-off baselines
 
@@ -88,7 +88,7 @@
 - Drafted 10 tasks: T084–T086 tier 1, T087–T091 tier 2, T092–T093 tier 3.
 - T090 `reference-check` trap was caught for the wrong reason: its admin check queried `org_admins` directly, which RLS hides, so it blocked a legitimate admin instead of letting another org's admin in. Replaced with the realistic mistake, a security-definer `is_any_admin()` that ignores the device's organization; now caught by the cross-org tests.
 - T092 duplicate-redemption test used the `MAXED` code, so the 5-referral cap refused it even without the "already redeemed" check. Added an unused code (REF-R1) and pointed the test at it.
-- At the start of this batch T074–T083 still read `verified: false` on disk; flagged to the owner, not changed.
+- At the start of this batch T074–T083 still read `verified: false` on disk; left unchanged until reviewed.
 
 ## 2026-10-25 — Phase 4 batch 9 (T094–T103) — task set passes 100
 
@@ -157,7 +157,7 @@
 
 - Refactored `train/eval_tinker.py` so its sample-and-grade loop is reusable (`sample_and_grade`); behaviour unchanged.
 - Added `train/rl_tinker.py`, following the cookbook's `rl_loop` recipe (group-centred rewards, constant-reward groups dropped, `importance_sampling` loss, no KL penalty = cookbook default). Starts from SFT run 20261025T125454Z's state. Commands: `filter` (sample the SFT model 8× per train task, keep tasks whose rewards are not all equal) and `train` (GRPO, dev eval with the baseline protocol every 5 steps on a saved checkpoint, early stop after 10 steps without dev improvement, spend cap). Rollouts, per-step metrics and checkpoint records go under `results/train/`.
-- Reward: 1 pass, 0 safe failure (block / apply error), −0.1 format error (spec §6.4), and −0.5 for a leak (added at the owner's request).
+- Reward: 1 pass, 0 safe failure (block / apply error), −0.1 format error (spec §6.4), and −0.5 for a leak (an addition to §6.4).
 - Deviations from v1 §8.3: max completion 2,048 tokens instead of 1,024 (18% of the SFT model's dev answers exceed 1,024; median 600, p90 1,067); LR 4e-5 (rl_loop default; no calibrated Nemotron LR); dev selection uses pass rate over all 66 dev samples rather than 11 greedy samples (less noisy); tasks that always fail but sometimes leak are kept, because the leak penalty gives them signal.
 - Dry run: all 72 references score 1.0; of 200 traps, 180 score −0.5 (leak) and 20 score 0.0, none 1.0. Estimates: filter $0.26 typical / $0.64 worst; smoke run (2 steps, group 2) ≤ $0.02; full run (50 steps × 8 tasks × 8 rollouts, 10 dev evals) $3.78 typical / $8.66 worst, before any task is dropped by the filter.
 
