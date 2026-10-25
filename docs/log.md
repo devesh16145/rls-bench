@@ -119,3 +119,8 @@
 - Failure: the full run crashed after 873 of 1,152 samples (55 of 72 train tasks) with HTTP 403 from OpenRouter. The key info endpoint shows the key has a $20 spending limit, now used up ($20.03 used, $0 remaining), separate from the project's $60 budget. The crash also skipped the rebuild, leaving the dry-run `sft.jsonl`.
 - Fix: `openrouter.complete` now keeps OpenRouter's error text in the exception (no key in it), and `build_sft.sample` stops cleanly on an API error so the training file is still rebuilt. Rebuilt `data/sft.jsonl` from the 873 saved samples (no cost).
 - Yield so far: 334 examples (279 model answers + 55 references) over 55 tasks; 42 tasks at the 6-answer cap; T052 and T078 have no passing answer (reference only). Pass rate 64% (tier 1 85%, tier 2 58%, tier 3 42%); 199 samples cut off at 16k tokens. 17 train tasks not yet sampled (T079–T103 range); ≈ $1.60 more at the observed $0.0057/sample.
+
+## 2026-10-25 — SFT sampling completed
+
+- After the key limit was raised to $30, resumed sampling: 279 remaining samples, $1.46, no errors. All 1,152 samples (72 train tasks × 16) are recorded; total sampling cost $6.45.
+- Final `data/sft.jsonl`: 427 examples (355 DeepSeek answers + 72 references) over all 72 train tasks; no dev/test task present (asserted). By tier: 1 → 145 examples (pass rate 83%), 2 → 191 (54%), 3 → 91 (39%). 50 tasks reached the 6-answer cap; T052 and T102 (both tier 3) have only the reference. 295 samples (26%) were cut off at 16k tokens, mostly tier 2–3. Examples are ~1,170 tokens (max ~2,800), ~0.52M tokens in total.
