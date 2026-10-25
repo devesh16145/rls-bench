@@ -1,0 +1,33 @@
+{
+  "model": "Qwen/Qwen3.5-9B",
+  "sweep_id": "20261025T184329Z",
+  "runs": [
+    {
+      "run_id": "20261025T184329Z",
+      "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.0001577",
+      "learning_rate": 0.0001577,
+      "final_dev_nll": 0.14463725686073303,
+      "min_dev_nll": 0.14339065551757812,
+      "last_train_nll": 0.08318901062011719
+    },
+    {
+      "run_id": "20261025T184758Z",
+      "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.000473",
+      "learning_rate": 0.000473,
+      "final_dev_nll": 0.14131636917591095,
+      "min_dev_nll": 0.14007243514060974,
+      "last_train_nll": 0.06055184081196785
+    },
+    {
+      "run_id": "20261025T185224Z",
+      "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189",
+      "learning_rate": 0.0014189,
+      "final_dev_nll": 0.1473771035671234,
+      "min_dev_nll": 0.1473771035671234,
+      "last_train_nll": 0.0633385181427002
+    }
+  ],
+  "best_run_id": "20261025T184758Z",
+  "best_learning_rate": 0.000473,
+  "best_final_dev_nll": 0.14131636917591095
+}

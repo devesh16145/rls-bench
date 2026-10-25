@@ -177,11 +177,9 @@ def train(model: str = typer.Option(DEFAULT_JUDGE_MODEL), renderer_name: str = t
 
 
 def parse_label(text: str) -> str | None:
-    words = re.findall(r"[a-z]+", text.lower())
-    for w in words:
-        if w in LABELS:
-            return w
-    return None
+    """The judge's verdict: the last label word in the answer (reasoning judges put the verdict last)."""
+    found = [w for w in re.findall(r"[a-z]+", text.lower()) if w in LABELS]
+    return found[-1] if found else None
 
 
 def _write_judgements(name: str, rows: list[dict[str, Any]], outputs: list[str], cost: float) -> Path:
@@ -229,7 +227,7 @@ def zero_shot(models: str = typer.Option(",".join(ZERO_SHOT)), opus: bool = type
     rows = _test_rows()
     renderer, _ = make_renderer(DEFAULT_JUDGE_MODEL, DEFAULT_JUDGE_RENDERER)
     tokens = sum(renderer.build_generation_prompt(r["messages"][:-1]).length for r in rows)
-    est = {m: round((tokens * price(m)["prefill"] + len(rows) * max_tokens * price(m)["sample"]) / 1e6, 3) for m in models.split(",") if m}
+    est = {m: round((tokens * price(m.split(":")[0])["prefill"] + len(rows) * max_tokens * price(m.split(":")[0])["sample"]) / 1e6, 3) for m in models.split(",") if m}
     if opus:
         pr = ANTHROPIC_PRICES["claude-opus-5-5"]
         est["claude-opus-5-5"] = round((tokens * pr["input"] + len(rows) * 1500 * pr["output"]) / 1e6, 3)
@@ -239,8 +237,11 @@ def zero_shot(models: str = typer.Option(",".join(ZERO_SHOT)), opus: bool = type
     if sum(v for k, v in est.items() if k != "claude-opus-5-5") > max_spend:
         raise typer.BadParameter("Tinker estimate exceeds --max-spend")
     load_tinker_key()
-    for m in [m for m in models.split(",") if m]:
-        _tinker_judge(m, ZERO_SHOT[m], None, rows, f"zeroshot_{m.split('/')[-1]}", max_tokens, typer.echo)
+    for item in [m for m in models.split(",") if m]:
+        m, _, renderer_name = item.partition(":")  # model[:renderer] - the renderer picks reasoning on/off
+        renderer_name = renderer_name or ZERO_SHOT[m]
+        name = f"zeroshot_{m.split('/')[-1]}" + ("" if renderer_name == ZERO_SHOT[m] else f"+{renderer_name}")
+        _tinker_judge(m, renderer_name, None, rows, name, max_tokens, typer.echo)
     if opus:
         from eval.anthropic_client import load_api_key
 

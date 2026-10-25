@@ -1,0 +1,47 @@
+{
+  "train": {
+    "available": {
+      "block": 574,
+      "pass": 791,
+      "error": 1777,
+      "leak": 578
+    },
+    "kept": {
+      "error": 600,
+      "block": 574,
+      "pass": 600,
+      "leak": 578
+    },
+    "examples": 2352
+  },
+  "dev": {
+    "available": {
+      "pass": 106,
+      "error": 255,
+      "leak": 121,
+      "block": 78
+    },
+    "kept": {
+      "block": 40,
+      "pass": 40,
+      "leak": 40,
+      "error": 40
+    },
+    "examples": 160
+  },
+  "test": {
+    "available": {
+      "block": 132,
+      "pass": 186,
+      "error": 280,
+      "leak": 127
+    },
+    "kept": {
+      "block": 100,
+      "error": 100,
+      "leak": 100,
+      "pass": 100
+    },
+    "examples": 400
+  }
+}

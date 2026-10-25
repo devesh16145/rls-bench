@@ -207,3 +207,15 @@
 
 - Three runs, 78 steps each (427 examples, batch 16, 3 epochs, rank 32, linear decay), dev loss on 57 held-out dev-task examples every 10 steps. Final dev NLL: lr 1.58e-4 → 0.1446, **lr 4.73e-4 (calibrated) → 0.1413**, lr 1.42e-3 → 0.1474. Training loss ended at 0.083 / 0.061 / 0.063. Estimated $2.47 per run. The SFT model is run 20261025T184758Z; `results/train/sft_sweep_Qwen3.5-9B_*.json`.
 - GRPO learning-rate sweep started from it: 2e-5, 6e-5, 2e-4; 10 steps × 16 tasks × 8 rollouts each, dev eval at step 10 (typical $3.3, worst $7.3 per run).
+
+## 2026-10-26 — Leaderboard run stopped at DeepSeek (Tinker)
+
+- Failure: `train/leaderboard.py run` finished Qwen3.5-9B and gpt-oss-120b (618 samples each), then Tinker returned `400 Sampling is not supported for deepseek-ai/DeepSeek-V4.1-Flash-1017` (the model is listed for training only); Kimi K2.6 never started. No money lost beyond the two finished rows.
+- Fix: DeepSeek removed from the Tinker leaderboard models (its OpenRouter row on all 103 tasks stands); Kimi rerun alone. Consequence for experiment C: a Tinker-sampled teacher must be Kimi K2.6 or another sampleable model.
+- Experiment C note: the cookbook's on-policy distillation scores the student's own token sequence with a teacher sampling client (`compute_logprobs`, prefill rate), so the teacher must share the student's tokenizer. For Qwen3.5-9B the candidate teacher is Qwen3.5-397B-A17B ($1.65 prefill); it would need its own 103-task baseline first (~$4) to show it is worth distilling from. Decided at the end from the remaining budget.
+
+## 2026-10-26 — Zero-shot judges (first results)
+
+- Judge data (`train/judge.py build`): 2,352 train / 160 dev / 400 test examples, balanced over pass / leak / block / error, deduplicated by (task, normalised SQL); `results/judge/data_stats.json`.
+- Failure: gpt-oss-120b (medium-reasoning template, the only chat template it has) produced no verdict within 32 output tokens (392 of 400 unparsed) and still 119 unparsed at 600. Fix: verdicts are parsed as the last label word in the answer, and reasoning judges get 1,500 output tokens; 5 unparsed remain.
+- Kimi K2.6 with thinking off (one-word answers): accuracy 37%, κ 0.16, leak recall 34%, leak precision 24%. gpt-oss-120b with reasoning (1,500 tokens): accuracy 52%, κ 0.36, leak recall 82%, precision 42%. Kimi with thinking on added as a row to separate "reasoning on/off" from "which model".

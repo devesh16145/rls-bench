@@ -1,0 +1,838 @@
+### repo: /Users/Devesh/Documents/VIBE/Handshake @ e6c2b40a018308b1b43bb2917b87f7f078a80a55
+modules: tinker_cookbook
+-- repo-wide (vs HEAD, staged+unstaged) --
+diff --git a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/logs.log b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/logs.log
+index b6d7545..6bbe338 100644
+--- a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/logs.log
++++ b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/logs.log
+@@ -4842,3 +4842,802 @@ revoke all on table public.push_tokens from public;
+ grant select, insert, update, delete on table public.push_tokens to authenticated;
+ grant all on table public.push_tokens to service_role;
+ ```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 30               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000873  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 21915     │
++│ progress             │ 0.397436  │
++│ test/bpb             │ 0.063989  │
++│ test/nll             │ 0.162286  │
++│ time/evals           │ 10.266983 │
++│ time/finish_batch    │ 3.264342  │
++│ time/get_batch       │ 0.131388  │
++│ time/run_evaluator   │ 10.266525 │
++│ time/step            │ 3.206415  │
++│ time/submit_batch    │ 10.401996 │
++│ train_mean_bpb       │ 0.041826  │
++│ train_mean_nll       │ 0.122306  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.api_usage (
++  user_id uuid not null references auth.users(id),
++  day date not null,
++  requests integer not null check (requests >= 0),
++  primary key (user_id, day)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.api_usage: 3 rows
++- auth.users: 2 rows
++
++## Access rules
++
++A developer dashboard built with supabase-js. Server code records daily API usage. The dashboard shows a chart with `supabase.from('api_usage').select()` and totals with `supabase.from('usage_summary').select()`.
++
++R1. Users can read only their own daily usage rows.
++R2. Provide a view `public.usage_summary` with exactly the columns `user_id`, `total_requests` (sum of requests) and `active_days` (number of days with usage), one row per user. Signed-in users see only their own row in it.
++R3. Nobody can change usage through the app.
++R4. Anonymous visitors cannot see anything, including `usage_summary`.
++R5. Server-side code using the service role keeps full access and sees every user in `usage_summary`.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++alter table public.api_usage enable row level security;
++
++-- R1: authenticated users may read only their own usage rows.
++create policy "api_usage_select_own"
++  on public.api_usage
++  for select
++  to authenticated
++  using ( (select auth.uid()) = user_id );
++
++-- R3 / R4: no write policies exist for anon or authenticated, and no read
++-- policy exists for anon, so those roles get nothing. Make the privilege
++-- layer explicit as well.
++revoke all on public.api_usage from anon;
++revoke insert, update, delete, truncate, references, trigger
++  on public.api_usage from authenticated;
++grant select on public.api_usage to authenticated;
++
++-- R2 / R5: per-user aggregate view. security_invoker makes the view run with
++-- the caller's privileges, so RLS on public.api_usage applies to it: signed-in
++-- users see only their own row, while the service role (BYPASSRLS) sees all.
++create view public.usage_summary
++  with (security_invoker = true)
++  as
++  select
++    u.user_id,
++    sum(u.requests)::bigint as total_requests,
++    count(*)::bigint        as active_days
++  from public.api_usage u
++  group by u.user_id;
++
++revoke all on public.usage_summary from anon;
++grant select on public.usage_summary to authenticated;
++grant select on public.usage_summary to service_role;
++```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 31               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000855  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 21248     │
++│ progress             │ 0.410256  │
++│ time/finish_batch    │ 1.823901  │
++│ time/get_batch       │ 0.172643  │
++│ time/step            │ 1.775557  │
++│ time/submit_batch    │ 0.174586  │
++│ train_mean_bpb       │ 0.045310  │
++│ train_mean_nll       │ 0.128430  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.editors (
++  user_id uuid primary key references auth.users(id)
++);
++
++create table public.articles (
++  id bigint generated by default as identity primary key,
++  author_id uuid not null default auth.uid() references auth.users(id),
++  title text not null,
++  body text not null default '',
++  status text not null default 'draft' check (status in ('draft', 'in_review', 'published')),
++  published_at timestamptz
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.articles: 4 rows
++- public.editors: 1 rows
++- auth.users: 3 rows
++
++## Access rules
++
++A newsroom tool built with supabase-js. Writers create drafts with `supabase.from('articles').insert({...}).select()`, edit them, and submit them with `.update({ status: 'in_review' }).eq('id', id).select()`. Editors (users in `editors`) publish with `.update({ status: 'published', published_at }).eq('id', id).select()` or send articles back to `draft`.
++
++R1. Anyone, including anonymous visitors, can read published articles. Writers can also read their own articles, and editors can read every article.
++R2. Writers can create drafts as themselves, edit their own drafts, and submit them for review. They cannot edit an article once it is submitted, and cannot publish.
++R3. Editors can edit articles that are in review, publish them, or send them back to `draft`. Editors cannot change drafts or published articles.
++R4. Once published, an article can no longer be changed through the app. Writers can delete only their own drafts.
++R5. Users can see whether they themselves are an editor. Nobody can change `editors` through the app.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++alter table public.editors enable row level security;
++alter table public.articles enable row level security;
++
++create or replace function public.is_editor()
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.editors
++    where user_id = auth.uid()
++  );
++$$;
++
++grant usage on schema public to anon, authenticated;
++grant execute on function public.is_editor() to anon, authenticated;
++
++revoke all on table public.editors from anon;
++revoke all on table public.editors from authenticated;
++grant select on table public.editors to authenticated;
++
++revoke all on table public.articles from anon;
++revoke all on table public.articles from authenticated;
++grant select on table public.articles to anon;
++grant select, insert, update, delete on table public.articles to authenticated;
++grant usage, select on sequence public.articles_id_seq to authenticated;
++
++create policy "editors_select_self"
++on public.editors
++for select
++to authenticated
++using (user_id = auth.uid());
++
++create policy "articles_select_published_own_or_editor"
++on public.articles
++for select
++to anon, authenticated
++using (
++  status = 'published'
++  or author_id = auth.uid()
++  or public.is_editor()
++);
++
++create policy "articles_insert_own_draft"
++on public.articles
++for insert
++to authenticated
++with check (
++  author_id = auth.uid()
++  and status = 'draft'
++  and published_at is null
++);
++
++create policy "articles_update_own_draft"
++on public.articles
++for update
++to authenticated
++using (
++  author_id = auth.uid()
++  and status = 'draft'
++)
++with check (
++  author_id = auth.uid()
++  and status in ('draft', 'in_review')
++  and published_at is null
++);
++
++create policy "articles_update_editor_in_review"
++on public.articles
++for update
++to authenticated
++using (
++  public.is_editor()
++  and status = 'in_review'
++)
++with check (
++  public.is_editor()
++  and status in ('in_review', 'published', 'draft')
++  and (
++    (status = 'published' and published_at is not null)
++    or (status in ('draft', 'in_review') and published_at is null)
++  )
++);
++
++create policy "articles_delete_own_draft"
++on public.articles
++for delete
++to authenticated
++using (
++  author_id = auth.uid()
++  and status = 'draft'
++);
++```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 32               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000837  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 19838     │
++│ progress             │ 0.423077  │
++│ time/finish_batch    │ 1.962195  │
++│ time/get_batch       │ 0.128498  │
++│ time/step            │ 1.934082  │
++│ time/submit_batch    │ 0.130653  │
++│ train_mean_bpb       │ 0.046288  │
++│ train_mean_nll       │ 0.132610  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.saved_searches (
++  id bigint generated by default as identity primary key,
++  user_id uuid not null default auth.uid() references auth.users(id),
++  query text not null,
++  notify_email text,
++  frequency text not null default 'off' check (frequency in ('daily', 'weekly', 'off'))
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.saved_searches: 2 rows
++- auth.users: 2 rows
++
++## Access rules
++
++A property-search site built with supabase-js. Users save searches with `supabase.from('saved_searches').insert({...}).select()` and edit them with `.update({...}).eq('id', id).select()`. When `notify_email` is set, a server job emails new matches to that address. Supabase puts the account's verified email address in the JWT claim `email`; users can edit their `user_metadata`.
++
++R1. Users can read, create, edit and delete only their own saved searches.
++R2. `notify_email` must be empty or the user's own verified email address from the JWT `email` claim, ignoring upper and lower case. Nothing in `user_metadata` counts.
++R3. Anonymous visitors cannot see or change saved searches.
++R4. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++alter table public.saved_searches enable row level security;
++
++create or replace function public.saved_searches_notify_email_allowed(candidate_email text)
++returns boolean
++language sql
++stable
++security invoker
++set search_path = ''
++as $$
++  select candidate_email is null
++      or candidate_email = ''
++      or (
++        auth.jwt() ->> 'email' is not null
++        and lower(candidate_email) = lower(auth.jwt() ->> 'email')
++      );
++$$;
++
++revoke all on function public.saved_searches_notify_email_allowed(text) from public;
++grant execute on function public.saved_searches_notify_email_allowed(text) to authenticated;
++grant execute on function public.saved_searches_notify_email_allowed(text) to service_role;
++
++revoke all on table public.saved_searches from anon;
++grant select, insert, update, delete on table public.saved_searches to authenticated;
++grant all on table public.saved_searches to service_role;
++
++create policy saved_searches_select_own
++on public.saved_searches
++for select
++to authenticated
++using (user_id = auth.uid());
++
++create policy saved_searches_insert_own
++on public.saved_searches
++for insert
++to authenticated
++with check (
++  user_id = auth.uid()
++  and public.saved_searches_notify_email_allowed(notify_email)
++);
++
++create policy saved_searches_update_own
++on public.saved_searches
++for update
++to authenticated
++using (user_id = auth.uid())
++with check (
++  user_id = auth.uid()
++  and public.saved_searches_notify_email_allowed(notify_email)
++);
++
++create policy saved_searches_delete_own
++on public.saved_searches
++for delete
++to authenticated
++using (user_id = auth.uid());
++```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 33               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000819  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 16860     │
++│ progress             │ 0.435897  │
++│ time/finish_batch    │ 2.113729  │
++│ time/get_batch       │ 0.158082  │
++│ time/step            │ 2.068925  │
++│ time/submit_batch    │ 0.160437  │
++│ train_mean_bpb       │ 0.031834  │
++│ train_mean_nll       │ 0.083641  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.receipts (
++  id bigint generated by default as identity primary key,
++  uploaded_by uuid references auth.users(id),
++  merchant text not null,
++  amount numeric(10, 2) not null,
++  created_at timestamptz not null default '2020-01-01'
++);
++
++create index receipts_uploaded_by_idx on public.receipts (uploaded_by);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.receipts: 5 rows
++- auth.users: 3 rows
++
++## Access rules
++
++An expense app. Users upload receipts; `uploaded_by` records who uploaded each one. A nightly job imports receipts from the bank feed, and those rows have no uploader (`uploaded_by` is null).
++
++R1. Users can read, edit and delete the receipts they uploaded.
++R2. Users can add receipts only as themselves.
++R3. Imported receipts are visible only to server-side code. App users can neither read them nor claim them, and cannot turn their own receipts into imported ones.
++R4. Anonymous visitors cannot read or change any receipts.
++R5. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++alter table public.receipts enable row level security;
++
++create policy "receipts_select_own"
++on public.receipts
++for select
++to authenticated
++using (uploaded_by = auth.uid());
++
++create policy "receipts_insert_own"
++on public.receipts
++for insert
++to authenticated
++with check (uploaded_by = auth.uid());
++
++create policy "receipts_update_own"
++on public.receipts
++for update
++to authenticated
++using (uploaded_by = auth.uid())
++with check (uploaded_by = auth.uid());
++
++create policy "receipts_delete_own"
++on public.receipts
++for delete
++to authenticated
++using (uploaded_by = auth.uid());
++
++revoke all on table public.receipts from anon;
++revoke all on table public.receipts from authenticated;
++revoke all on table public.receipts from public;
++
++grant select, insert, update, delete on table public.receipts to authenticated;
++grant all on table public.receipts to service_role;
++```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 34               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000800  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 16171     │
++│ progress             │ 0.448718  │
++│ time/finish_batch    │ 1.527730  │
++│ time/get_batch       │ 0.065742  │
++│ time/step            │ 1.507532  │
++│ time/submit_batch    │ 0.066802  │
++│ train_mean_bpb       │ 0.057667  │
++│ train_mean_nll       │ 0.158694  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.rides (
++  id bigint primary key,
++  driver_id uuid not null references auth.users(id),
++  from_city text not null,
++  to_city text not null,
++  departs_at timestamptz not null,
++  seats integer not null check (seats > 0)
++);
++
++create table public.ride_bookings (
++  ride_id bigint not null references public.rides(id) on delete cascade,
++  passenger_id uuid not null default auth.uid() references auth.users(id),
++  status text not null default 'requested' check (status in ('requested', 'confirmed', 'declined')),
++  primary key (ride_id, passenger_id)
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.ride_bookings: 4 rows
++- public.rides: 3 rows
++- auth.users: 5 rows
++
++## Access rules
++
++A car-pooling app built with supabase-js. Passengers request a seat with `supabase.from('ride_bookings').insert({ ride_id, passenger_id }).select()` and withdraw with `.delete()`. Drivers answer with `.update({ status }).match({ ride_id, passenger_id }).select()`. Departure times are compared with `now()`.
++
++R1. Signed-in users can see every ride. Drivers can create rides as themselves and edit and delete their own rides.
++R2. Passengers can see their own bookings; drivers can see every booking on their rides.
++R3. Signed-in users can request a seat, as themselves, on rides that have not departed and that they are not driving. New requests are always `requested`. Passengers can withdraw their own bookings before departure.
++R4. Only the driver can confirm or decline requests on their ride, and only before departure. A request can be confirmed only while the ride has fewer confirmed bookings than seats. Nothing else about a booking can change.
++R5. Anonymous visitors cannot see or change anything.
++R6. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++create schema private;
++
++grant usage on schema private to authenticated;
++
++create function private.is_driver(p_ride_id bigint) returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select exists (select 1 from public.rides r where r.id = p_ride_id and r.driver_id = auth.uid())
++$$;
++
++create function private.ride_upcoming(p_ride_id bigint) returns boolean
++language sql stable security definer set search_path = ''
++as $$
++  select coalesce((select r.departs_at > now() from public.rides r where r.id = p_ride_id), false)
++$$;
++
++create function private.seats_left(p_ride_id bigint) returns integer
++language sql stable security definer set search_path = ''
++as $$
++  select r.seats - (select count(*)::integer from public.ride_bookings b where b.ride_id = r.id and b.status = 'confirmed') from public.rides r where r.id = p_ride_id
++$$;
++
++alter table public.rides enable row level security;
++alter table public.ride_bookings enable row level security;
++
++revoke update on public.ride_bookings from anon, authenticated;
++grant update (status) on public.ride_bookings to authenticated;
++
++create policy rides_select on public.rides
++  for select to authenticated
++  using (true);
++
++create policy rides_insert on public.rides
++  for insert to authenticated
++  with check (driver_id = auth.uid());
++
++create policy rides_update on public.rides
++  for update to authenticated
++  using (driver_id = auth.uid())
++  with check (driver_id = auth.uid());
++
++create policy rides_delete on public.rides
++  for delete to authenticated
++  using (driver_id = auth.uid());
++
++create policy bookings_select on public.ride_bookings
++  for select to authenticated
++  using (passenger_id = auth.uid() or private.is_driver(ride_id));
++
++create policy bookings_insert on public.ride_bookings
++  for insert to authenticated
++  with check (
++    passenger_id = auth.uid()
++    and status = 'requested'
++    and private.ride_upcoming(ride_id)
++    and not private.is_driver(ride_id)
++  );
++
++create policy bookings_update on public.ride_bookings
++  for update to authenticated
++  using (private.is_driver(ride_id) and private.ride_upcoming(ride_id))
++  with check (
++    private.is_driver(ride_id)
++    and (status <> 'confirmed' or coalesce(private.seats_left(ride_id), 0) > 0)
++  );
++
++create policy bookings_delete on public.ride_bookings
++  for delete to authenticated
++  using (passenger_id = auth.uid() and private.ride_upcoming(ride_id));
++```<|im_end|>
++tinker_cookbook.utils.ml_log:206 [INFO] Wrote metrics to /Users/Devesh/Documents/VIBE/Handshake/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++tinker_cookbook.utils.ml_log:279 [INFO] 
++              Step 35               
++┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
++┃ Metric               ┃ Value     ┃
++┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
++│ epoch                │ 1         │
++│ learning_rate        │ 0.000782  │
++│ num_loss_tokens      │ 16.000000 │
++│ num_sequences        │ 16        │
++│ num_tokens           │ 18277     │
++│ progress             │ 0.461538  │
++│ time/finish_batch    │ 8.561340  │
++│ time/get_batch       │ 0.203383  │
++│ time/step            │ 8.511636  │
++│ time/submit_batch    │ 0.205912  │
++│ train_mean_bpb       │ 0.036101  │
++│ train_mean_nll       │ 0.091425  │
++└──────────────────────┴───────────┘
++tinker_cookbook.supervised.train:434 [INFO] <|im_start|>system
++You are a senior database engineer. Write Supabase Row Level Security for the schema and rules below. Available: `auth.uid()`, `auth.jwt()`, `auth.role()`, roles `anon`, `authenticated`, `service_role` (bypasses RLS). Output exactly one ```sql block containing only: `alter table ... enable row level security`, `create policy`, helper `create function`, `create trigger`, `create view`, and grants/revokes. Do not modify existing tables or data. No explanation outside the block.<|im_end|>
++<|im_start|>user
++## Schema
++
++```sql
++create table public.patients (
++  id bigint primary key,
++  user_id uuid not null unique references auth.users(id),
++  full_name text not null
++);
++
++create table public.care_team (
++  patient_id bigint not null references public.patients(id),
++  doctor_id uuid not null references auth.users(id),
++  primary key (patient_id, doctor_id)
++);
++
++create table public.records (
++  id bigint generated by default as identity primary key,
++  patient_id bigint not null references public.patients(id),
++  author_id uuid not null default auth.uid() references auth.users(id),
++  note text not null,
++  created_at timestamptz not null default '2020-01-01'
++);
++```
++
++Supabase's `auth.users` and `storage.buckets` / `storage.objects` tables already exist.
++
++## Seed data (row counts only)
++
++- public.care_team: 2 rows
++- public.patients: 2 rows
++- public.records: 3 rows
++- auth.users: 4 rows
++
++## Access rules
++
++A telehealth app built with supabase-js. Doctors must use multi-factor authentication: Supabase sets the JWT claim `aal` to `aal2` in a session that passed an MFA challenge and to `aal1` otherwise. Doctors add notes with `supabase.from('records').insert({ patient_id, author_id, note }).select()`.
++
++R1. Patients can read their own patient row and their own records, whatever the session's assurance level.
++R2. Doctors can read the patient rows and records of patients whose care team they are in, but only in sessions with `aal2`.
++R3. Doctors can add records, as the author, for patients whose care team they are in, only in sessions with `aal2`. Patients cannot add records.
++R4. Records can never be changed or deleted through the app.
++R5. Users can see the care-team rows that involve them, as the patient or as the doctor. Nobody can change care teams through the app.
++R6. Access comes only from the patient and care-team tables; nothing in a user's metadata grants it.
++R7. Anonymous visitors cannot see or change anything.
++R8. Server-side code using the service role keeps full access.
++
++RLSBENCH-CANARY-f9002c750838f00b<|im_end|>
++<|im_start|>assistant
++<think>
++
++</think>
++
++```sql
++alter table public.patients enable row level security;
++alter table public.care_team enable row level security;
++alter table public.records enable row level security;
++
++-- Helper: is the current session MFA-verified (aal2)?
++create or replace function public.current_session_is_aal2()
++returns boolean
++language sql
++stable
++as $$
++  select coalesce(auth.jwt() ->> 'aal', '') = 'aal2'
++$$;
++
++-- Helper: is the current user a doctor on this patient's care team?
++-- SECURITY DEFINER so care_team RLS does not recurse / mask the check.
++create or replace function public.is_care_team_doctor(p_patient_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.care_team ct
++    where ct.patient_id = p_patient_id
++      and ct.doctor_id = auth.uid()
++  )
++$$;
++
++-- Helper: does the current user own this patient row?
++create or replace function public.owns_patient(p_patient_id bigint)
++returns boolean
++language sql
++stable
++security definer
++set search_path = ''
++as $$
++  select exists (
++    select 1
++    from public.patients p
++    where p.id = p_patient_id
++      and p.user_id = auth.uid()
++  )
++$$;
++
++revoke execute on function public.current_session_is_aal2() from public, anon;
++revoke execute on function public.is_care_team_doctor(bigint) from public, anon;
++revoke execute on function public.owns_patient(bigint) from public, anon;
++grant execute on function public.current_session_is_aal2() to authenticated, service_role;
++grant execute on function public.is_care_team_doctor(bigint) to authenticated, service_role;
++grant execute on function public.owns_patient(bigint) to authenticated, service_role;
++
++-- R1: patients read their own patient row (any assurance level)
++create policy patients_select_own
++on public.patients
++for select
++to authenticated
++using (user_id = auth.uid());
++
++-- R2: care-team doctors read patient rows, aal2 only
++create policy patients_select_doctor_aal2
++on public.patients
++for select
++to authenticated
++using (public.current_session_is_aal2() and public.is_care_team_doctor(id));
++
++-- R1: patients read their own records (any assurance level)
++create policy records_select_own
++on public.records
++for select
++to authenticated
++using (public.owns_patient(patient_id));
++
++-- R2: care-team doctors read records, aal2 only
++create policy records_select_doctor_aal2
++on public.records
++for select
++to authenticated
++using (public.current_session_is_aal2() and public.is_care_team_doctor(patient_id));
++
++-- R3: care-team doctors add records as themselves, aal2 only
++create policy records_insert_doctor_aal2
++on public.records
++for insert
++to authenticated
++with check (
++  author_id = auth.uid()
++  and public.current_session_is_aal2()
++  and public.is_care_team_doctor(patient_id)
++);
++
++-- R5: users see care-team rows involving them (as patient or as doctor)
++create policy care_team_select_involved
++on public.care_team
++for select
++to authenticated
++using (
++  doctor_id = auth.uid()
++  or public.owns_patient(patient_id)
++);
++
++-- R7: anonymous visitors have no access at all
++revoke all on public.patients from anon;
++revoke all on public.care_team from anon;
++revoke all on public.records from anon;
++
++-- R3/R4/R5/R6: only the exact operations above are permitted to app users
++revoke insert, update, delete, truncate on public.patients from authenticated;
++revoke insert, update, delete, truncate on public.care_team from authenticated;
++revoke update, delete, truncate on public.records from authenticated;
++
++grant select on public.patients to authenticated;
++grant select on public.care_team to authenticated;
++grant select, insert on public.records to authenticated;
++
++-- R8: service_role keeps full access (bypasses RLS)
++grant all on public.patients to service_role;
++grant all on public.care_team to service_role;
++grant all on public.records to service_role;
++
++grant usage, select on all sequences in schema public to authenticated, service_role;
++```<|im_end|>
+diff --git a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
+index c95cdcc..c2809c7 100644
+--- a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
++++ b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl
+@@ -28,3 +28,9 @@
+ {"step": 27, "epoch": 1, "progress": 0.358974358974359, "learning_rate": 0.0009277423076923078, "num_sequences": 16, "num_tokens": 20406, "num_loss_tokens": 16.00000000128057, "train_mean_nll": 0.13448846340179443, "train_mean_bpb": 0.047097305424429206, "time/get_batch": 0.14013483305461705, "time/submit_batch": 0.14143641700502485, "time/step": 1.658984416979365, "time/finish_batch": 1.9064787499373779}
+ {"step": 28, "epoch": 1, "progress": 0.3717948717948718, "learning_rate": 0.000909551282051282, "num_sequences": 16, "num_tokens": 21415, "num_loss_tokens": 15.999999760068022, "train_mean_nll": 0.1287751942873001, "train_mean_bpb": 0.04430933840535557, "time/get_batch": 0.17280645796563476, "time/submit_batch": 0.17449766595382243, "time/step": 1.9084482080070302, "time/finish_batch": 1.9382332089589909}
+ {"step": 29, "epoch": 1, "progress": 0.38461538461538464, "learning_rate": 0.0008913602564102564, "num_sequences": 16, "num_tokens": 19392, "num_loss_tokens": 16.00000003754394, "train_mean_nll": 0.13322465121746063, "train_mean_bpb": 0.044431241099203295, "time/get_batch": 0.09603612497448921, "time/submit_batch": 0.09716454101726413, "time/step": 0.00962449994403869, "time/finish_batch": 0.06103783298749477}
++{"step": 30, "epoch": 1, "progress": 0.3974358974358974, "learning_rate": 0.0008731692307692309, "num_sequences": 16, "num_tokens": 21915, "num_loss_tokens": 16.000000077765435, "train_mean_nll": 0.12230567634105682, "train_mean_bpb": 0.04182569109654342, "test/nll": 0.16228647530078888, "test/bpb": 0.06398916854593834, "time/get_batch": 0.1313884169794619, "time/run_evaluator": 10.266524708014913, "time/evals": 10.266982542001642, "time/submit_batch": 10.401996041066013, "time/step": 3.20641483401414, "time/finish_batch": 3.2643420830136165}
++{"step": 31, "epoch": 1, "progress": 0.41025641025641024, "learning_rate": 0.0008549782051282053, "num_sequences": 16, "num_tokens": 21248, "num_loss_tokens": 16.00000013416866, "train_mean_nll": 0.1284300684928894, "train_mean_bpb": 0.04530979720751529, "time/get_batch": 0.17264266696292907, "time/submit_batch": 0.17458558408543468, "time/step": 1.7755574999609962, "time/finish_batch": 1.8239006249932572}
++{"step": 32, "epoch": 1, "progress": 0.4230769230769231, "learning_rate": 0.0008367871794871795, "num_sequences": 16, "num_tokens": 19838, "num_loss_tokens": 16.000000019848812, "train_mean_nll": 0.132610484957695, "train_mean_bpb": 0.04628826037169086, "time/get_batch": 0.12849812500644475, "time/submit_batch": 0.130653457948938, "time/step": 1.9340817920165136, "time/finish_batch": 1.9621945830294862}
++{"step": 33, "epoch": 1, "progress": 0.4358974358974359, "learning_rate": 0.0008185961538461538, "num_sequences": 16, "num_tokens": 16860, "num_loss_tokens": 16.00000016798731, "train_mean_nll": 0.08364056795835495, "train_mean_bpb": 0.03183414317534101, "time/get_batch": 0.15808204200584441, "time/submit_batch": 0.16043666703626513, "time/step": 2.0689253330929205, "time/finish_batch": 2.1137288749450818}
++{"step": 34, "epoch": 1, "progress": 0.44871794871794873, "learning_rate": 0.0008004051282051283, "num_sequences": 16, "num_tokens": 16171, "num_loss_tokens": 15.9999999285792, "train_mean_nll": 0.15869386494159698, "train_mean_bpb": 0.05766734376314255, "time/get_batch": 0.06574233307037503, "time/submit_batch": 0.06680179201066494, "time/step": 1.5075315409339964, "time/finish_batch": 1.5277300419984385}
++{"step": 35, "epoch": 1, "progress": 0.46153846153846156, "learning_rate": 0.0007822141025641027, "num_sequences": 16, "num_tokens": 18277, "num_loss_tokens": 15.999999904655851, "train_mean_nll": 0.09142492711544037, "train_mean_bpb": 0.03610066853721299, "time/get_batch": 0.20338270801585168, "time/submit_batch": 0.20591183297801763, "time/step": 8.511635832954198, "time/finish_batch": 8.561340249958448}
+diff --git a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/timing_spans.jsonl b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/timing_spans.jsonl
+index 0b6fd02..6727f2a 100644
+--- a/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/timing_spans.jsonl
++++ b/results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/timing_spans.jsonl
+@@ -28,3 +28,9 @@
+ {"step": 27, "spans": [{"name": "get_batch", "duration": 0.14013483305461705, "wall_start": 6.175041198730469e-05, "wall_end": 0.1401963233947754}, {"name": "submit_batch", "duration": 0.14143641700502485, "wall_start": 0.0, "wall_end": 0.14143610000610352}, {"name": "step", "duration": 1.658984416979365, "wall_start": 1.8825809955596924, "wall_end": 3.5415661334991455}, {"name": "finish_batch", "duration": 1.9064787499373779, "wall_start": 1.8825535774230957, "wall_end": 3.789031982421875}]}
+ {"step": 28, "spans": [{"name": "get_batch", "duration": 0.17280645796563476, "wall_start": 4.291534423828125e-05, "wall_end": 0.1728496551513672}, {"name": "submit_batch", "duration": 0.17449766595382243, "wall_start": 0.0, "wall_end": 0.1744983196258545}, {"name": "step", "duration": 1.9084482080070302, "wall_start": 2.1836163997650146, "wall_end": 4.092065334320068}, {"name": "finish_batch", "duration": 1.9382332089589909, "wall_start": 2.1835978031158447, "wall_end": 4.121830940246582}]}
+ {"step": 29, "spans": [{"name": "get_batch", "duration": 0.09603612497448921, "wall_start": 6.389617919921875e-05, "wall_end": 0.0960996150970459}, {"name": "submit_batch", "duration": 0.09716454101726413, "wall_start": 0.0, "wall_end": 0.09716415405273438}, {"name": "step", "duration": 0.00962449994403869, "wall_start": 12.442337989807129, "wall_end": 12.45196270942688}, {"name": "finish_batch", "duration": 0.06103783298749477, "wall_start": 12.442219734191895, "wall_end": 12.503257989883423}]}
++{"step": 30, "spans": [{"name": "get_batch", "duration": 0.1313884169794619, "wall_start": 5.8650970458984375e-05, "wall_end": 0.13144731521606445}, {"name": "run_evaluator", "duration": 10.266524708014913, "wall_start": 0.1338484287261963, "wall_end": 10.400373458862305}, {"name": "evals", "duration": 10.266982542001642, "wall_start": 0.13373875617980957, "wall_end": 10.400721073150635}, {"name": "submit_batch", "duration": 10.401996041066013, "wall_start": 0.0, "wall_end": 10.401997327804565}, {"name": "step", "duration": 3.20641483401414, "wall_start": 10.645890712738037, "wall_end": 13.852306127548218}, {"name": "finish_batch", "duration": 3.2643420830136165, "wall_start": 10.645860433578491, "wall_end": 13.910202980041504}]}
++{"step": 31, "spans": [{"name": "get_batch", "duration": 0.17264266696292907, "wall_start": 0.00020432472229003906, "wall_end": 0.17284750938415527}, {"name": "submit_batch", "duration": 0.17458558408543468, "wall_start": 0.0, "wall_end": 0.17458581924438477}, {"name": "step", "duration": 1.7755574999609962, "wall_start": 3.5769057273864746, "wall_end": 5.3524627685546875}, {"name": "finish_batch", "duration": 1.8239006249932572, "wall_start": 3.576869487762451, "wall_end": 5.400769948959351}]}
++{"step": 32, "spans": [{"name": "get_batch", "duration": 0.12849812500644475, "wall_start": 8.845329284667969e-05, "wall_end": 0.128587007522583}, {"name": "submit_batch", "duration": 0.130653457948938, "wall_start": 0.0, "wall_end": 0.13065290451049805}, {"name": "step", "duration": 1.9340817920165136, "wall_start": 2.120469570159912, "wall_end": 4.05455207824707}, {"name": "finish_batch", "duration": 1.9621945830294862, "wall_start": 2.1204328536987305, "wall_end": 4.082628011703491}]}
++{"step": 33, "spans": [{"name": "get_batch", "duration": 0.15808204200584441, "wall_start": 6.532669067382812e-05, "wall_end": 0.15814805030822754}, {"name": "submit_batch", "duration": 0.16043666703626513, "wall_start": 0.0, "wall_end": 0.16043663024902344}, {"name": "step", "duration": 2.0689253330929205, "wall_start": 2.1930408477783203, "wall_end": 4.261966705322266}, {"name": "finish_batch", "duration": 2.1137288749450818, "wall_start": 2.1930203437805176, "wall_end": 4.306748867034912}]}
++{"step": 34, "spans": [{"name": "get_batch", "duration": 0.06574233307037503, "wall_start": 4.57763671875e-05, "wall_end": 0.06578850746154785}, {"name": "submit_batch", "duration": 0.06680179201066494, "wall_start": 0.0, "wall_end": 0.0668027400970459}, {"name": "step", "duration": 1.5075315409339964, "wall_start": 2.4061203002929688, "wall_end": 3.9136526584625244}, {"name": "finish_batch", "duration": 1.5277300419984385, "wall_start": 2.406057119369507, "wall_end": 3.9337868690490723}]}
++{"step": 35, "spans": [{"name": "get_batch", "duration": 0.20338270801585168, "wall_start": 0.0005846023559570312, "wall_end": 0.20396685600280762}, {"name": "submit_batch", "duration": 0.20591183297801763, "wall_start": 0.0, "wall_end": 0.20591235160827637}, {"name": "step", "duration": 8.511635832954198, "wall_start": 1.8222010135650635, "wall_end": 10.333836555480957}, {"name": "finish_batch", "duration": 8.561340249958448, "wall_start": 1.8221797943115234, "wall_end": 10.38352084159851}]}

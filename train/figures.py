@@ -29,9 +29,15 @@ SERIES = {"base": MUTED, "sft": BLUE, "sft+rl": ORANGE, "repair": AQUA, "distil"
 
 app = typer.Typer(add_completion=False)
 
+
+@app.callback()
+def _cli() -> None:
+    """Subcommands below."""
+
+
 plt.rcParams.update({
     "font.family": "sans-serif", "font.size": 10, "axes.edgecolor": GRID, "axes.labelcolor": INK, "axes.titlesize": 11,
-    "axes.titleweight": "semibold", "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
+    "axes.titleweight": "bold", "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
     "grid.color": GRID, "grid.linewidth": 0.8, "xtick.color": MUTED, "ytick.color": MUTED, "legend.frameon": False,
     "figure.dpi": 150, "savefig.bbox": "tight",
 })
@@ -87,7 +93,7 @@ def fig_leaderboard() -> Path | None:
         ax.set_xlabel("% of 103 tasks, 95% Wilson interval")
     a1.set_yticks(ys)
     a1.set_yticklabels(names)
-    fig.suptitle("RLS-Bench leaderboard: one greedy answer per task, all 103 tasks", x=0.02, ha="left", fontweight="semibold")
+    fig.suptitle("RLS-Bench leaderboard: one greedy answer per task, all 103 tasks", x=0.02, ha="left", fontweight="bold")
     return _save(fig, "leaderboard")
 
 
@@ -136,7 +142,7 @@ def fig_sft_sweeps() -> list[Path]:
             ax.set_xlabel("step")
             ax.set_ylabel("mean NLL")
             ax.legend(fontsize=8)
-        fig.suptitle(f"SFT learning-rate sweep: {s['model'].split('/')[-1]} (best lr {s['best_learning_rate']:g})", x=0.02, ha="left", fontweight="semibold")
+        fig.suptitle(f"SFT learning-rate sweep: {s['model'].split('/')[-1]} (best lr {s['best_learning_rate']:g})", x=0.02, ha="left", fontweight="bold")
         out.append(_save(fig, f"sft_sweep_{s['model'].split('/')[-1]}"))
     return out
 
@@ -185,7 +191,7 @@ def fig_rl_health() -> list[Path]:
             ax.set_title(title)
             ax.set_xlabel("step")
         fig.suptitle(f"GRPO training health: {run['name']} (lr {run['learning_rate']:g}, {run['tasks_per_step']}×{run['group_size']} rollouts/step)",
-                     x=0.02, ha="left", fontweight="semibold")
+                     x=0.02, ha="left", fontweight="bold")
         out.append(_save(fig, f"rl_health_{run['name']}"))
     return out
 
@@ -233,7 +239,7 @@ def fig_test_bars() -> Path | None:
         ax.set_ylim(0, 100)
         ax.set_ylabel("%")
         ax.set_title(t)
-    fig.suptitle("Test split (20 tasks × 6 samples), evaluated once for version 2", x=0.02, ha="left", fontweight="semibold")
+    fig.suptitle("Test split (20 tasks × 6 samples), evaluated once for version 2", x=0.02, ha="left", fontweight="bold")
     return _save(fig, "test_bars")
 
 
@@ -282,7 +288,7 @@ def fig_judges() -> Path | None:
     a2.legend(fontsize=8, loc="lower right")
     a1.set_yticks(ys)
     a1.set_yticklabels([n.replace("zeroshot_", "zero-shot ").replace("trained_", "trained ") for n in names], fontsize=8)
-    fig.suptitle("Judges on 400 held-out test-task candidates (100 per label)", x=0.02, ha="left", fontweight="semibold")
+    fig.suptitle("Judges on 400 held-out test-task candidates (100 per label)", x=0.02, ha="left", fontweight="bold")
     return _save(fig, "judges")
 
 

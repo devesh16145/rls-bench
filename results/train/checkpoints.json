@@ -479,5 +479,258 @@
     "metrics": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.000473/metrics.jsonl",
     "state_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final",
     "sampler_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T185224Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.0014189,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "data_hash": "3804db6d4692dcc5",
+    "dev_data_hash": "2a330dbf7a69be2f",
+    "steps": 78,
+    "dev_nll": [
+      [
+        0,
+        0.33736667037010193
+      ],
+      [
+        10,
+        0.2344244420528412
+      ],
+      [
+        20,
+        0.17431069910526276
+      ],
+      [
+        30,
+        0.16228647530078888
+      ],
+      [
+        40,
+        0.1583830863237381
+      ],
+      [
+        50,
+        0.1480698138475418
+      ],
+      [
+        60,
+        0.15239767730236053
+      ],
+      [
+        70,
+        0.1473771035671234
+      ]
+    ],
+    "final_dev_nll": 0.1473771035671234,
+    "min_dev_nll": 0.1473771035671234,
+    "first_train_nll": 0.33771929144859314,
+    "last_train_nll": 0.0633385181427002,
+    "log_path": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189",
+    "metrics": "results/train/runs/sft_Qwen3.5-9B_20261025T184329Z_lr0.0014189/metrics.jsonl",
+    "state_path": "tinker://7ae0dfe5-1097-52c5-a259-153b06e75dba:train:0/weights/final",
+    "sampler_path": "tinker://7ae0dfe5-1097-52c5-a259-153b06e75dba:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T185449Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr3e-05",
+    "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+    "renderer": "nemotron3_ultra_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 3e-05,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft.jsonl",
+    "data_hash": "3804db6d4692dcc5",
+    "dev_data_hash": "2a330dbf7a69be2f",
+    "steps": 78,
+    "dev_nll": [
+      [
+        0,
+        0.37150469422340393
+      ],
+      [
+        10,
+        0.29883822798728943
+      ],
+      [
+        20,
+        0.2532449960708618
+      ],
+      [
+        30,
+        0.23691648244857788
+      ],
+      [
+        40,
+        0.22327499091625214
+      ],
+      [
+        50,
+        0.2139216512441635
+      ],
+      [
+        60,
+        0.2081347405910492
+      ],
+      [
+        70,
+        0.20473290979862213
+      ]
+    ],
+    "final_dev_nll": 0.20473290979862213,
+    "min_dev_nll": 0.20473290979862213,
+    "first_train_nll": 0.37368500232696533,
+    "last_train_nll": 0.18195374310016632,
+    "log_path": "results/train/runs/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr3e-05",
+    "metrics": "results/train/runs/sft_NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16_20261025T185449Z_lr3e-05/metrics.jsonl",
+    "state_path": "tinker://354939aa-3065-5c11-96ee-c8eb90c69427:train:0/weights/final",
+    "sampler_path": "tinker://354939aa-3065-5c11-96ee-c8eb90c69427:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261025T185938Z",
+    "kind": "rl",
+    "framework": "cookbook",
+    "name": "rlsweep_Qwen3.5-9B_lr0.00002",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "parent_run_id": "20261025T184758Z",
+    "load_checkpoint_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final",
+    "lora_rank": 32,
+    "learning_rate": 2e-05,
+    "steps": 10,
+    "tasks_per_step": 16,
+    "group_size": 8,
+    "max_tokens": 2048,
+    "max_turns": 1,
+    "leak_penalty": 0.5,
+    "turn_penalty": 0.05,
+    "seed": 0,
+    "tasks": [
+      "T003",
+      "T004",
+      "T005",
+      "T006",
+      "T007",
+      "T008",
+      "T010",
+      "T011",
+      "T013",
+      "T015",
+      "T016",
+      "T017",
+      "T018",
+      "T019",
+      "T020",
+      "T021",
+      "T022",
+      "T023",
+      "T024",
+      "T025",
+      "T027",
+      "T029",
+      "T030",
+      "T031",
+      "T032",
+      "T034",
+      "T035",
+      "T036",
+      "T037",
+      "T038",
+      "T040",
+      "T041",
+      "T044",
+      "T045",
+      "T046",
+      "T047",
+      "T048",
+      "T049",
+      "T050",
+      "T052",
+      "T053",
+      "T054",
+      "T056",
+      "T057",
+      "T059",
+      "T063",
+      "T066",
+      "T068",
+      "T069",
+      "T070",
+      "T071",
+      "T072",
+      "T075",
+      "T076",
+      "T078",
+      "T079",
+      "T080",
+      "T083",
+      "T085",
+      "T086",
+      "T087",
+      "T088",
+      "T089",
+      "T091",
+      "T092",
+      "T093",
+      "T094",
+      "T096",
+      "T100",
+      "T101",
+      "T102",
+      "T103"
+    ],
+    "est_spend_usd": 3.2039,
+    "log_path": "results/train/runs/rlsweep_Qwen3.5-9B_lr0.00002",
+    "metrics": "results/train/runs/rlsweep_Qwen3.5-9B_lr0.00002/metrics.jsonl",
+    "checkpoints": [
+      {
+        "name": "000010",
+        "batch": 10,
+        "state_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/weights/000010",
+        "sampler_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/sampler_weights/000010"
+      },
+      {
+        "name": "final",
+        "batch": 10,
+        "state_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/weights/final",
+        "sampler_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/sampler_weights/final"
+      }
+    ],
+    "dev_evals": [
+      {
+        "eval": 1,
+        "label": "Qwen3.5-9B@rlsweep_Qwen3.5-9B_lr0.00002-eval001",
+        "dev/pass_all": 0.21212121212121213,
+        "dev/leak_all": 0.42424242424242425,
+        "dev/apply_error_all": 0.12121212121212122,
+        "dev/pass_at_1": 0.2727272727272727,
+        "dev/mean_completion_tokens": 514.5,
+        "dev/spend_usd": 0.03879729899999999
+      }
+    ],
+    "best_dev_eval": {
+      "eval": 1,
+      "label": "Qwen3.5-9B@rlsweep_Qwen3.5-9B_lr0.00002-eval001",
+      "dev/pass_all": 0.21212121212121213,
+      "dev/leak_all": 0.42424242424242425,
+      "dev/apply_error_all": 0.12121212121212122,
+      "dev/pass_at_1": 0.2727272727272727,
+      "dev/mean_completion_tokens": 514.5,
+      "dev/spend_usd": 0.03879729899999999
+    },
+    "state_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/weights/final",
+    "sampler_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/sampler_weights/final"
   }
 ]

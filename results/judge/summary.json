@@ -1,0 +1,586 @@
+{
+  "zeroshot_Kimi-K2.6+kimi_k26": {
+    "n": 400,
+    "unparsed": 19,
+    "accuracy": {
+      "rate": 0.3575,
+      "lo": 0.3120927823653414,
+      "hi": 0.40561822151993315,
+      "n": 400
+    },
+    "kappa_4class": 0.157,
+    "pass_precision": {
+      "rate": 0.35294117647058826,
+      "lo": 0.17309720397243744,
+      "hi": 0.5869963651478132,
+      "n": 17
+    },
+    "pass_recall": {
+      "rate": 0.06,
+      "lo": 0.027786123963188192,
+      "hi": 0.1247681544589592,
+      "n": 100
+    },
+    "leak_precision": {
+      "rate": 0.3532934131736527,
+      "lo": 0.2848404638510851,
+      "hi": 0.42834390990547644,
+      "n": 167
+    },
+    "leak_recall": {
+      "rate": 0.59,
+      "lo": 0.4920143005341078,
+      "hi": 0.6813268697886348,
+      "n": 100
+    },
+    "block_precision": {
+      "rate": 0.27927927927927926,
+      "lo": 0.2042765697416089,
+      "hi": 0.36904825124916796,
+      "n": 111
+    },
+    "block_recall": {
+      "rate": 0.31,
+      "lo": 0.22779697212376038,
+      "hi": 0.40626055719489407,
+      "n": 100
+    },
+    "error_precision": {
+      "rate": 0.5465116279069767,
+      "lo": 0.4415616959142949,
+      "hi": 0.6474840531754034,
+      "n": 86
+    },
+    "error_recall": {
+      "rate": 0.47,
+      "lo": 0.3751081795934127,
+      "hi": 0.5671114302990063,
+      "n": 100
+    },
+    "unsafe_as_pass": {
+      "rate": 0.06,
+      "lo": 0.027786123963188192,
+      "hi": 0.1247681544589592,
+      "n": 100
+    },
+    "confusion": {
+      "pass": {
+        "leak": 45,
+        "unparsed": 9,
+        "block": 33,
+        "error": 7,
+        "pass": 6
+      },
+      "leak": {
+        "error": 10,
+        "block": 23,
+        "leak": 59,
+        "pass": 6,
+        "unparsed": 2
+      },
+      "block": {
+        "error": 22,
+        "leak": 38,
+        "block": 31,
+        "unparsed": 5,
+        "pass": 4
+      },
+      "error": {
+        "leak": 25,
+        "pass": 1,
+        "error": 47,
+        "block": 24,
+        "unparsed": 3
+      }
+    },
+    "leak_recall_by_task_trap": {
+      "aggregate-limit": {
+        "recall": 0.5,
+        "n": 4
+      },
+      "anon-vs-authenticated": {
+        "recall": 0.25,
+        "n": 4
+      },
+      "anon-write-spoof": {
+        "recall": 0.69,
+        "n": 16
+      },
+      "column-grant-blocks-client": {
+        "recall": 0.5,
+        "n": 4
+      },
+      "duplicate-approval": {
+        "recall": 0.33,
+        "n": 6
+      },
+      "forgot-enable": {
+        "recall": 0.6,
+        "n": 5
+      },
+      "negative-condition": {
+        "recall": 0.55,
+        "n": 33
+      },
+      "null-owner": {
+        "recall": 0.69,
+        "n": 16
+      },
+      "old-vs-new": {
+        "recall": 0.5,
+        "n": 4
+      },
+      "over-broad-for-all": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "overdraft": {
+        "recall": 1.0,
+        "n": 1
+      },
+      "ownership-change": {
+        "recall": 0.56,
+        "n": 9
+      },
+      "private-row-leak": {
+        "recall": 0.67,
+        "n": 18
+      },
+      "privilege-escalation": {
+        "recall": 0.52,
+        "n": 27
+      },
+      "recursive-policy": {
+        "recall": 0.71,
+        "n": 7
+      },
+      "reference-check": {
+        "recall": 0.61,
+        "n": 18
+      },
+      "restrictive-vs-permissive": {
+        "recall": 0.6,
+        "n": 5
+      },
+      "rpc-missing-auth-check": {
+        "recall": 0.67,
+        "n": 3
+      },
+      "self-approval": {
+        "recall": 0.83,
+        "n": 6
+      },
+      "sequence-bypass": {
+        "recall": 0.33,
+        "n": 6
+      },
+      "soft-delete-leak": {
+        "recall": 0.6,
+        "n": 5
+      },
+      "state-transition": {
+        "recall": 0.5,
+        "n": 28
+      },
+      "time-window": {
+        "recall": 0.64,
+        "n": 36
+      },
+      "upsert-needs-update": {
+        "recall": 0.8,
+        "n": 5
+      },
+      "weak-with-check": {
+        "recall": 0.64,
+        "n": 14
+      }
+    },
+    "est_spend_usd": 4.244
+  },
+  "zeroshot_Kimi-K2.6": {
+    "n": 400,
+    "unparsed": 0,
+    "accuracy": {
+      "rate": 0.37,
+      "lo": 0.3241319808189903,
+      "hi": 0.4183412157079268,
+      "n": 400
+    },
+    "kappa_4class": 0.16,
+    "pass_precision": {
+      "rate": 0.7551020408163265,
+      "lo": 0.6191368101239605,
+      "hi": 0.8539765474166023,
+      "n": 49
+    },
+    "pass_recall": {
+      "rate": 0.37,
+      "lo": 0.28182360534324524,
+      "hi": 0.4677947041905709,
+      "n": 100
+    },
+    "leak_precision": {
+      "rate": 0.2361111111111111,
+      "lo": 0.1741675163392711,
+      "hi": 0.31176829215288715,
+      "n": 144
+    },
+    "leak_recall": {
+      "rate": 0.34,
+      "lo": 0.25461520797348164,
+      "hi": 0.43722271145275377,
+      "n": 100
+    },
+    "block_precision": {
+      "rate": 0.22580645161290322,
+      "lo": 0.16707853452979088,
+      "hi": 0.29779668991680014,
+      "n": 155
+    },
+    "block_recall": {
+      "rate": 0.35,
+      "lo": 0.26364248243097527,
+      "hi": 0.44745556703112027,
+      "n": 100
+    },
+    "error_precision": {
+      "rate": 0.8076923076923077,
+      "lo": 0.6810113918634199,
+      "hi": 0.8920395397526649,
+      "n": 52
+    },
+    "error_recall": {
+      "rate": 0.42,
+      "lo": 0.3279838267435473,
+      "hi": 0.5179351329695703,
+      "n": 100
+    },
+    "unsafe_as_pass": {
+      "rate": 0.01,
+      "lo": 0.0017674320641406505,
+      "hi": 0.054486196178705315,
+      "n": 100
+    },
+    "confusion": {
+      "pass": {
+        "block": 29,
+        "pass": 37,
+        "leak": 34
+      },
+      "leak": {
+        "block": 60,
+        "leak": 34,
+        "error": 5,
+        "pass": 1
+      },
+      "block": {
+        "block": 35,
+        "leak": 49,
+        "pass": 11,
+        "error": 5
+      },
+      "error": {
+        "block": 31,
+        "error": 42,
+        "leak": 27
+      }
+    },
+    "leak_recall_by_task_trap": {
+      "aggregate-limit": {
+        "recall": 0.25,
+        "n": 4
+      },
+      "anon-vs-authenticated": {
+        "recall": 0.75,
+        "n": 4
+      },
+      "anon-write-spoof": {
+        "recall": 0.62,
+        "n": 16
+      },
+      "column-grant-blocks-client": {
+        "recall": 0.0,
+        "n": 4
+      },
+      "duplicate-approval": {
+        "recall": 0.0,
+        "n": 6
+      },
+      "forgot-enable": {
+        "recall": 0.2,
+        "n": 5
+      },
+      "negative-condition": {
+        "recall": 0.18,
+        "n": 33
+      },
+      "null-owner": {
+        "recall": 0.62,
+        "n": 16
+      },
+      "old-vs-new": {
+        "recall": 0.0,
+        "n": 4
+      },
+      "over-broad-for-all": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "overdraft": {
+        "recall": 0.0,
+        "n": 1
+      },
+      "ownership-change": {
+        "recall": 0.11,
+        "n": 9
+      },
+      "private-row-leak": {
+        "recall": 0.56,
+        "n": 18
+      },
+      "privilege-escalation": {
+        "recall": 0.11,
+        "n": 27
+      },
+      "recursive-policy": {
+        "recall": 0.29,
+        "n": 7
+      },
+      "reference-check": {
+        "recall": 0.17,
+        "n": 18
+      },
+      "restrictive-vs-permissive": {
+        "recall": 0.2,
+        "n": 5
+      },
+      "rpc-missing-auth-check": {
+        "recall": 0.33,
+        "n": 3
+      },
+      "self-approval": {
+        "recall": 0.67,
+        "n": 6
+      },
+      "sequence-bypass": {
+        "recall": 0.0,
+        "n": 6
+      },
+      "soft-delete-leak": {
+        "recall": 0.2,
+        "n": 5
+      },
+      "state-transition": {
+        "recall": 0.25,
+        "n": 28
+      },
+      "time-window": {
+        "recall": 0.5,
+        "n": 36
+      },
+      "upsert-needs-update": {
+        "recall": 0.2,
+        "n": 5
+      },
+      "weak-with-check": {
+        "recall": 0.36,
+        "n": 14
+      }
+    },
+    "est_spend_usd": 1.0469
+  },
+  "zeroshot_gpt-oss-120b": {
+    "n": 400,
+    "unparsed": 5,
+    "accuracy": {
+      "rate": 0.52,
+      "lo": 0.47108291490392346,
+      "hi": 0.5685365933227047,
+      "n": 400
+    },
+    "kappa_4class": 0.363,
+    "pass_precision": {
+      "rate": 0.7872340425531915,
+      "lo": 0.6509597329080159,
+      "hi": 0.88010292001905,
+      "n": 47
+    },
+    "pass_recall": {
+      "rate": 0.37,
+      "lo": 0.28182360534324524,
+      "hi": 0.4677947041905709,
+      "n": 100
+    },
+    "leak_precision": {
+      "rate": 0.422680412371134,
+      "lo": 0.3553312442843859,
+      "hi": 0.4930321868244125,
+      "n": 194
+    },
+    "leak_recall": {
+      "rate": 0.82,
+      "lo": 0.7333264161369926,
+      "hi": 0.8829977450105364,
+      "n": 100
+    },
+    "block_precision": {
+      "rate": 0.5303030303030303,
+      "lo": 0.41157685726598636,
+      "hi": 0.6456957150362233,
+      "n": 66
+    },
+    "block_recall": {
+      "rate": 0.35,
+      "lo": 0.26364248243097527,
+      "hi": 0.44745556703112027,
+      "n": 100
+    },
+    "error_precision": {
+      "rate": 0.6136363636363636,
+      "lo": 0.5091875700661254,
+      "hi": 0.7085790056918536,
+      "n": 88
+    },
+    "error_recall": {
+      "rate": 0.54,
+      "lo": 0.44264860323368227,
+      "hi": 0.6343919169097589,
+      "n": 100
+    },
+    "unsafe_as_pass": {
+      "rate": 0.0,
+      "lo": 3.469446951953614e-18,
+      "hi": 0.03699349820698568,
+      "n": 100
+    },
+    "confusion": {
+      "pass": {
+        "pass": 37,
+        "block": 14,
+        "leak": 36,
+        "error": 10,
+        "unparsed": 3
+      },
+      "leak": {
+        "leak": 82,
+        "error": 8,
+        "block": 10
+      },
+      "block": {
+        "block": 35,
+        "leak": 37,
+        "error": 16,
+        "pass": 10,
+        "unparsed": 2
+      },
+      "error": {
+        "leak": 39,
+        "block": 7,
+        "error": 54
+      }
+    },
+    "leak_recall_by_task_trap": {
+      "aggregate-limit": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "anon-vs-authenticated": {
+        "recall": 0.75,
+        "n": 4
+      },
+      "anon-write-spoof": {
+        "recall": 0.88,
+        "n": 16
+      },
+      "column-grant-blocks-client": {
+        "recall": 0.5,
+        "n": 4
+      },
+      "duplicate-approval": {
+        "recall": 0.67,
+        "n": 6
+      },
+      "forgot-enable": {
+        "recall": 1.0,
+        "n": 5
+      },
+      "negative-condition": {
+        "recall": 0.82,
+        "n": 33
+      },
+      "null-owner": {
+        "recall": 0.88,
+        "n": 16
+      },
+      "old-vs-new": {
+        "recall": 0.5,
+        "n": 4
+      },
+      "over-broad-for-all": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "overdraft": {
+        "recall": 1.0,
+        "n": 1
+      },
+      "ownership-change": {
+        "recall": 0.67,
+        "n": 9
+      },
+      "private-row-leak": {
+        "recall": 0.78,
+        "n": 18
+      },
+      "privilege-escalation": {
+        "recall": 0.81,
+        "n": 27
+      },
+      "recursive-policy": {
+        "recall": 0.86,
+        "n": 7
+      },
+      "reference-check": {
+        "recall": 0.67,
+        "n": 18
+      },
+      "restrictive-vs-permissive": {
+        "recall": 0.8,
+        "n": 5
+      },
+      "rpc-missing-auth-check": {
+        "recall": 0.67,
+        "n": 3
+      },
+      "self-approval": {
+        "recall": 1.0,
+        "n": 6
+      },
+      "sequence-bypass": {
+        "recall": 0.67,
+        "n": 6
+      },
+      "soft-delete-leak": {
+        "recall": 1.0,
+        "n": 5
+      },
+      "state-transition": {
+        "recall": 0.75,
+        "n": 28
+      },
+      "time-window": {
+        "recall": 0.86,
+        "n": 36
+      },
+      "upsert-needs-update": {
+        "recall": 0.6,
+        "n": 5
+      },
+      "weak-with-check": {
+        "recall": 0.93,
+        "n": 14
+      }
+    },
+    "est_spend_usd": 0.5266
+  }
+}

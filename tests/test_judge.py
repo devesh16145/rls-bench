@@ -12,10 +12,10 @@ def test_label_of_orders_pass_leak_error_block():
     assert judge.label_of({"passed": False, "leak": False}) == "block"
 
 
-def test_parse_label_takes_first_known_word():
+def test_parse_label_takes_last_known_word():
     assert judge.parse_label("Leak.") == "leak"
     assert judge.parse_label("The candidate would PASS all rules") == "pass"
-    assert judge.parse_label("I think this is a leak, not a block") == "leak"
+    assert judge.parse_label("Not a leak. Final answer: block") == "block"
     assert judge.parse_label("unsure") is None
 
 

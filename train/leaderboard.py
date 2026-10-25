@@ -27,7 +27,6 @@ LEADERBOARD_PATH = ROOT / "results" / "leaderboard.json"
 # model -> reasoning-off renderer (cookbook names); the cheapest faithful protocol for a base-model row
 MODELS = {
     "Qwen/Qwen3.5-9B": "qwen3_5_disable_thinking",
-    "deepseek-ai/DeepSeek-V4.1-Flash-1017": "deepseekv4_1_disable_thinking",
     "moonshotai/Kimi-K2.6": "kimi_k26_disable_thinking",
     "Qwen/Qwen3.8-27B": "qwen3_8_disable_thinking",
     "openai/gpt-oss-120b": "gpt_oss_medium_reasoning",  # no reasoning-off template; medium is its default
