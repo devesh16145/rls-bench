@@ -274,3 +274,8 @@
 
 - Qwen3.5-397B-A17B, reasoning off, all 103 tasks on Tinker: pass@1 38%, pass@5 48%, leak 15%; estimated $4.35. It is the only sampleable Tinker model that shares the student's tokenizer, so it is the distillation teacher despite scoring below Kimi K2.6 and below the GRPO student's dev numbers; the experiment measures what pure distillation from such a teacher gives, against SFT and GRPO.
 - Experiment C started: `train/distill_cookbook.py`, student Qwen3.5-9B from the base model, teacher Qwen3.5-397B, 40 steps × 16 tasks × 4 rollouts (2,560 rollouts), lr 1e-4, KL coefficient 1.0, environment reward scaled to 0, dev eval every 10 steps; typical $12.5, worst $26.7, cap $30.
+
+## 2026-10-26 — Full GRPO run, Nemotron-3.5-Lightning (run 20261025T193419Z)
+
+- 50 steps × 16 × 8 from the v2 SFT model, lr 6e-5; estimated $5.64. Train side (first 5 → last 5 steps): reward 0.33 → 0.49, pass 43% → 53%, leak 20% → 7%, answer length 620 → 832 tokens, entropy 0.072 → 0.017, KL ≤ 5e-3.
+- Dev (66 samples): SFT 30% pass / 44% leak → step 10 27% / 49%, step 20 29% / 42%, step 30 27% / 36%, step 40 23% / 23%, **step 50 38% / 17%**. Best checkpoint by the pre-registered rule: step 50 (the final one). The leak rate fell at every evaluation; the pass rate moved within noise until the last one.

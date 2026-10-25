@@ -1,0 +1,1 @@
+{"eval": 1, "label": "Qwen3.5-9B@distil_Qwen3.5-9B_from397B_s40-eval001", "dev/pass_all": 0.0, "dev/leak_all": 0.07575757575757576, "dev/apply_error_all": 0.5303030303030303, "dev/pass_at_1": 0.0, "dev/mean_completion_tokens": 1788.0151515151515, "dev/spend_usd": 0.10662726299999999}
