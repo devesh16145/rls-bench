@@ -177,8 +177,15 @@ def train(
         task_ids=task_ids, steps=steps, tasks_per_step=tasks_per_step, group_size=group_size, model_name=model,
         renderer_name=renderer_name, seed=seed, max_turns=max_turns, leak_penalty=leak_penalty,
         turn_penalty=turn_penalty, max_tokens=max_tokens, guard_name=name)
-    evaluator = rl_env.make_dev_evaluator(prefix=f"{slug}@{name}", model_name=model, renderer_name=renderer_name,
-                                          log_path=log_path, max_spend=dev_est["worst_usd"] + 0.05)
+    if max_turns > 1:
+        from train.repair_eval import RepairDevEvaluator
+
+        dev_evaluator = RepairDevEvaluator(prefix=f"{slug}@{name}", model_name=model, renderer_name=renderer_name,
+                                           log_path=log_path, max_turns=max_turns, max_spend=max_turns * dev_est["worst_usd"] + 0.05)
+        evaluator = lambda: dev_evaluator  # noqa: E731
+    else:
+        evaluator = rl_env.make_dev_evaluator(prefix=f"{slug}@{name}", model_name=model, renderer_name=renderer_name,
+                                              log_path=log_path, max_spend=dev_est["worst_usd"] + 0.05)
     config = rl_train.Config(
         learning_rate=learning_rate, dataset_builder=dataset_builder, model_name=model, recipe_name="rls_bench_grpo",
         max_tokens=max_tokens, log_path=str(log_path), eval_every=eval_every, save_every=eval_every or steps,
@@ -191,7 +198,7 @@ def train(
     dev_path = log_path / "dev_evals.jsonl"
     dev_evals = [json.loads(line) for line in dev_path.read_text().splitlines()] if dev_path.exists() else []
     final = next((c for c in reversed(checkpoints) if c.get("sampler_path")), checkpoints[-1])
-    best = max(dev_evals, key=lambda e: e["dev/pass_all"]) if dev_evals else None
+    best = max(dev_evals, key=lambda e: e.get("dev/pass_final", e["dev/pass_all"])) if dev_evals else None
     record = {
         "run_id": run_id, "kind": "rl", "framework": "cookbook", "name": name, "model": model, "renderer": renderer_name,
         "parent_run_id": from_run, "load_checkpoint_path": load_path, "lora_rank": lora_rank, "learning_rate": learning_rate,
