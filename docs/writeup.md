@@ -2,8 +2,8 @@
 
 Outline from `docs/spec.md` §11. Only the training section is drafted; the other sections are not yet written.
 
-1. Why RLS — *not yet written*
-2. Benchmark design — *not yet written*
+1. Why RLS (below)
+2. Benchmark design (below)
 3. Results — *not yet written*
 4. Judge calibration — *not yet written*
 5. Training a small model on the harness (below)
@@ -11,6 +11,28 @@ Outline from `docs/spec.md` §11. Only the training section is drafted; the othe
 7. What's next — *not yet written*
 
 ---
+
+## 1. Why Row Level Security
+
+Supabase apps talk to Postgres directly from the browser. There is no application server in between to decide who may read which row; that decision is made by Row Level Security policies on the tables themselves, evaluated by the database for every query under the caller's identity. When the policies are right, a user can only see and change what the product rules allow. When they are slightly wrong, the app still works in every demo and every happy-path test, and someone else's rows are one filtered `select` away.
+
+Two things make this a good benchmark for code-writing models. First, correctness is executable: a policy set either lets the wrong user through or it does not, and the database can be asked. There is no need for a judge model to guess whether SQL is "secure". Second, the mistakes are specific and repeatable. A policy that forgets `with check` on an update, one that trusts a claim the client controls, one that lets the owner column be rewritten, a view that runs with its owner's rights: each is a small, named pattern that shows up again and again, in human code and in model output. That makes it possible to measure not just how often a model fails but how.
+
+The benchmark asks a direct question: given a schema and the access rules written as a product manager would write them, can a model write the policies, and when it cannot, does it fail safe or fail open?
+
+## 2. Benchmark design
+
+**Tasks.** Each of the 103 tasks is a small application: a schema (`schema.sql`), fixture rows (`seed.sql`), the access rules as numbered requirements (`requirement.md`, "R1. Users can read their own notes…"), a reference solution, and a test file. Tasks come in three tiers: single-owner tables and public/private rows (tier 1), memberships, roles, state transitions and time windows (tier 2), and security-definer helpers, RPCs, storage paths and multi-tenant claims (tier 3). Every task also lists the trap patterns it is built to catch, drawn from a taxonomy of 55 named failure modes (`docs/failure-taxonomy.md`).
+
+**Tests.** A test is a query run as a specific caller: `anon`, an authenticated user with chosen JWT claims, or `service_role`. It states what should happen: these rows, this count, this many rows affected, an error, or a denial. Tests can be raw SQL or mirror what the `supabase-js` client sends (inserts and updates with `returning`, upserts with `on conflict`, filtered deletes), because Postgres treats those differently: an updated row must still satisfy the `select` policy, an upsert checks the insert, update and select policies together, and a delete needs the row to be visible. Each test cites the rules it covers, and every rule must be covered.
+
+**Grading.** A candidate's SQL is applied to a fresh clone of the task database; then each test runs in its own transaction with the caller's role and claims set, and is rolled back. Besides pass or fail, every failure is classified: a **leak** when a caller got access the rules forbid, a **block** when a caller lost access the rules allow. A candidate whose SQL fails to apply, or that produces no SQL block, is recorded as such. The leak rate is the headline number, because a blocked user files a bug and a leaked row does not.
+
+**What makes a task valid.** A task is accepted only when the reference passes; the no-policy, allow-all and deny-all candidates all fail; results are identical across runs; every rule has a test; and every trap the task claims to catch is caught: for each trap there is a realistic wrong answer under `traps/`, and at least one test must fail on it. Several traps turned out to be caught by accident the first time (a leaky update policy rejected by the select policy, for instance); those tests were tightened until the trap failed for the right reason. Tests were never weakened to make a reference pass.
+
+**Prompt and protocol.** Models see one fixed prompt: a short system instruction, the schema, the row counts of the fixture (never the rows), and the requirements verbatim. Zero-shot, no tools, no retries. Each model is sampled once greedily and five times at temperature 0.7 per task, which gives pass@1 and pass@5. Every rate is reported with a 95% Wilson interval. Models whose API ignores temperature are recorded as such.
+
+**Split.** The tasks were split once, stratified by tier with a fixed seed, into 72 train, 11 dev and 20 test. Training data comes from train tasks only; checkpoints are chosen on dev; the test split is evaluated once per version of this write-up and the evaluation is locked to a git commit.
 
 ## 5. Training a small model on the harness
 
