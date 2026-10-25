@@ -30,6 +30,7 @@ MODELS = {
     "moonshotai/Kimi-K2.6": "kimi_k26_disable_thinking",
     "Qwen/Qwen3.8-27B": "qwen3_8_disable_thinking",
     "openai/gpt-oss-120b": "gpt_oss_medium_reasoning",  # no reasoning-off template; medium is its default
+    "Qwen/Qwen3.5-397B-A17B": "qwen3_5_disable_thinking",
 }
 
 app = typer.Typer(add_completion=False)

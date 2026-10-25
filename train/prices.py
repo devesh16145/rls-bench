@@ -8,6 +8,7 @@ table; the stored `est_spend_usd` figures are estimates from token counts, not i
 PRICES: dict[str, dict[str, float]] = {
     "Qwen/Qwen3.5-9B": {"prefill": 0.30, "sample": 0.807, "train": 1.463},
     "Qwen/Qwen3.5-4B": {"prefill": 0.33, "sample": 1.005, "train": 0.737},
+    "Qwen/Qwen3.5-397B-A17B": {"prefill": 1.65, "sample": 7.50, "train": 6.60},
     "Qwen/Qwen3-8B": {"prefill": 0.195, "sample": 0.60, "train": 0.44},
     "Qwen/Qwen3.8-27B": {"prefill": 0.6975, "sample": 5.595, "train": 4.103},
     "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16": {"prefill": 0.184, "sample": 0.495, "train": 0.44},
