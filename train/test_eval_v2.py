@@ -66,15 +66,19 @@ def parse_rows(rows: str) -> list[dict[str, Any]]:
 @app.command()
 def main(
     rows: str = typer.Option(..., help="Comma-separated name=ref rows, e.g. base=Qwen/Qwen3.5-9B,sft=<run_id>,sft+rl=<run_id>#step-30"),
+    repair_rows: str = typer.Option("", help="Rows also evaluated with the 3-try repair protocol (same name=ref form)."),
     max_spend: float = typer.Option(2.0, help="Per row (USD)."),
     estimate_only: bool = typer.Option(False, "--estimate"),
     yes: bool = typer.Option(False, "--yes"),
     once: bool = typer.Option(False, "--once"),
 ) -> None:
     models = parse_rows(rows)
+    repair_models = parse_rows(repair_rows) if repair_rows else []
     test_ids = sorted(splitmod.load()["test"])
     tasks = [Task.load(next((ROOT / "tasks").glob(f"{tid}-*"))) for tid in test_ids]
     content = lock_content(models, test_ids, K, MAX_TOKENS)
+    content["repair_models"] = [{key: m[key] for key in ("name", "label", "model", "renderer", "model_path")} for m in repair_models]
+    content["repair_max_turns"] = 3
     total_typ = total_worst = 0.0
     per_row = {}
     for m in models:
@@ -112,7 +116,20 @@ def main(
                                            renderer_name=m["renderer"], k=K, max_tokens=MAX_TOKENS, max_spend=max_spend,
                                            out_dir=TEST_DIR, log=lambda s: None)
         typer.echo(f"{m['name']}: {out['graded']} graded, est ${out['spent_usd']:.3f}, stopped at cap: {out['stopped_at_cap']}")
-    summary = {"git_commit": commit, "version": 2, **compare(models, test_ids, TEST_DIR)}
+    repair_summaries = {}
+    for m in repair_models:
+        from train import repair_eval
+
+        client = (service.create_sampling_client(model_path=m["model_path"]) if m["model_path"]
+                  else service.create_sampling_client(base_model=m["model"]))
+        renderer, _ = make_renderer(m["model"], m["renderer"])
+        label = m["label"] + "@repair3"
+        out = repair_eval.repair_sample_and_grade(client, renderer, tasks, label=label, model=m["model"], model_path=m["model_path"],
+                                                  renderer_name=m["renderer"], k=K, max_turns=3, max_tokens=MAX_TOKENS,
+                                                  max_spend=3 * max_spend, out_dir=TEST_DIR, log=lambda s: None)
+        repair_summaries[m["name"]] = {**repair_eval.summarize(label, tasks, out_dir=TEST_DIR), "est_spend_usd": round(out["spent_usd"], 4)}
+        typer.echo(f"{m['name']} (3 tries): pass by try {[round(w['rate'], 3) for w in repair_summaries[m['name']]['pass_by_try']]}, est ${out['spent_usd']:.3f}")
+    summary = {"git_commit": commit, "version": 2, **compare(models, test_ids, TEST_DIR), "repair": repair_summaries}
     (TEST_DIR / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     for name, row in summary["models"].items():
         typer.echo(f"{name:10} pass {row['pass_all_samples']['rate']:.0%} [{row['pass_all_samples']['lo']:.0%}, {row['pass_all_samples']['hi']:.0%}]  "

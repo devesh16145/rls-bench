@@ -299,3 +299,8 @@
 
 - Pass after 1 / 2 / 3 tries, 66 dev samples: base 0% / 9% / 12%; SFT 23% / 30% / 36%; GRPO step 40 **52% / 62% / 67%**; repair-trained step 5 52% / 64% / 67%. Leak on any try: 36% / 49% / 26% / 27%. Cost about $0.55 for the three evals.
 - Reading: harness feedback is worth 10–15 points to every model, in proportion to what it can already do; repair training on top of GRPO did not add to that. The repair row in the test eval is the step-5 checkpoint, pre-registered before this comparison was run.
+
+## 2026-10-26 — On-policy distillation (distil_Qwen3.5-9B_from397B_s40, experiment C)
+
+- Qwen3.5-9B from the base model, teacher Qwen3.5-397B (reasoning off), 40 steps × 16 tasks × 4 rollouts, lr 1e-4, KL coefficient 1.0, environment reward scaled to 0; estimated $12.11 including teacher scoring. Train side: teacher KL per token 0.18 → 0.10, pass 3% → 32%, leak 7% → 23%, apply errors 60% → 18%, format errors 25% → 4%, answer length 1,182 → 669 tokens, entropy 0.39 → 0.05.
+- Dev: step 10 0% pass / 8% leak (answers still 1,788 tokens and mostly failing to apply), step 20 27% / 35%, **step 30 29% / 35%**, step 40 21% / 47%. Best checkpoint: step 30. Pure distillation from a 38%-pass teacher reaches the SFT model's pass rate with a higher leak rate; it never sees a correctness signal, and inherits the teacher's 15% leak rate and then some.

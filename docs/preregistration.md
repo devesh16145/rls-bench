@@ -28,7 +28,7 @@ Chosen checkpoints (filled in before running):
 | base (Nemotron) | nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16 | — | — |
 | sft (Nemotron) | 20261025T190749Z (sft lr 3e-4) | final | lowest final dev loss of the three sweep runs (0.153) |
 | sft+rl (Nemotron) | 20261025T193419Z (rl_Nemotron_lr6e-5_s50) | step 50 (final) | highest dev pass rate of the five evals (38%) |
-| distil | _pending_ | | |
+| distil | distil_Qwen3.5-9B_from397B_s40 | step 30 | highest dev pass rate of the four evals (29%) |
 
 ## Primary measures
 
@@ -40,7 +40,8 @@ Chosen checkpoints (filled in before running):
 ## Secondary measures
 
 Greedy pass@1 (n = 20), apply-error rate, format-error rate, mean answer length, pass and leak by tier, pass by
-trap. For the repair row: pass rate after 1, 2 and 3 tries.
+trap. For the repair row and the sft+rl row: pass rate after 1, 2 and 3 tries with harness feedback (the same
+3-try protocol as on dev), run once alongside the single-answer protocol.
 
 ## What would count as a result
 
