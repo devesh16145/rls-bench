@@ -141,7 +141,14 @@ def sample(tasks: list[Task], *, model: str, samples: int, max_tokens: int, max_
         while futures:
             fut = next(as_completed(futures))
             t, ph, idx = futures.pop(fut)
-            completion = fut.result()
+            try:
+                completion = fut.result()
+            except httpx.HTTPError as exc:
+                if not stopped:
+                    stopped = True
+                    log(f"stopping: {exc}; not submitting {len(queue)} remaining samples")
+                    queue.clear()
+                continue
             if not completion.cached:
                 spent += completion.cost_usd
             result = run_completion(t, completion.text)

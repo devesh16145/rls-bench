@@ -114,7 +114,9 @@ def complete(
             if r.status_code in RETRY_STATUS and attempt < 5:
                 time.sleep(2**attempt)
                 continue
-            r.raise_for_status()
+            if r.status_code >= 400:
+                # keep OpenRouter's explanation (e.g. "key limit exceeded"); it never contains the key
+                raise httpx.HTTPStatusError(f"{r.status_code} from OpenRouter: {r.text[:300]}", request=r.request, response=r)
             payload = r.json()
             if "error" in payload:
                 raise RuntimeError(f"OpenRouter error: {payload['error']}")
