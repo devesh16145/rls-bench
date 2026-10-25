@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 660" font-family="system-ui, sans-serif" font-size="12">
+<rect width="760" height="660" fill="#ffffff"/>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#1f2328">GRPO from SFT, Nemotron-3.5-Lightning (run 20261025T133618Z, leak penalty 0.5)</text>
+<line x1="64" x2="636" y1="286.0" y2="286.0" stroke="#e6e8eb"/>
+<text x="56" y="290.0" text-anchor="end" fill="#6e7781">-0.5</text>
+<line x1="64" x2="636" y1="211.3" y2="211.3" stroke="#e6e8eb"/>
+<text x="56" y="215.3" text-anchor="end" fill="#6e7781">0</text>
+<line x1="64" x2="636" y1="136.7" y2="136.7" stroke="#e6e8eb"/>
+<text x="56" y="140.7" text-anchor="end" fill="#6e7781">+0.5</text>
+<line x1="64" x2="636" y1="62.0" y2="62.0" stroke="#e6e8eb"/>
+<text x="56" y="66.0" text-anchor="end" fill="#6e7781">+1.0</text>
+<text x="64" y="50" font-weight="600" fill="#1f2328">Train mean reward per step</text>
+<line x1="407.2" x2="407.2" y1="62" y2="286" stroke="#6e7781" stroke-dasharray="3 4"/>
+<text x="64.0" y="302" text-anchor="middle" fill="#6e7781">0</text>
+<text x="178.4" y="302" text-anchor="middle" fill="#6e7781">5</text>
+<text x="292.8" y="302" text-anchor="middle" fill="#6e7781">10</text>
+<text x="407.2" y="302" text-anchor="middle" fill="#6e7781">15</text>
+<text x="521.6" y="302" text-anchor="middle" fill="#6e7781">20</text>
+<text x="636.0" y="302" text-anchor="middle" fill="#6e7781">25</text>
+<polyline points="86.9,207.6 109.8,181.7 132.6,196.2 155.5,171.9 178.4,216.7 201.3,196.6 224.2,173.3 247.0,234.7 269.9,206.7 292.8,184.7 315.7,205.0 338.6,214.1 361.4,157.9 384.3,180.5 407.2,192.2 430.1,180.1 453.0,194.5 475.8,185.2 498.7,174.2 521.6,205.7 544.5,127.8 567.4,225.3 590.2,190.3 613.1,193.4 636.0,230.2" fill="none" stroke="#86b6ef" stroke-width="1.5"/>
+<polyline points="86.9,207.6 109.8,194.7 132.6,195.2 155.5,189.3 178.4,194.8 201.3,192.6 224.2,190.9 247.0,198.6 269.9,205.6 292.8,199.2 315.7,200.9 338.6,209.0 361.4,193.7 384.3,188.5 407.2,190.0 430.1,185.0 453.0,181.0 475.8,186.5 498.7,185.2 521.6,188.0 544.5,177.5 567.4,183.7 590.2,184.7 613.1,188.5 636.0,193.4" fill="none" stroke="#2a78d6" stroke-width="2"/>
+<circle cx="86.9" cy="207.6" r="6" fill="transparent"><title>step 1: reward +0.025, pass 11%, leak 14%</title></circle>
+<circle cx="109.8" cy="181.7" r="6" fill="transparent"><title>step 2: reward +0.198, pass 27%, leak 12%</title></circle>
+<circle cx="132.6" cy="196.2" r="6" fill="transparent"><title>step 3: reward +0.102, pass 19%, leak 16%</title></circle>
+<circle cx="155.5" cy="171.9" r="6" fill="transparent"><title>step 4: reward +0.264, pass 31%, leak 8%</title></circle>
+<circle cx="178.4" cy="216.7" r="6" fill="transparent"><title>step 5: reward -0.036, pass 5%, leak 14%</title></circle>
+<circle cx="201.3" cy="196.6" r="6" fill="transparent"><title>step 6: reward +0.098, pass 17%, leak 12%</title></circle>
+<circle cx="224.2" cy="173.3" r="6" fill="transparent"><title>step 7: reward +0.255, pass 28%, leak 3%</title></circle>
+<circle cx="247.0" cy="234.7" r="6" fill="transparent"><title>step 8: reward -0.156, pass 0%, leak 30%</title></circle>
+<circle cx="269.9" cy="206.7" r="6" fill="transparent"><title>step 9: reward +0.031, pass 14%, leak 20%</title></circle>
+<circle cx="292.8" cy="184.7" r="6" fill="transparent"><title>step 10: reward +0.178, pass 23%, leak 9%</title></circle>
+<circle cx="315.7" cy="205.0" r="6" fill="transparent"><title>step 11: reward +0.042, pass 14%, leak 19%</title></circle>
+<circle cx="338.6" cy="214.1" r="6" fill="transparent"><title>step 12: reward -0.019, pass 6%, leak 16%</title></circle>
+<circle cx="361.4" cy="157.9" r="6" fill="transparent"><title>step 13: reward +0.358, pass 39%, leak 6%</title></circle>
+<circle cx="384.3" cy="180.5" r="6" fill="transparent"><title>step 14: reward +0.206, pass 28%, leak 14%</title></circle>
+<circle cx="407.2" cy="192.2" r="6" fill="transparent"><title>step 15: reward +0.128, pass 17%, leak 8%</title></circle>
+<circle cx="430.1" cy="180.1" r="6" fill="transparent"><title>step 16: reward +0.209, pass 28%, leak 14%</title></circle>
+<circle cx="453.0" cy="194.5" r="6" fill="transparent"><title>step 17: reward +0.113, pass 20%, leak 17%</title></circle>
+<circle cx="475.8" cy="185.2" r="6" fill="transparent"><title>step 18: reward +0.175, pass 23%, leak 11%</title></circle>
+<circle cx="498.7" cy="174.2" r="6" fill="transparent"><title>step 19: reward +0.248, pass 31%, leak 12%</title></circle>
+<circle cx="521.6" cy="205.7" r="6" fill="transparent"><title>step 20: reward +0.037, pass 12%, leak 17%</title></circle>
+<circle cx="544.5" cy="127.8" r="6" fill="transparent"><title>step 21: reward +0.559, pass 59%, leak 6%</title></circle>
+<circle cx="567.4" cy="225.3" r="6" fill="transparent"><title>step 22: reward -0.094, pass 8%, leak 34%</title></circle>
+<circle cx="590.2" cy="190.3" r="6" fill="transparent"><title>step 23: reward +0.141, pass 20%, leak 11%</title></circle>
+<circle cx="613.1" cy="193.4" r="6" fill="transparent"><title>step 24: reward +0.120, pass 23%, leak 22%</title></circle>
+<circle cx="636.0" cy="230.2" r="6" fill="transparent"><title>step 25: reward -0.127, pass 0%, leak 25%</title></circle>
+<text x="644" y="197.4" fill="#1f2328">5-step mean</text>
+<text x="644" y="211.4" fill="#6e7781">light: per step</text>
+<line x1="64" x2="636" y1="586.0" y2="586.0" stroke="#e6e8eb"/>
+<text x="56" y="590.0" text-anchor="end" fill="#6e7781">0%</text>
+<line x1="64" x2="636" y1="541.2" y2="541.2" stroke="#e6e8eb"/>
+<text x="56" y="545.2" text-anchor="end" fill="#6e7781">10%</text>
+<line x1="64" x2="636" y1="496.4" y2="496.4" stroke="#e6e8eb"/>
+<text x="56" y="500.4" text-anchor="end" fill="#6e7781">20%</text>
+<line x1="64" x2="636" y1="451.6" y2="451.6" stroke="#e6e8eb"/>
+<text x="56" y="455.6" text-anchor="end" fill="#6e7781">30%</text>
+<line x1="64" x2="636" y1="406.8" y2="406.8" stroke="#e6e8eb"/>
+<text x="56" y="410.8" text-anchor="end" fill="#6e7781">40%</text>
+<line x1="64" x2="636" y1="362.0" y2="362.0" stroke="#e6e8eb"/>
+<text x="56" y="366.0" text-anchor="end" fill="#6e7781">50%</text>
+<text x="64" y="350" font-weight="600" fill="#1f2328">Dev (11 tasks × 6 samples): pass and leak rate, step 0 = SFT</text>
+<line x1="407.2" x2="407.2" y1="362" y2="586" stroke="#6e7781" stroke-dasharray="3 4"/>
+<text x="64.0" y="602" text-anchor="middle" fill="#6e7781">0</text>
+<text x="178.4" y="602" text-anchor="middle" fill="#6e7781">5</text>
+<text x="292.8" y="602" text-anchor="middle" fill="#6e7781">10</text>
+<text x="407.2" y="602" text-anchor="middle" fill="#6e7781">15</text>
+<text x="521.6" y="602" text-anchor="middle" fill="#6e7781">20</text>
+<text x="636.0" y="602" text-anchor="middle" fill="#6e7781">25</text>
+<polyline points="64.0,518.1 178.4,511.3 292.8,518.1 407.2,450.2 521.6,477.4 636.0,518.1" fill="none" stroke="#2a78d6" stroke-width="2"/>
+<circle cx="64.0" cy="518.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 0: pass 15%</title></circle>
+<circle cx="178.4" cy="511.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 5: pass 17%</title></circle>
+<circle cx="292.8" cy="518.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 10: pass 15%</title></circle>
+<circle cx="407.2" cy="450.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 15: pass 30%</title></circle>
+<circle cx="521.6" cy="477.4" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 20: pass 24%</title></circle>
+<circle cx="636.0" cy="518.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 25: pass 15%</title></circle>
+<text x="644" y="522.1" fill="#1f2328">pass 15%</text>
+<polyline points="64.0,429.9 178.4,457.0 292.8,477.4 407.2,491.0 521.6,504.5 636.0,504.5" fill="none" stroke="#eb6834" stroke-width="2"/>
+<circle cx="64.0" cy="429.9" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 0: leak 35%</title></circle>
+<circle cx="178.4" cy="457.0" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 5: leak 29%</title></circle>
+<circle cx="292.8" cy="477.4" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 10: leak 24%</title></circle>
+<circle cx="407.2" cy="491.0" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 15: leak 21%</title></circle>
+<circle cx="521.6" cy="504.5" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 20: leak 18%</title></circle>
+<circle cx="636.0" cy="504.5" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="2"><title>step 25: leak 18%</title></circle>
+<text x="644" y="508.5" fill="#1f2328">leak 18%</text>
+<text x="411.2" y="374" fill="#6e7781">best dev: step 15</text>
+<text x="350.0" y="650" text-anchor="middle" fill="#1f2328">optimizer step</text>
+</svg>

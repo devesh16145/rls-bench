@@ -1,0 +1,6 @@
+{"name": "step_0005", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0005", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0005", "step": 5}
+{"name": "step_0010", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0010", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0010", "step": 10}
+{"name": "step_0015", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0015", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0015", "step": 15}
+{"name": "step_0020", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0020", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0020", "step": 20}
+{"name": "step_0025", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0025", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0025", "step": 25}
+{"name": "final", "state_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/final", "sampler_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/final", "step": 25}

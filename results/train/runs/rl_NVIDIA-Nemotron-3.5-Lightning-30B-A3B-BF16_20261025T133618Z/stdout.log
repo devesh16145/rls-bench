@@ -1,0 +1,62 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+{
+  "sft_run": "20261025T125454Z",
+  "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16",
+  "tasks": 70,
+  "tasks_source": "results/train/rl_filter_20261025T125454Z.jsonl",
+  "steps": 50,
+  "tasks_per_step": 8,
+  "group_size": 8,
+  "rollouts_per_step": 64,
+  "epochs": 5.71,
+  "temperature": 1.0,
+  "max_tokens": 2048,
+  "learning_rate": 4e-05,
+  "leak_penalty": 0.5,
+  "format_penalty": 0.1,
+  "step_typical_usd": 0.0645,
+  "step_worst_usd": 0.1452,
+  "dev_evals": 10,
+  "dev_eval_typical_usd": 0.0559,
+  "dev_eval_worst_usd": 0.1407,
+  "total_typical_usd": 3.78,
+  "total_worst_usd": 8.66
+}
+step 0: reward +0.025 pass 11% leak 14% len 702 groups 8/8  est spend $0.07
+step 1: reward +0.198 pass 27% leak 12% len 533 groups 7/8  est spend $0.12
+step 2: reward +0.102 pass 19% leak 16% len 717 groups 8/8  est spend $0.18
+step 3: reward +0.264 pass 31% leak 8% len 549 groups 8/8  est spend $0.24
+step 4: reward -0.036 pass 5% leak 14% len 926 groups 8/8  est spend $0.31
+  dev @ step 5: pass 17% (all samples), pass@1 18%, leak 45%  est spend $0.35
+step 5: reward +0.098 pass 17% leak 12% len 804 groups 8/8  est spend $0.42
+step 6: reward +0.255 pass 28% leak 3% len 653 groups 8/8  est spend $0.49
+step 7: reward -0.156 pass 0% leak 30% len 715 groups 8/8  est spend $0.55
+step 8: reward +0.031 pass 14% leak 20% len 775 groups 8/8  est spend $0.63
+step 9: reward +0.178 pass 23% leak 9% len 513 groups 7/8  est spend $0.68
+  dev @ step 10: pass 15% (all samples), pass@1 18%, leak 18%  est spend $0.71
+step 10: reward +0.042 pass 14% leak 19% len 678 groups 8/8  est spend $0.77
+step 11: reward -0.019 pass 6% leak 16% len 686 groups 6/8  est spend $0.83
+step 12: reward +0.358 pass 39% leak 6% len 524 groups 2/8  est spend $0.86
+step 13: reward +0.206 pass 28% leak 14% len 582 groups 7/8  est spend $0.91
+step 14: reward +0.128 pass 17% leak 8% len 629 groups 7/8  est spend $0.97
+  dev @ step 15: pass 30% (all samples), pass@1 27%, leak 18%  est spend $0.99
+step 15: reward +0.209 pass 28% leak 14% len 500 groups 7/8  est spend $1.04
+step 16: reward +0.113 pass 20% leak 17% len 530 groups 7/8  est spend $1.09
+step 17: reward +0.175 pass 23% leak 11% len 545 groups 7/8  est spend $1.14
+step 18: reward +0.248 pass 31% leak 12% len 521 groups 7/8  est spend $1.19
+step 19: reward +0.037 pass 12% leak 17% len 529 groups 6/8  est spend $1.24
+  dev @ step 20: pass 24% (all samples), pass@1 18%, leak 36%  est spend $1.26
+step 20: reward +0.559 pass 59% leak 6% len 403 groups 4/8  est spend $1.29
+step 21: reward -0.094 pass 8% leak 34% len 384 groups 8/8  est spend $1.34
+step 22: reward +0.141 pass 20% leak 11% len 611 groups 8/8  est spend $1.40
+step 23: reward +0.120 pass 23% leak 22% len 358 groups 5/8  est spend $1.43
+step 24: reward -0.127 pass 0% leak 25% len 676 groups 7/8  est spend $1.49
+  dev @ step 25: pass 15% (all samples), pass@1 18%, leak 27%  est spend $1.51
+{
+  "run_id": "20261025T133618Z",
+  "steps": 25,
+  "stop_reason": "no-dev-improvement",
+  "est_spend_usd": 1.5124,
+  "best_dev_step": 15,
+  "best_dev_pass_all_samples": 0.30303030303030304
+}
