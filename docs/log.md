@@ -249,3 +249,8 @@
 
 - lr 2e-5: reward 0.30 → 0.31, pass 38% → 40%, dev after 10 steps 23% pass / 35% leak. lr 6e-5: reward 0.29 → 0.36, pass 39% → 44%, leak 20% → 16%, entropy 0.088 → 0.043, KL ≤ 2e-3, dev 27% / 39%. About $1.15 per run. Decision: the full Nemotron run uses lr 6e-5, 50 steps × 16 × 8, cap $20 (typical ≈ $7, worst ≈ $15).
 - Qwen3.5-9B full run (lr 4e-5) mid-way: dev pass 29% at step 20 and **45% at step 30**, dev leak 39% → 18%, against 24% / 26% for the SFT model.
+
+## 2026-10-26 — Opus 5.5 as a zero-shot judge
+
+- 400 judgements, effort medium, 2,000 output tokens, estimated $7.34 on the Anthropic credit. Accuracy 79% [75, 83], κ 0.72, leak recall 97%, leak precision 67%, 2% of real leaks called "pass". Confusion: pass 79/100 right (15 called leak); leak 97/100; block 41/100 (32 called leak, 26 called pass); error 99/100. Lowest leak recall by task trap: recursive-policy 57% (n 7), restrictive-vs-permissive 60% (n 5), ownership-change 78% (n 9); 100% on anon-write-spoof, null-owner, negative-condition, weak-with-check, state-transition and others.
+- Ranking on κ: Opus 0.72 > trained Qwen3-8B 0.48 > gpt-oss-120b with reasoning 0.36 > Kimi K2.6 0.16 (thinking on or off). Reasoning helps leak recall (Kimi 34% → 59%, gpt-oss 82%) but not agreement; the trained 8B judge is the most precise non-Opus judge (62%) and the cheapest ($0.09 for 400 judgements).

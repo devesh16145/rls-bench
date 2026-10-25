@@ -583,6 +583,196 @@
     },
     "est_spend_usd": 1.0469
   },
+  "zeroshot_claude-opus-5-5": {
+    "n": 400,
+    "unparsed": 1,
+    "accuracy": {
+      "rate": 0.79,
+      "lo": 0.7474205944599498,
+      "hi": 0.8270622748261584,
+      "n": 400
+    },
+    "kappa_4class": 0.72,
+    "pass_precision": {
+      "rate": 0.7383177570093458,
+      "lo": 0.6478138222860739,
+      "hi": 0.8123028212750834,
+      "n": 107
+    },
+    "pass_recall": {
+      "rate": 0.79,
+      "lo": 0.7002003116591013,
+      "hi": 0.858343459380847,
+      "n": 100
+    },
+    "leak_precision": {
+      "rate": 0.6736111111111112,
+      "lo": 0.5933828868381698,
+      "hi": 0.7448172391538316,
+      "n": 144
+    },
+    "leak_recall": {
+      "rate": 0.97,
+      "lo": 0.9154806357094724,
+      "hi": 0.9897454759759611,
+      "n": 100
+    },
+    "block_precision": {
+      "rate": 0.8367346938775511,
+      "lo": 0.7096366156608317,
+      "hi": 0.9148730162927116,
+      "n": 49
+    },
+    "block_recall": {
+      "rate": 0.41,
+      "lo": 0.3186731302113651,
+      "hi": 0.5079856994658921,
+      "n": 100
+    },
+    "error_precision": {
+      "rate": 1.0,
+      "lo": 0.9626467879321726,
+      "hi": 1.0,
+      "n": 99
+    },
+    "error_recall": {
+      "rate": 0.99,
+      "lo": 0.9455138038212946,
+      "hi": 0.9982325679358593,
+      "n": 100
+    },
+    "unsafe_as_pass": {
+      "rate": 0.02,
+      "lo": 0.00550196755016235,
+      "hi": 0.07001179072854388,
+      "n": 100
+    },
+    "confusion": {
+      "pass": {
+        "pass": 79,
+        "block": 6,
+        "leak": 15
+      },
+      "leak": {
+        "leak": 97,
+        "pass": 2,
+        "block": 1
+      },
+      "block": {
+        "block": 41,
+        "leak": 32,
+        "pass": 26,
+        "unparsed": 1
+      },
+      "error": {
+        "error": 99,
+        "block": 1
+      }
+    },
+    "leak_recall_by_task_trap": {
+      "aggregate-limit": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "anon-vs-authenticated": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "anon-write-spoof": {
+        "recall": 1.0,
+        "n": 16
+      },
+      "column-grant-blocks-client": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "duplicate-approval": {
+        "recall": 1.0,
+        "n": 6
+      },
+      "forgot-enable": {
+        "recall": 1.0,
+        "n": 5
+      },
+      "negative-condition": {
+        "recall": 1.0,
+        "n": 33
+      },
+      "null-owner": {
+        "recall": 1.0,
+        "n": 16
+      },
+      "old-vs-new": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "over-broad-for-all": {
+        "recall": 1.0,
+        "n": 4
+      },
+      "overdraft": {
+        "recall": 1.0,
+        "n": 1
+      },
+      "ownership-change": {
+        "recall": 0.78,
+        "n": 9
+      },
+      "private-row-leak": {
+        "recall": 0.94,
+        "n": 18
+      },
+      "privilege-escalation": {
+        "recall": 0.96,
+        "n": 27
+      },
+      "recursive-policy": {
+        "recall": 0.57,
+        "n": 7
+      },
+      "reference-check": {
+        "recall": 1.0,
+        "n": 18
+      },
+      "restrictive-vs-permissive": {
+        "recall": 0.6,
+        "n": 5
+      },
+      "rpc-missing-auth-check": {
+        "recall": 1.0,
+        "n": 3
+      },
+      "self-approval": {
+        "recall": 1.0,
+        "n": 6
+      },
+      "sequence-bypass": {
+        "recall": 1.0,
+        "n": 6
+      },
+      "soft-delete-leak": {
+        "recall": 1.0,
+        "n": 5
+      },
+      "state-transition": {
+        "recall": 1.0,
+        "n": 28
+      },
+      "time-window": {
+        "recall": 0.94,
+        "n": 36
+      },
+      "upsert-needs-update": {
+        "recall": 1.0,
+        "n": 5
+      },
+      "weak-with-check": {
+        "recall": 1.0,
+        "n": 14
+      }
+    },
+    "est_spend_usd": 7.3435
+  },
   "zeroshot_gpt-oss-120b": {
     "n": 400,
     "unparsed": 5,
