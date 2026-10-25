@@ -37,26 +37,35 @@ Every task is reviewed by hand against the checklist in `docs/spec.md` §9 befor
 
 ## Results
 
-### Open models, all 103 tasks
+### Leaderboard, all 103 tasks
 
-Greedy pass@1 and leak rate, with 95% Wilson intervals; pass@5 over 5 samples at temperature 0.7. Source: `results/summary.json`.
+Greedy pass@1 and leak rate with 95% Wilson intervals; pass@5 over 5 samples at temperature 0.7. Reasoning is each model's default where the route allows it; "reasoning off" rows use the model's no-thinking template with a 4,096-token cap. Source: `results/leaderboard.json`; figure: `results/figures/leaderboard.png`.
 
-| Model | pass@1 | pass@5 | Leak rate | Tier 1 / 2 / 3 pass@1 |
+| Model | Route | pass@1 | pass@5 | Leak rate | Tier 1 / 2 / 3 pass@1 |
+|---|---|---|---|---|---|
+| Claude Opus 5.5 (effort medium) | Anthropic API | **87%** [79–92] | 92% | **1%** | 97% / 100% / 54% |
+| DeepSeek V4.1 Flash (16k reasoning) | OpenRouter | 55% [46–65] | 83% | 1% | 81% / 46% / 42% |
+| Kimi K2.6 (reasoning off) | Tinker | 48% [39–58] | 72% | 16% | 68% / 37% / 42% |
+| gpt-oss-120b (medium reasoning) | Tinker | 29% [21–38] | 37% | 10% | 58% / 15% / 19% |
+| Nemotron-3.5-Lightning (16k reasoning) | OpenRouter | 18% [12–27] | 35% | 17% | 42% / 13% / 0% |
+| Qwen3-14B (16k reasoning) | OpenRouter | 14% [8–22] | 25% | 17% | 35% / 4% / 4% |
+| Nemotron-3.5-Lightning (reasoning off) | OpenRouter | 12% [7–19] | 20% | 25% | — |
+| Qwen3.5-9B (reasoning off) | Tinker | 7% [3–13] | 7% | 25% | 13% / 2% / 8% |
+
+The frontier model fails closed: of Opus's 13 misses, 12 deny a legitimate user and one leaks. The small open models leak on 17–25% of tasks. Everyone's failures concentrate in tier 3, where the logic lives in security-definer RPCs and approval workflows. GPT-6.1 Sol Pro was run on the first 13 tasks only (92% pass@1) before the set grew; it is not in the table.
+
+### Can a judge replace the harness?
+
+Judges read the rules, the schema and a candidate's SQL (never the tests) and label it pass / leak / block / error; the harness provides the truth. On 400 held-out candidates from the test tasks (100 per label), source `results/judge/summary.json`:
+
+| Judge | κ vs harness | Leak recall | Leak precision | Leaks called "pass" |
 |---|---|---|---|---|
-| DeepSeek V4.1 Flash | 55% [46–65] | 83% | 1% [0–5] | 81% / 46% / 42% |
-| Nemotron-3.5-Lightning (16k reasoning) | 18% [12–27] | 35% | 17% [11–25] | 42% / 13% / 0% |
-| Qwen3-14B | 14% [8–22] | 25% | 17% [11–26] | 35% / 4% / 4% |
-| Nemotron-3.5-Lightning (reasoning off) | 12% [7–19] | 20% | 25% [18–34] | — |
+| Claude Opus 5.5 | **0.72** | **97%** | 67% | 2% |
+| Qwen3-8B fine-tuned on 2,352 harness-labelled candidates | 0.48 | 53% | 62% | 10% |
+| gpt-oss-120b, reasoning | 0.36 | 82% | 42% | 0% |
+| Kimi K2.6, thinking on / off | 0.16 / 0.16 | 59% / 34% | 35% / 24% | 6% / 1% |
 
-### Frontier models, first 13 tasks only
-
-These were baselined before the task set grew, so they cover T001–T013 only and are **not comparable** with the table above.
-
-| Model | pass@1 | Leak rate |
-|---|---|---|
-| Claude Opus 5.5 | 100% [77–100] | 0% [0–23] |
-| GPT-6.1 Sol Pro | 92% [67–99] | 0% [0–23] |
-| Qwen3.8-27B | 15% [4–42] | 0% [0–23] |
+Even the best judge agrees with the database four times in five; the confusion is between "too strict" and "too loose", which reading a policy cannot settle. Details in `docs/writeup.md` §4.
 
 ### Training a small model on the harness
 
@@ -102,7 +111,7 @@ Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both i
 
 - The schemas are synthetic and in a Supabase flavour.
 - All tasks were written and reviewed by a single author.
-- The frontier models cover only 13 tasks.
+- Leaderboard rows mix three serving routes; the same model served two ways scored differently on the same tasks.
 - The dev and test splits are small (11 and 20 tasks).
 - The training results come from one run per stage.
 - The OpenRouter baselines saw all tasks, test included, before the split was frozen.
