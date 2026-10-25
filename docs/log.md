@@ -294,3 +294,8 @@
 
 - Same settings as seed 0, seed 1; estimated $15.98. Train: reward 0.31 → 0.50, pass 41% → 53%, leak 21% → 6%, answer length 638 → 918 tokens, entropy 0.073 → 0.022, KL ≤ 5e-4. Dev: step 10 21% pass / 32% leak, step 20 26% / 32%, step 30 32% / 20%, **step 40 53% / 21%**, step 50 38% / 35%. Best checkpoint: step 40, as in seed 0 (52% / 6%). Both seeds peak at step 40 and fall back by step 50 while train reward keeps rising, so step 50 looks like the start of overfitting to the 72 train tasks.
 - The second seed and the repair run were started within the same second and share `run_id` 20261025T194632Z; run records are now resolved by their unique `name` first (`checkpoint_record`), and the pre-registration names runs.
+
+## 2026-10-26 — Repair protocol on untrained models (dev, 3 tries)
+
+- Pass after 1 / 2 / 3 tries, 66 dev samples: base 0% / 9% / 12%; SFT 23% / 30% / 36%; GRPO step 40 **52% / 62% / 67%**; repair-trained step 5 52% / 64% / 67%. Leak on any try: 36% / 49% / 26% / 27%. Cost about $0.55 for the three evals.
+- Reading: harness feedback is worth 10–15 points to every model, in proportion to what it can already do; repair training on top of GRPO did not add to that. The repair row in the test eval is the step-5 checkpoint, pre-registered before this comparison was run.
