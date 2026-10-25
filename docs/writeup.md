@@ -106,117 +106,94 @@ Chance agreement on a balanced four-way set is κ = 0.
 
 ## 5. Training a small model on the harness
 
-Can the benchmark's own grader train a small open model to write safer RLS? We fine-tuned NVIDIA Nemotron-3.5-Lightning (30B total, 3B active parameters) on Tinker in two stages: LoRA SFT on answers that pass the harness, then GRPO with the harness as the reward. Every number below comes from records in `results/` (paths at the end of the section). Rates are over all samples, with 95% Wilson intervals in brackets unless stated otherwise.
+Can the benchmark's own grader train a small open model to write safer policies? Two students were trained on Tinker: Qwen3.5-9B (the main one; the cookbook has a calibrated learning rate for it) and Nemotron-3.5-Lightning (30B total, 3B active). Each went through LoRA SFT on answers that pass the harness, then GRPO with the harness as the reward. Every number below comes from records under `results/`; rates are over all samples with 95% Wilson intervals unless stated otherwise. Dev is 11 tasks × 6 samples (66), test 20 × 6 (120).
 
-### 5.1 Split
+### 5.1 Version 1, and why it was redone
 
-The 103 verified tasks were split once, before any training, stratified by tier with a fixed seed (`tasks/split.json`): 72 train, 11 dev, 20 test. Training data came from train tasks only, and the scripts refuse dev and test tasks. Checkpoints were chosen on dev. The test split was evaluated exactly once, behind a lock file recording the models, the protocol and the git commit.
+The first attempt (Nemotron only) used a hand-written RL loop: 25 steps of 64 rollouts, 1,600 answers in total, an untuned learning rate, no training-health metrics. On test it gave base 13% pass / 29% leak, SFT 23% / 19%, SFT+RL 24% / 18%: SFT did the work and RL added nothing measurable. That is what a token-sized RL run looks like, not a finding about RL. Version 2 keeps the data and the split, and redoes training on the cookbook's loops at a scale where the curves mean something.
 
-### 5.2 SFT data: rejection sampling
+### 5.2 Split and SFT data
 
-DeepSeek V4.1 Flash (via OpenRouter) answered each train task 16 times at temperature 0.8, with the benchmark's fixed prompt. The harness graded every answer. Per task, we kept up to 6 distinct passing answers, deduplicated on normalised SQL, plus the reference solution.
+The 103 tasks were split once, stratified by tier with a fixed seed: 72 train, 11 dev, 20 test. SFT data was built by rejection sampling: DeepSeek V4.1 Flash answered each train task 16 times at temperature 0.8, the harness graded every answer, and up to 6 distinct passing answers per task were kept, plus the reference solution.
 
-| Tier | Tasks | Samples | Passed | Leaked | Cut off at 16k tokens | Training examples |
-|---|---|---|---|---|---|---|
-| 1 | 22 | 352 | 293 (83%) | 30 | 10 | 145 |
-| 2 | 32 | 512 | 278 (54%) | 1 | 198 | 191 |
-| 3 | 18 | 288 | 111 (39%) | 9 | 87 | 91 |
-| **All** | **72** | **1,152** | **682 (59%)** | **40** | **295** | **427** |
+| Tier | Tasks | Samples | Passed | Cut off at 16k tokens | Training examples |
+|---|---|---|---|---|---|
+| 1 | 22 | 352 | 293 (83%) | 10 | 145 |
+| 2 | 32 | 512 | 278 (54%) | 198 | 191 |
+| 3 | 18 | 288 | 111 (39%) | 87 | 91 |
+| **All** | **72** | **1,152** | **682 (59%)** | **295** | **427** |
 
-The 427 examples are 355 sampled answers plus 72 references. 50 tasks reached the 6-answer cap. Two tier-3 tasks (T052, T102) had no passing sample and contribute only their reference. Sampling cost $6.45 on OpenRouter.
+Two tier-3 tasks had no passing sample and contribute only their reference. A held-out loss set of 57 examples (the 11 dev references plus 46 passing DeepSeek answers on dev tasks) was used to pick learning rates. Sampling cost $6.45 on OpenRouter.
 
-### 5.3 LoRA SFT
+### 5.3 SFT, with a learning-rate sweep
 
-The setup: rank 32, learning rate 1e-4 with linear decay, 3 epochs, batch 16 (78 steps), reasoning-off chat template, and loss on the answer only. Training loss per answer token fell from 0.364 at the first step to 0.134 at the last. The epoch means were 0.251, 0.157 and 0.127. This is training loss only; it shows the model learned the answer format and style, not that it writes correct policies.
+Rank-32 LoRA, 3 epochs, batch 16 (78 steps), linear decay, loss on the answer only, dev loss every 10 steps. Three learning rates per student; the lowest final dev loss wins and that run *is* the SFT model, so nothing is retrained.
 
-### 5.4 GRPO with the harness as reward
-
-**Reward.** 1 if every test passes, 0 for a safe failure (blocked access, or SQL that fails to apply), −0.1 for a format error, and **−0.5 for a leak**. The leak penalty is our addition to the spec's reward. It makes a group of answers that all fail still carry a signal, because failing closed scores above failing open. On the 72 train tasks, all reference solutions score 1. Of the 200 trap mutations, 180 score −0.5 and 20 score 0; none scores 1.
-
-**Task filter.** The SFT model answered each train task 8 times at temperature 1.0. On train it passed 19% of answers and leaked 15%. We dropped tasks whose 8 rewards were identical: T094 (always passed) and T008 (always a safe failure). Of the 70 tasks kept, 39 never passed. They stay in only because their leak and format rewards vary, so most of the signal teaches "fail closed" rather than "pass".
-
-**Training.** We followed the Tinker cookbook's RL loop:
-- Rewards centred within each group.
-- Groups with identical rewards dropped.
-- Importance-sampling loss, no KL penalty.
-- Learning rate 4e-5.
-- 8 tasks × 8 answers per step, temperature 1.0.
-- Answers capped at 2,048 tokens. The spec said 1,024, but 18% of the SFT model's dev answers are longer than that.
-
-Every 5 steps a checkpoint was evaluated on dev, and training stopped after 10 steps without dev improvement. The run stopped at step 25. 174 of 200 groups carried signal. Mean reward per step was noisy, from −0.16 to +0.56, because each step draws different tasks. The mean of the first five steps was +0.11, and of the last five +0.12.
-
-### 5.5 Dev results
-
-Dev has 11 tasks × 6 samples (one greedy, five at temperature 0.7, max 4,096 tokens).
-
-| Checkpoint | Pass | Leak | Greedy pass@1 |
-|---|---|---|---|
-| Base (Tinker) | 9% [4, 18] | 39% [29, 51] | 1/11 |
-| SFT | 15% [8, 26] | 35% [24, 47] | 2/11 |
-| GRPO step 5 | 17% [10, 27] | 29% [19, 41] | 2/11 |
-| GRPO step 10 | 15% [8, 26] | 24% [16, 36] | 2/11 |
-| **GRPO step 15** | **30% [21, 42]** | **21% [13, 33]** | **3/11** |
-| GRPO step 20 | 24% [16, 36] | 18% [11, 29] | 2/11 |
-| GRPO step 25 | 15% [8, 26] | 18% [11, 29] | 2/11 |
-
-Step 15 was selected. Its gain came from three tasks (T028, T074, T081) that swing between evaluations. Because it is the best of five checkpoints on the same 11 tasks, its dev number is optimistic.
-
-### 5.6 Test results (evaluated once)
-
-Test has 20 tasks × 6 samples = 120 samples per model, with the same protocol as dev.
-
-| Model | Pass | Leak | Apply error | Greedy pass@1 (n = 20) | Greedy leak | Mean answer tokens |
-|---|---|---|---|---|---|---|
-| Base | 13% [8, 21] | 29% [22, 38] | 42% | 15% [5, 36] | 25% | 848 |
-| SFT | 23% [17, 32] | 19% [13, 27] | 35% | 30% [15, 52] | 25% | 678 |
-| SFT + GRPO (step 15) | 24% [17, 33] | 18% [12, 25] | 26% | 25% [11, 47] | 35% | 513 |
-
-The 120 samples per model are clustered in 20 tasks, so the sample-level intervals above are too narrow. The fairer test is paired by task. The table counts tasks where the first model did better, then worse, on pass count and on leak count out of 6, with a two-sided sign test:
-
-| Comparison | Pass: better / worse | p | Leak: lower / higher | p |
+| Student | Learning rates | Final dev loss | Chosen | Dev pass / leak (the chosen model) |
 |---|---|---|---|---|
-| SFT vs base | 4 / 2 | 0.69 | 10 / 6 | 0.45 |
-| SFT + GRPO vs SFT | 3 / 2 | 1.00 | 7 / 3 | 0.34 |
-| SFT + GRPO vs base | 6 / 1 | 0.12 | 10 / 3 | 0.09 |
+| Qwen3.5-9B | 1.58e-4 / 4.73e-4 / 1.42e-3 | 0.145 / **0.141** / 0.147 | 4.73e-4 (the cookbook's calibrated rate) | 24% / 26% |
+| Nemotron-3.5-Lightning | 3e-5 / 1e-4 / 3e-4 | 0.205 / 0.159 / **0.153** | 3e-4 | 30% / 44% |
 
-By tier (pass / leak):
+Dev reference points for the untrained students: Qwen3.5-9B 0% pass / 12% leak (59% of its answers fail to apply); Nemotron 9% / 39%. For Nemotron, the version-1 SFT at 1e-4 scored 15% pass on the same dev samples; tuning the learning rate alone doubled it. Each sweep run cost about $2.40 (Qwen) or $0.76 (Nemotron).
 
-| Tier | Base | SFT | SFT + GRPO |
+### 5.4 GRPO on the cookbook loop
+
+**Environment.** The harness is wrapped as a cookbook RL environment: an episode is the fixed prompt for a train task, the model's answer, and the harness grade as the reward: 1 for a pass, 0 for a safe failure (a block, or SQL that fails to apply), −0.1 for a format error, and **−0.5 for a leak**, so that a group of answers that all fail still prefers failing closed. All 72 references score 1 through the environment; of the 200 trap files, 180 score −0.5 and 20 score 0, none 1.
+
+**Loop.** The cookbook's RL loop with group-centred rewards (8 answers per task, temperature 1.0), constant-reward groups dropped, the importance-sampling loss, no KL penalty, 2,048-token answers, 16 tasks per step. Sampler-vs-trainer KL and entropy are logged every step; dev is evaluated and a checkpoint saved every 10 steps; the checkpoint with the highest dev pass rate is kept.
+
+**Learning-rate sweeps (10 steps each).** Qwen3.5-9B: 2e-5 learned slowly but stably; 6e-5 learned fastest (train pass 41% → 54%) but its entropy fell from 0.08 to 0.02 in ten steps; 2e-4 collapsed (reward 0.30 → 0.12). The full run uses 4e-5. Nemotron: 6e-5 beat 2e-5 (reward 0.29 → 0.36 vs flat) with stable KL; the full run uses 6e-5. All three Qwen sweep runs raised the dev leak rate above the SFT model's while cutting dev apply errors: SQL that used to fail to apply now applied and leaked, mostly on two tasks.
+
+**Full runs (50 steps × 16 tasks × 8 rollouts, 6,400 rollouts, about 11 passes over the train tasks).**
+
+| Run | Train reward | Train pass | Train leak | Answer length | Entropy | Cost |
+|---|---|---|---|---|---|---|
+| Qwen3.5-9B, seed 0 | 0.34 → 0.63 | 44% → 65% | 18% → 2.6% | 664 → 907 | 0.068 → 0.015 | $15.77 |
+| Qwen3.5-9B, seed 1 | 0.31 → 0.50 | 41% → 53% | 21% → 6% | 638 → 918 | 0.073 → 0.022 | $15.98 |
+| Nemotron, lr 6e-5 | 0.33 → 0.49 | 43% → 53% | 20% → 7% | 620 → 832 | 0.072 → 0.017 | $5.64 |
+
+(First five steps → last five. Sampler–trainer KL stayed below 6e-4 for Qwen and 5e-3 for Nemotron.)
+
+### 5.5 Dev during training
+
+| Checkpoint | Qwen seed 0, pass / leak | Qwen seed 1 | Nemotron |
 |---|---|---|---|
-| 1 | 42% / 42% | 53% / 14% | 72% / 22% |
-| 2 | 2% / 31% | 17% / 17% | 4% / 9% |
-| 3 | 0% / 10% | 0% / 30% | 3% / 27% |
+| SFT (step 0) | 24% / 26% | 24% / 26% | 30% / 44% |
+| step 10 | 21% / 38% | 21% / 32% | 27% / 49% |
+| step 20 | 29% / 39% | 26% / 32% | 29% / 42% |
+| step 30 | 45% / 18% | 32% / 20% | 27% / 36% |
+| step 40 | **52% / 6%** | **53% / 21%** | 23% / 23% |
+| step 50 | 47% / 18% | 38% / 35% | **38% / 17%** |
 
-### 5.7 What the training did, and did not, show
+Both Qwen seeds peak at step 40 and fall back by step 50 while train reward keeps rising: the last ten steps look like the start of overfitting to 72 tasks. Nemotron's leak rate fell at every evaluation; its pass rate moved within noise until the last one. Greedy pass@1 on the 11 dev tasks went from 2 to 5 for Qwen (both seeds) and from 3 to 4 for Nemotron. Figures: `results/figures/dev_curve_*.png`, `results/figures/rl_health_*.png`.
 
-- **SFT produced most of the change.** Pass rose from 13% to 23%, leak fell from 29% to 19%, and apply errors fell from 42% to 35%.
-- **GRPO did not add pass rate on test** (23% → 24%). The dev gain at the selected checkpoint (15% → 30%) did not carry over. That is what you'd expect from picking the best of five evaluations on 11 tasks.
-- **GRPO changed behaviour in other ways.** Apply errors fell to 26% and answers got shorter (678 → 513 tokens). On dev the leak rate fell steadily across checkpoints (35% → 18%). On test, the all-sample leak rate barely moved (19% → 18%), while the greedy leak rate rose from 5 to 7 of 20 tasks.
-- **GRPO's test gains are in tier 1** (53% → 72%), while tier 2 fell (17% → 4%). The spec lists this pattern ("tier 1 improving while traps don't") as a reward-hacking signal, alongside shrinking answers. We report it rather than explain it away.
-- **No difference is significant at the task level.** The strongest is base vs SFT + GRPO: pass p = 0.12, leak p = 0.09. With 20 test tasks, only large effects are detectable.
+### 5.6 Repair: a second and third try with harness feedback
 
-### 5.8 Cost
+The same environment with up to three turns: a failing answer gets back the names of the failing tests, the rules they cover, whether each failure was a leak or a block, and the SQL error if any; never the expected rows or the test queries. The model then rewrites the whole answer. Turns after the first cost 0.05.
 
-Tinker spend, estimated at list prices from recorded token counts, came to $2.65 in total:
+First, the protocol alone, on dev (pass after 1 / 2 / 3 tries): base 0% / 9% / 12%; SFT 23% / 30% / 36%; GRPO step 40 **52% / 62% / 67%**. Feedback is worth 10–15 points to every model, in proportion to what it can already do.
 
-| Item | Spend |
-|---|---|
-| SFT run | $0.66 |
-| GRPO filter pass | $0.25 |
-| GRPO run, including its five dev evals | $1.51 |
-| Smoke run | $0.01 |
-| Standalone dev evals | $0.06 |
-| Test eval | $0.16 |
+Then training on it: 25 steps × 16 tasks × 4 rollouts from the GRPO step-40 checkpoint, 1,536-token answers, $8.07. Train reward stayed flat (0.59 → 0.57), first-try pass fell from 42% to 38% and tries per episode rose from 1.8 to 1.9; on dev the third-try pass rate went 67% → 65% → 55% → 58% → 58% across the five checkpoints. The model had already collapsed to near-deterministic sampling in the GRPO run (entropy 0.011 at the start of repair training), which leaves GRPO little to work with. The pre-registered repair checkpoint is step 5, which is indistinguishable from the GRPO model it started from. Figure: `results/figures/repair.png`.
 
-The SFT data cost $6.45 on OpenRouter.
+### 5.7 Pure distillation
 
-### 5.9 Caveats specific to training
+_Pending: the on-policy distillation run (Qwen3.5-9B from Qwen3.5-397B, environment reward off) is in progress; its dev results and the SFT / GRPO / distillation comparison go here._
 
-- The split is small: 11 dev and 20 test tasks.
-- One base model, one seed, one run per stage.
-- No tuned learning rate exists for Nemotron in the Tinker cookbook, so both learning rates are recipe defaults (1e-4 for SFT, 4e-5 for GRPO).
-- The OpenRouter baselines ran on all 103 tasks, test included, before the split was frozen. No training choice (data, hyperparameters, checkpoint) used test results.
-- "Base" in the tables means the base model sampled on Tinker with the same chat template as training. Nemotron served through OpenRouter scored differently on the same dev tasks (reasoning off: 15% pass over all samples), so OpenRouter numbers are not the training baseline.
+### 5.8 Test (evaluated once for version 2)
+
+_Pending: the pre-registered test evaluation (`docs/preregistration.md`) runs after the distillation row is chosen._
+
+### 5.9 Cost
+
+_Pending: final Tinker spend by stage from `results/train/tinker_spend.json`._
+
+### 5.10 Caveats specific to training
+
+- 72 train tasks is small for RL: 50 steps cycle through them eleven times, and both Qwen seeds show the dev peak-then-fall pattern of a policy starting to memorise them.
+- Entropy collapses to near zero in every GRPO run. Pass rate kept improving on dev until step 40, but a near-deterministic policy at temperature 1 has little left to explore, and the repair run showed what that costs.
+- The dev set is 11 tasks: one task is 9 points of greedy pass@1 and 6 samples are 9 points of the all-sample rate. Checkpoint choice is noisy; the test split is what the claims rest on.
+- Answers got about 40% longer under GRPO. Longer is not better or worse in itself here (the cap was not reached), but it is the kind of drift a reward with no length term allows.
+- The leak penalty is not symmetric with the pass reward, and tasks that always fail still train the policy to fail closed; on dev this showed up as apply errors turning into leaks early in training before the leak rate fell.
 
 *Sources: `results/train/sft_data_stats.json`, `results/train/checkpoints.json`, `results/train/sft_*.jsonl`, `results/train/rl_filter_20261025T125454Z.jsonl`, `results/train/rl_*_20261025T133618Z*.jsonl`, `results/tinker_eval/`, `results/test_eval/`, `results/train/report.json` (dev and test tables, tiers and paired sign tests, from `train/report.py`), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json` (from `train/build_sft.py stats`).*
 
