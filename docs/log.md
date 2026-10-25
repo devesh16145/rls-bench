@@ -285,3 +285,7 @@
 - From the step-40 GRPO checkpoint: 25 steps × 16 tasks × 4 rollouts, up to 3 tries with harness feedback, 1,536-token answers, lr 4e-5, dev eval every 5 steps; estimated $8.07. Train side: reward flat (0.59 → 0.57), pass by the final try 72% → 72%, first-try pass 42% → 38%, tries per episode 1.8 → 1.9, entropy already 0.011 at the start (inherited from the GRPO parent).
 - Dev, pass after 1 / 2 / 3 tries: step 5 **52% / 64% / 67%**, step 10 39% / 62% / 65%, step 15 35% / 47% / 55%, step 20 32% / 44% / 58%, step 25 33% / 49% / 58%. Leak on the final try 14% → 21%.
 - Reading: the feedback itself is worth a lot (a third of the GRPO model's failures are fixed within three tries at step 5, when the policy is still essentially the GRPO checkpoint), but training on the repair task made the first try worse and did not raise the third-try rate. Best checkpoint by the pre-registered rule (highest dev pass after 3 tries): step 5. To separate "feedback helps" from "repair training helps", the base, SFT and GRPO-40 models are evaluated with the same 3-try protocol.
+
+## 2026-10-26 — Adapters exported
+
+- Six LoRA adapters exported in Hugging Face format to `results/train/adapters/` (gitignored; manifests with SHA-256 hashes committed): Qwen3.5-9B SFT, Qwen3.5-9B GRPO step 40, Qwen3.5-9B repair step 5, Nemotron SFT, Nemotron GRPO step 50, and the Qwen3-8B judge. Each is `adapter_config.json` + `adapter_model.safetensors` (369–378 MB for the 8–9B students; see manifests for Nemotron).
