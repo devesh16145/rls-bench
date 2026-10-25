@@ -100,3 +100,10 @@
 - Committed all work so far on branch `rls-bench-v0`.
 - Froze `tasks/split.json` with `rls split --freeze` (seed 20261025, stratified by tier): 72 train / 11 dev / 20 test (tier 1: 22/3/6, tier 2: 32/5/9, tier 3: 18/3/5). `freeze` refuses to run if the file exists; a pytest checks the split stays disjoint and within the task set.
 - Note: 4 of the 20 test tasks (T001, T002, T009, T012) were already baselined against frontier and open models in Phase 2; their prompts were sent to OpenRouter, which is acceptable for evaluation but they must never be used to build SFT data.
+
+## 2026-10-25 — open-model baselines on all 103 tasks
+
+- Ran T014–T103 for Nemotron-3.5-Lightning (reasoning off, $0.08; 16k, $0.75), Qwen3-14B (16k, $0.55) and DeepSeek V4.1 Flash (16k, $3.38). No spend cap hit. Qwen3.8-27B skipped: its worst case ($21.66) exceeded the $20 per-run limit and 86% of its earlier answers were cut off.
+- `summary.json` now has `by_split` (train/dev/test, from the frozen split) with the same rates plus pass@5.
+- Nemotron reasoning-off (the training base), all 103 tasks: pass@1 12%, leak 25%, apply errors 50% (most common: syntax errors 131/618 samples, references to missing tables or columns 112/618). Train split pass@5 is 18%, so plain GRPO would see few rewarded groups; SFT first, as planned.
+- DeepSeek V4.1 Flash is the strongest open model (pass@1 55%, train pass@5 85%, leak 1%) and is the natural source for rejection-sampled SFT data (spec §8.1). 37% of its answers were cut off at 16k tokens.

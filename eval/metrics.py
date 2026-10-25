@@ -47,6 +47,15 @@ def cohen_kappa(a: list[bool], b: list[bool]) -> float:
     return 1.0 if expected == 1 else (observed - expected) / (1 - expected)
 
 
+def load_split_map() -> dict[str, str]:
+    """task id -> 'train' | 'dev' | 'test', from the frozen split (empty before it exists)."""
+    path = TASKS_DIR / "split.json"
+    if not path.exists():
+        return {}
+    split = json.loads(path.read_text())
+    return {tid: name for name in ("train", "dev", "test") for tid in split[name]}
+
+
 def load_task_meta() -> dict[str, TaskMeta]:
     metas = {}
     for p in sorted(TASKS_DIR.glob("T*/task.yaml")):
@@ -65,6 +74,11 @@ def _latest(records: Iterable[dict[str, Any]]) -> dict[tuple[str, float, int], d
     for r in records:
         out[(r["task_id"], r["temperature"], r["index"])] = r
     return out
+
+
+def _pass_at_5(groups: list[list[bool]], k: int) -> dict[str, Any]:
+    vals = [pass_at_k(len(v), sum(v), k) for v in groups if len(v) >= k]
+    return {"rate": sum(vals) / len(vals) if vals else None, "n": len(vals)}
 
 
 def _rates(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -92,10 +106,15 @@ def model_metrics(records: list[dict[str, Any]], metas: dict[str, TaskMeta], k: 
     pass5 = [pass_at_k(len(v), sum(v), k) for v in sampled.values() if len(v) >= k]
     overall["pass_at_5"] = {"rate": sum(pass5) / len(pass5) if pass5 else None, "n": len(pass5)}
 
-    groups: dict[str, dict[str, list[dict[str, Any]]]] = {"tier": defaultdict(list), "tag": defaultdict(list), "trap": defaultdict(list)}
+    split_of = load_split_map()
+    groups: dict[str, dict[str, list[dict[str, Any]]]] = {
+        "tier": defaultdict(list), "tag": defaultdict(list), "trap": defaultdict(list), "split": defaultdict(list),
+    }
     for tid, res in greedy.items():
         m = metas[tid]
         groups["tier"][str(m.tier)].append(res)
+        if tid in split_of:
+            groups["split"][split_of[tid]].append(res)
         for tag in m.tags:
             groups["tag"][tag].append(res)
         for trap in m.traps:
@@ -127,6 +146,13 @@ def model_metrics(records: list[dict[str, Any]], metas: dict[str, TaskMeta], k: 
         "by_tier": {key: _rates(v) for key, v in sorted(groups["tier"].items())},
         "by_tag": {key: _rates(v) for key, v in sorted(groups["tag"].items())},
         "by_trap": {key: _rates(v) for key, v in sorted(groups["trap"].items())},
+        "by_split": {
+            key: {
+                **_rates(v),
+                "pass_at_5": _pass_at_5([vals for tid, vals in sampled.items() if split_of.get(tid) == key], k),
+            }
+            for key, v in sorted(groups["split"].items())
+        },
         "per_task": {
             tid: {"passed": r["passed"], "leak": r["leak"], "block": r["block"],
                   "apply_error": r["apply_error"], "format_error": r["format_error"]}
