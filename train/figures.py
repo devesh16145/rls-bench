@@ -303,8 +303,7 @@ def fig_repair() -> Path | None:
     for f in files:
         s = json.loads(f.read_text())
         label = f.name.replace(".summary.json", "")
-        name = ("base" if "@base" in label else "SFT" if "@sft-" in label else "repair-trained" if "@rl-" in label and "repair" in label.split("@")[1]
-                else "SFT + GRPO")
+        name = ("base" if "@base" in label else "SFT" if "@sft-" in label else "repair-trained" if "@repair_" in label else "SFT + GRPO")
         rows.append((name, [w["rate"] * 100 for w in s["pass_by_try"]], s["leak_any_try"]["rate"] * 100))
     order = {"base": 0, "SFT": 1, "SFT + GRPO": 2, "repair-trained": 3}
     rows.sort(key=lambda r: order.get(r[0], 9))
