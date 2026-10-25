@@ -240,3 +240,7 @@
 - Decision: the full run uses lr 4e-5 (between the stable 2e-5 and the fast-but-entropy-collapsing 6e-5; also the cookbook's RL default), 50 steps × 16 × 8, dev eval every 10 steps, cap $40 (worst case $37.6).
 - Watch item: all three runs raised the dev leak rate above the SFT model's 26% while cutting dev apply errors (24% → 12–20%): SQL that used to fail to apply now applies and leaks. Train-side leak rates fell. Reported either way; the pre-registered selection rule (highest dev pass) stands.
 - Per-sample dev transitions SFT → GRPO (lr 2e-5, 10 steps): 8 apply-error samples became leaks (all on T073 and T067), 2 passes became leaks (T028), 1 blocked sample became a leak; nothing moved into pass. The early policy change on unseen tasks is "write SQL that applies", in the style of passing train answers, and on T073/T067 that style leaks. The 50-step run's dev evals will show whether leaks come back down.
+
+## 2026-10-26 — Repair-RL dry run (experiment B, not started)
+
+- Environment check with 3 turns: all 72 references score 1 on the first try; every trap gets feedback and a second turn (no episode ends early). Estimate at 30 steps × 16 tasks × 4 rollouts with 2,048-token answers: typical $13, worst $56 (three turns, each re-reading the growing conversation), over the $40 cap. The run will use 25 steps and 1,536-token answers (worst ≈ $35), starting from the best single-turn GRPO checkpoint once that run finishes.
