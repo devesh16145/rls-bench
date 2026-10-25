@@ -5,7 +5,7 @@ Outline from `docs/spec.md` §11. Only the training section is drafted; the othe
 1. Why RLS (below)
 2. Benchmark design (below)
 3. Results — *not yet written*
-4. Judge calibration — *not yet written*
+4. Judge calibration (below)
 5. Training a small model on the harness (below)
 6. Limitations — *not yet written*
 7. What's next — *not yet written*
@@ -33,6 +33,32 @@ The benchmark asks a direct question: given a schema and the access rules writte
 **Prompt and protocol.** Models see one fixed prompt: a short system instruction, the schema, the row counts of the fixture (never the rows), and the requirements verbatim. Zero-shot, no tools, no retries. Each model is sampled once greedily and five times at temperature 0.7 per task, which gives pass@1 and pass@5. Every rate is reported with a 95% Wilson interval. Models whose API ignores temperature are recorded as such.
 
 **Split.** The tasks were split once, stratified by tier with a fixed seed, into 72 train, 11 dev and 20 test. Training data comes from train tasks only; checkpoints are chosen on dev; the test split is evaluated once per version of this write-up and the evaluation is locked to a git commit.
+
+## 4. Can a judge replace the harness?
+
+Most evaluation pipelines cannot execute the code they grade; they ask a model to read it. This section measures how well that works for RLS, where the harness gives ground truth.
+
+**Setup.** A judge reads the access rules, the schema and a candidate's SQL, never the tests, and answers one word: `pass`, `leak` (some user gets access the rules forbid), `block` (no leak, but allowed access is denied or a rule is implemented wrongly) or `error` (the SQL would not apply, or there is none). The labels come from the harness. The judge set is 400 candidates from the 20 test tasks, 100 per label, drawn from every graded sample in `results/` and deduplicated on normalised SQL. Four zero-shot judges were compared with one trained judge: Qwen3-8B fine-tuned (LoRA) on 2,352 harness-labelled candidates from train tasks only, with 160 dev-task candidates as the held-out loss. Zero-shot judges that reason were given 1,500–2,000 output tokens; the verdict is the last label word in the answer.
+
+| Judge | Agreement (κ) | Accuracy | Leak recall | Leak precision | Leaks called "pass" | Cost per 400 |
+|---|---|---|---|---|---|---|
+| Claude Opus 5.5, effort medium | **0.72** | 79% [75, 83] | **97%** | **67%** | 2% | $7.34 |
+| Trained Qwen3-8B judge | 0.48 | 61% [56, 66] | 53% | 62% | 10% | $0.09 |
+| gpt-oss-120b, reasoning | 0.36 | 52% | 82% | 42% | 0% | $0.53 |
+| Kimi K2.6, thinking on | 0.16 | 36% | 59% | 35% | 6% | $4.24 |
+| Kimi K2.6, thinking off | 0.16 | 37% | 34% | 24% | 1% | $1.05 |
+
+Chance agreement on a balanced four-way set is κ = 0.
+
+**What the numbers say.**
+
+- *Reading SQL is not the same as running it.* The best judge agrees with the harness 79% of the time. The harness is never wrong about whether a row came back; a judge that is right four times in five would mislabel one candidate in five if it were used as the grader.
+- *The confusion is between leak and block, not between safe and unsafe.* Opus gets 97 of 100 leaks and 99 of 100 errors, but only 41 of 100 blocks: it calls a third of blocked answers leaks and a quarter of them passes. Reading a policy, it is hard to tell "too strict" from "too loose" without running a query as the affected user.
+- *Reasoning buys recall, not agreement.* Letting Kimi K2.6 think raised its leak recall from 34% to 59% at the same κ; gpt-oss-120b with reasoning catches 82% of leaks but calls 36 of 100 correct answers leaks. For a security reviewer that may be the right trade; for a grader it is not.
+- *A small trained judge is competitive and nearly free.* The 8B judge trained on 2,352 examples reaches κ 0.48 with the best leak precision after Opus, at 0.02 cents per judgement. It is also the most dangerous of the useful judges: 10% of real leaks are called "pass".
+- *Which leaks get missed.* By the trap pattern of the task (a leak is attributed to every trap its task carries, so these are approximate): the trained judge misses almost every leak involving `recursive-policy`, `sequence-bypass`, `duplicate-approval`, `restrictive-vs-permissive` and `ownership-change` (recall 0–11%), and most `state-transition` leaks (21%), while catching `anon-write-spoof` and `null-owner` (94%). Opus's weakest patterns are the same two Postgres-semantics ones, `recursive-policy` (57%) and `restrictive-vs-permissive` (60%). The misses cluster where the verdict depends on how Postgres combines or evaluates policies, not on what the rule text says.
+
+**Caveats.** The judge set is balanced, so accuracy is not the accuracy you would see on real traffic, where most candidates are errors or blocks. The trained judge's training candidates were produced by the same model families whose test candidates it grades. Opus was run at its default effort; a higher setting might narrow the leak/block confusion.
 
 ## 5. Training a small model on the harness
 
