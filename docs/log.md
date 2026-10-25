@@ -261,3 +261,7 @@
 - Dev (66 samples): step 10 21% pass / 38% leak, step 20 29% / 39%, step 30 45% / 18%, **step 40 52% / 6%**, step 50 47% / 18%; greedy pass@1 3/11 → 5/11 from step 30. SFT reference 24% / 26%. Best checkpoint by the pre-registered rule: step 40.
 - Watch items for the write-up: entropy near zero by the end (the policy is close to deterministic at temperature 1), answers 37% longer, and the dev leak rate bouncing between 6% and 18% on 66 samples.
 - Started: repair RL (experiment B) from the step-40 checkpoint, 25 steps × 16 × 4, 3 tries, 1,536-token answers, dev eval every 5 steps; and a second seed of the full single-turn run (seed 1) for error bars on the headline.
+
+## 2026-10-26 — Claude Opus 5.5 baseline (Anthropic API)
+
+- All 103 tasks, 618 samples, effort medium (the model's default), 8,000-token cap, no temperature parameter (the API rejects one; recorded as `temperature_sent: false`). Estimated $27.96 on the Anthropic credit. Greedy pass@1 87%, pass@5 92%, leak 1%. Merged into `results/leaderboard.json` (8 complete rows).
