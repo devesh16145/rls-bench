@@ -52,7 +52,7 @@ Greedy pass@1 and leak rate with 95% Wilson intervals; pass@5 over 5 samples at 
 | Nemotron-3.5-Lightning (reasoning off) | OpenRouter | 12% [7–19] | 20% | 25% | — |
 | Qwen3.5-9B (reasoning off) | Tinker | 7% [3–13] | 7% | 25% | 13% / 2% / 8% |
 
-The frontier model fails closed: of Opus's 13 misses, 12 deny a legitimate user and one leaks. The small open models leak on 17–25% of tasks. Everyone's failures concentrate in tier 3, where the logic lives in security-definer RPCs and approval workflows. GPT-6.1 Sol Pro was run on the first 13 tasks only (92% pass@1) before the set grew; it is not in the table.
+The frontier model fails closed: of Opus's 13 misses, 11 deny a legitimate user, one is SQL that failed to apply, and one leaks. The small open models leak on 17–25% of tasks. Everyone's failures concentrate in tier 3, where the logic lives in security-definer RPCs and approval workflows. GPT-6.1 Sol Pro was run on the first 13 tasks only (92% pass@1) before the set grew; it is not in the table.
 
 ### Can a judge replace the harness?
 
