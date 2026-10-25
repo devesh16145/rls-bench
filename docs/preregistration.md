@@ -16,7 +16,19 @@ cap, reasoning-off template):
 | sft+rl, seed 2 / second student | as above | same rule |
 | repair | best repair-RL checkpoint | highest dev pass-after-3-tries |
 
-Chosen checkpoints (filled in before running): _pending_.
+Chosen checkpoints (filled in before running):
+
+| Row | Run | Checkpoint | Why |
+|---|---|---|---|
+| base | Qwen/Qwen3.5-9B | — | — |
+| sft | 20261025T184758Z (sft_Qwen3.5-9B lr 4.73e-4) | final | lowest final dev loss of the three sweep runs (0.1413) |
+| sft+rl | 20261025T191833Z (rl_Qwen3.5-9B_lr4e-5_s50) | step 40 | highest dev pass rate of the five evals (52%) |
+| sft+rl, seed 2 | _pending_ | | |
+| repair | _pending_ | | |
+| base (Nemotron) | nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16 | — | — |
+| sft (Nemotron) | 20261025T190749Z (sft lr 3e-4) | final | lowest final dev loss of the three sweep runs (0.153) |
+| sft+rl (Nemotron) | 20261025T193419Z (rl_Nemotron_lr6e-5_s50) | step 50 (final) | highest dev pass rate of the five evals (38%) |
+| distil | _pending_ | | |
 
 ## Primary measures
 
