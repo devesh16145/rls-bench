@@ -271,27 +271,27 @@ def fig_test_bars() -> Path | None:
 
 
 def fig_test_by_tier() -> Path | None:
+    """Test pass rate per row, one bar per tier (three sequential blues), so rows are the x axis and tiers the series."""
     path = RESULTS / "test_eval_v2" / "summary.json"
-    if not path.exists():
-        return None
-    s = json.loads(path.read_text())
-    names = list(s["models"])
-    tiers = ["1", "2", "3"]
     extra = path.with_name("paired_and_tiers.json")
-    if "by_tier" not in next(iter(s["models"].values())) and extra.exists():
-        for n, d in json.loads(extra.read_text())["by_tier"].items():
-            s["models"][n]["by_tier"] = d
-    fig, ax = plt.subplots(figsize=(10, 4))
-    w = 0.8 / len(names)
-    colors = [MUTED, BLUE, ORANGE, AQUA, YELLOW, "#6250d6"]
-    for i, n in enumerate(names):
-        vals = [s["models"][n]["by_tier"][t]["pass"]["rate"] * 100 for t in tiers]
-        ax.bar([j + i * w for j in range(3)], vals, width=w, color=colors[i % len(colors)], label=n, zorder=3)
-    ax.set_xticks([j + w * (len(names) - 1) / 2 for j in range(3)])
-    ax.set_xticklabels([f"tier {t}" for t in tiers])
+    if not path.exists() or not extra.exists():
+        return None
+    names = list(json.loads(path.read_text())["models"])
+    by_tier = json.loads(extra.read_text())["by_tier"]
+    tiers = ["1", "2", "3"]
+    shades = ["#9ec5f4", "#3987e5", "#104281"]  # one hue, light -> dark = tier 1 -> 3
+    fig, ax = plt.subplots(figsize=(11, 4))
+    w = 0.26
+    for j, (t, c) in enumerate(zip(tiers, shades)):
+        xs = [i + (j - 1) * w for i in range(len(names))]
+        vals = [by_tier[n][t]["pass"]["rate"] * 100 for n in names]
+        ax.bar(xs, vals, width=w, color=c, label=f"tier {t}", zorder=3)
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels(names, rotation=25, ha="right", fontsize=8)
     ax.set_ylabel("pass rate, all samples (%)")
-    ax.legend(fontsize=8)
-    ax.set_title("Test pass rate by tier")
+    ax.set_ylim(0, 100)
+    ax.legend(fontsize=8, title="task tier", loc="upper right")
+    ax.set_title("Test pass rate by tier (tier 1: single-owner rules; tier 3: RPCs, storage, multi-tenant)")
     return _save(fig, "test_by_tier")
 
 
