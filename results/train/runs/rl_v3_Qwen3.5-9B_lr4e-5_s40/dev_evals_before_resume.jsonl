@@ -1,0 +1,1 @@
+{"eval": 3, "label": "Qwen3.5-9B@rl_v3_Qwen3.5-9B_lr4e-5_s40-eval003", "dev/pass_all": 0.45454545454545453, "dev/leak_all": 0.2878787878787879, "dev/apply_error_all": 0.09090909090909091, "dev/pass_at_1": 0.45454545454545453, "dev/mean_completion_tokens": 545.8333333333334, "dev/spend_usd": 0.040466174999999965}
