@@ -29,3 +29,28 @@ def test_freeze_refuses_to_overwrite(tmp_path, monkeypatch):
     monkeypatch.setattr(splitmod, "SPLIT_PATH", target)
     with pytest.raises(FileExistsError):
         splitmod.freeze([])
+
+
+def test_extend_train_refuses_unverified_and_keeps_dev_test(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    import pytest
+
+    from harness import split as splitmod
+    from harness.models import Task
+
+    src = splitmod.load()
+    trimmed = {**src, "train": [t for t in src["train"] if t != "T104"]}
+    path = tmp_path / "split.json"
+    path.write_text(json.dumps(trimmed))
+    monkeypatch.setattr(splitmod, "SPLIT_PATH", path)
+    task = Task.load(next((Path(__file__).resolve().parent.parent / "tasks").glob("T104-*")))
+    task.meta.verified = False
+    with pytest.raises(ValueError):
+        splitmod.extend_train([task])
+    task.meta.verified = True
+    out = splitmod.extend_train([task])
+    assert out["dev"] == src["dev"] and out["test"] == src["test"]
+    assert "T104" in out["train"] and len(out["train"]) == len(trimmed["train"]) + 1
+    assert out["revisions"][-1]["added_to_train"] == ["T104"]

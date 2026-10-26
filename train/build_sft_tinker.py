@@ -65,7 +65,17 @@ def sample(model: str = typer.Option("moonshotai/Kimi-K2.6"), samples: int = typ
     renderer_name = LEADERBOARD_RENDERERS[model]
     tasks = train_tasks(limit)
     renderer, _ = make_renderer(model, renderer_name)
-    est = estimate(tasks, renderer, samples, max_tokens, model)
+    # price only what will actually run: tasks whose samples are already recorded are skipped below
+    done_tasks: set[str] = set()
+    if RAW_TINKER_PATH.exists():
+        counts: dict[str, int] = {}
+        for line in RAW_TINKER_PATH.read_text().splitlines():
+            r = json.loads(line)
+            if r["model"] == model:
+                counts[r["task_id"]] = counts.get(r["task_id"], 0) + 1
+        done_tasks = {t for t, n in counts.items() if n >= samples}
+    est = estimate([t for t in tasks if t.id not in done_tasks], renderer, samples, max_tokens, model)
+    est["already_sampled_tasks"] = len(done_tasks)
     typer.echo(json.dumps({**est, "renderer": renderer_name, "temperature": TEMPERATURE}, indent=2))
     if estimate_only:
         return
