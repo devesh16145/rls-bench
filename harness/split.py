@@ -54,3 +54,21 @@ def freeze(tasks: list[Task]) -> dict:
 
 def load() -> dict:
     return json.loads(SPLIT_PATH.read_text())
+
+
+def extend_train(tasks: list[Task]) -> dict:
+    """Append newly verified tasks to the train split. Dev and test are never changed; every revision is recorded."""
+    split = load()
+    assigned = set(split["train"]) | set(split["dev"]) | set(split["test"])
+    new = sorted(t.id for t in tasks if t.id not in assigned)
+    unverified = [t.id for t in tasks if t.id in new and not t.meta.verified]
+    if unverified:
+        raise ValueError(f"refusing to add unverified tasks: {', '.join(unverified)}")
+    if not new:
+        return split
+    split["train"] = sorted(split["train"] + new)
+    split["counts"]["train"] = len(split["train"])
+    split.setdefault("revisions", []).append({"on": dt.date.today().isoformat(), "added_to_train": new,
+                                             "note": "new tasks appended to train only; dev and test unchanged"})
+    SPLIT_PATH.write_text(json.dumps(split, indent=2) + "\n")
+    return split

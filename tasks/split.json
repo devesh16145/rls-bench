@@ -3,7 +3,7 @@
   "seed": 20261025,
   "method": "stratified by tier; per tier: test = round(20%), dev = round(10%), rest train; ids sorted then shuffled with random.Random(seed)",
   "counts": {
-    "train": 72,
+    "train": 82,
     "dev": 11,
     "test": 20
   },
@@ -96,7 +96,17 @@
     "T100",
     "T101",
     "T102",
-    "T103"
+    "T103",
+    "T104",
+    "T105",
+    "T106",
+    "T107",
+    "T108",
+    "T109",
+    "T110",
+    "T111",
+    "T112",
+    "T113"
   ],
   "dev": [
     "T028",
@@ -132,5 +142,23 @@
     "T095",
     "T097",
     "T099"
+  ],
+  "revisions": [
+    {
+      "on": "2026-10-26",
+      "added_to_train": [
+        "T104",
+        "T105",
+        "T106",
+        "T107",
+        "T108",
+        "T109",
+        "T110",
+        "T111",
+        "T112",
+        "T113"
+      ],
+      "note": "new tasks appended to train only; dev and test unchanged"
+    }
   ]
 }
