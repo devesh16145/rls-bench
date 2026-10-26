@@ -3079,5 +3079,69 @@
     },
     "state_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/weights/final",
     "sampler_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261026T124124Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.00024,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft_v3.jsonl",
+    "data_hash": "7cce147eb6d50e33",
+    "dev_data_hash": "7ccf6fe5a14a9116",
+    "steps": 90,
+    "dev_nll": [
+      [
+        0,
+        0.3314838707447052
+      ],
+      [
+        10,
+        0.19849376380443573
+      ],
+      [
+        20,
+        0.17074191570281982
+      ],
+      [
+        30,
+        0.16219617426395416
+      ],
+      [
+        40,
+        0.15749293565750122
+      ],
+      [
+        50,
+        0.15322773158550262
+      ],
+      [
+        60,
+        0.15333230793476105
+      ],
+      [
+        70,
+        0.1546134054660797
+      ],
+      [
+        80,
+        0.153293639421463
+      ]
+    ],
+    "final_dev_nll": 0.153293639421463,
+    "min_dev_nll": 0.15322773158550262,
+    "first_train_nll": 0.31831836700439453,
+    "last_train_nll": 0.08608158677816391,
+    "log_path": "results/train/runs/sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024",
+    "metrics": "results/train/runs/sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024/metrics.jsonl",
+    "state_path": "tinker://c50d2a3d-57e5-5d81-926c-f786c42f0beb:train:0/weights/final",
+    "sampler_path": "tinker://c50d2a3d-57e5-5d81-926c-f786c42f0beb:train:0/sampler_weights/final"
   }
 ]
