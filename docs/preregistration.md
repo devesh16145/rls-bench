@@ -76,3 +76,19 @@ Written before the version 3 test evaluation runs; filled in as runs finish and 
 **What would count as a result:** version 3 SFT above version 2 SFT on test pass with no higher leak rate; and the GRPO-over-SFT comparison repeated with the new data, again reported whichever way it goes.
 
 **Disclosure:** this is the third evaluation of the test split (version 1 at 1bc6904, version 2 at 54bb76a). No training decision used test results.
+
+---
+
+# Pre-registration: version 4 test evaluation (one row)
+
+Written before it runs. **What changes:** ten newly verified tasks (T104–T113) were appended to the train split, Kimi K2.6 was sampled on them, and the version-3 SFT recipe was re-run at the same learning rate (2.4e-4) on the enlarged data (491 examples, 82 tasks). No GRPO follows (remaining credit).
+
+| Row | Run | Checkpoint | Why |
+|---|---|---|---|
+| sft-82 | sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024 | final | the only run (single learning rate, no sweep) |
+
+**Measures:** pass and leak over the 120 test samples with Wilson intervals; paired sign tests by task against `sft` (version 2, 72 tasks, DeepSeek data) and `sft-v3` (version 3, 72 tasks, two-source data), reused from their result files.
+
+**What would count as a result:** a higher pass rate than `sft-v3` with no higher leak rate, which would attribute the dev gain to the extra train tasks rather than noise.
+
+**Disclosure:** the fourth evaluation of the test split (versions 1–3 at 1bc6904, 54bb76a, 34bab1f). No training decision used test results.
