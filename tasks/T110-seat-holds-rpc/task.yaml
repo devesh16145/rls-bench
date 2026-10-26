@@ -1,0 +1,23 @@
+id: T110
+title: Seat holds and bookings that only happen through two RPCs
+tier: 3
+tags:
+- rpc
+- security-definer
+- time-window
+- column-masking
+- view
+- sequencing
+traps:
+- rpc-missing-auth-check
+- sequence-bypass
+- time-window
+- column-leak
+extra_tables: []
+fixture_notes:
+- users u1 (…01), u2 (…02)
+- 'event 1 seats: 1 free; 2 held by u2 until 2099 (live); 3 held by u2 until 2020 (expired); 4 booked by u2; 5 free; 6 held by u1 until 2020 (expired)'
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

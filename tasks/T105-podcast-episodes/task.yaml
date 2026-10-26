@@ -1,0 +1,22 @@
+id: T105
+title: Podcast episodes that go public at their publish time
+tier: 2
+tags:
+- anon-read
+- publish-window
+- parent-child
+- role-by-table
+- client-returning
+traps:
+- private-row-leak
+- time-window
+- reference-check
+extra_tables: []
+fixture_notes:
+- hosts h1 (…01, show 1) and h2 (…02, show 2); listener (…03) hosts nothing
+- 'show 1: episode 1 published in 2020, episode 2 published but dated 2099, episode 3 draft'
+- 'show 2: episode 4 published in 2020, episode 5 a draft with a tentative 2020 date'
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

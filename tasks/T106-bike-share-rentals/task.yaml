@@ -1,0 +1,22 @@
+id: T106
+title: 'Bike-share rentals: one open rental per rider, cost set by the server'
+tier: 2
+tags:
+- aggregate-limit
+- reference-check
+- column-restriction
+- state-transition
+- client-returning
+traps:
+- aggregate-limit
+- reference-check
+- privilege-escalation
+extra_tables: []
+fixture_notes:
+- riders u1 (…01), u2 (…02); staff member staff (…03)
+- bike 1 in service and free; bike 2 in service but rented by u2 (open rental 1); bike 3 out of service
+- u1 has a returned rental (2) with a cost
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

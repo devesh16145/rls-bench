@@ -1,0 +1,23 @@
+id: T111
+title: Payroll adjustments approved by the direct manager up to a limit, by finance above it
+tier: 3
+tags:
+- approval-limit
+- hierarchy
+- self-approval
+- state-transition
+- column-restriction
+- client-returning
+traps:
+- approval-limit
+- self-approval
+- skip-level-access
+- state-transition
+extra_tables: []
+fixture_notes:
+- ceo (…01) manages mgr (…02) and fin (…03, finance); mgr manages emp (…04) and emp2 (…05)
+- 'adjustments: 1 emp 20,000 pending; 2 emp2 90,000 pending; 3 emp 10,000 approved by mgr; 4 mgr 30,000 pending; 5 fin 5,000 pending'
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

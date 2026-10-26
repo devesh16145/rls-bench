@@ -1,0 +1,233 @@
+- name: owner_sees_own_camera
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from cameras order by id
+  expect:
+    rows:
+    - [1]
+
+- name: grantee_sees_shared_and_own_cameras
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from cameras order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: expired_grantee_sees_nothing
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select * from cameras
+  expect: {denied: true}
+
+- name: stranger_sees_nothing
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select * from cameras
+  expect: {denied: true}
+
+- name: owner_reads_stream_key_after_mfa
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal2}
+  sql: select key from stream_keys where camera_id = 1
+  expect:
+    rows:
+    - [k1]
+
+- name: owner_cannot_read_stream_key_without_mfa
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal1}
+  sql: select key from stream_keys
+  expect: {denied: true}
+
+- name: grantee_reads_shared_key_after_mfa
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {aal: aal2}
+  sql: select key from stream_keys order by key
+  expect:
+    rows:
+    - [k1]
+    - [k2]
+
+- name: grantee_cannot_read_key_without_mfa
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000002
+    claims: {aal: aal1}
+  sql: select key from stream_keys where camera_id = 1
+  expect: {denied: true}
+
+- name: expired_grantee_cannot_read_key
+  covers: [R2]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000003
+    claims: {aal: aal2}
+  sql: select key from stream_keys where camera_id = 1
+  expect: {denied: true}
+
+- name: owner_shares_camera
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: camera_shares
+    values: {camera_id: 1, grantee_id: 00000000-0000-0000-0000-000000000004, expires_at: '2099-06-01T00:00:00Z', created_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: grantee_cannot_share_on
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: camera_shares
+    values: {camera_id: 1, grantee_id: 00000000-0000-0000-0000-000000000004, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_share_as_other_creator
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: camera_shares
+    values: {camera_id: 1, grantee_id: 00000000-0000-0000-0000-000000000004, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: stranger_cannot_share_camera
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: camera_shares
+    values: {camera_id: 1, grantee_id: 00000000-0000-0000-0000-000000000004, created_by: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_removes_share
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: camera_shares
+    match: {id: 1}
+  expect: {affected: 1}
+
+- name: grantee_cannot_remove_share
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: camera_shares
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: share_cannot_be_edited
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: camera_shares
+    values: {expires_at: '2099-12-31T00:00:00Z'}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: grantee_sees_own_shares
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from camera_shares order by id
+  expect:
+    rows:
+    - [1]
+
+- name: owner_sees_shares_of_own_camera
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from camera_shares order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: user_adds_camera
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: cameras
+    values: {owner_id: 00000000-0000-0000-0000-000000000004, label: Backyard}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_add_camera_for_other
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: cameras
+    values: {owner_id: 00000000-0000-0000-0000-000000000001, label: x}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_renames_camera
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: cameras
+    values: {label: Porch}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: grantee_cannot_rename_camera
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: cameras
+    values: {label: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_write_stream_key
+  covers: [R4]
+  as:
+    role: authenticated
+    sub: 00000000-0000-0000-0000-000000000001
+    claims: {aal: aal2}
+  client:
+    op: insert
+    table: stream_keys
+    values: {camera_id: 1, key: x}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_nothing
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from cameras
+  expect: {denied: true}
+
+- name: service_role_sees_all_keys
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from stream_keys
+  expect:
+    rows:
+    - [2]

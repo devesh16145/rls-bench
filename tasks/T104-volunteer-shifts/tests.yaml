@@ -1,0 +1,223 @@
+- name: volunteer_sees_open_shifts
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from shifts order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [4]
+
+- name: coordinator_sees_cancelled_shift_too
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from shifts
+  expect:
+    rows:
+    - [4]
+
+- name: volunteer_signs_up
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 1, volunteer_id: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: volunteer_cannot_sign_up_as_other
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 1, volunteer_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_sign_up_full_shift
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 2, volunteer_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_sign_up_past_shift
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 4, volunteer_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_sign_up_cancelled_shift
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 3, volunteer_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_sign_up_twice
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 1, volunteer_id: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_insert_cancelled_signup
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: signups
+    values: {shift_id: 1, volunteer_id: 00000000-0000-0000-0000-000000000001, status: cancelled}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_sees_own_signups
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from signups order by id
+  expect:
+    rows:
+    - [2]
+    - [3]
+
+- name: coordinator_sees_all_signups
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from signups
+  expect:
+    rows:
+    - [3]
+
+- name: volunteer_cancels_own_signup
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: signups
+    values: {status: cancelled}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: volunteer_cannot_cancel_others_signup
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: signups
+    values: {status: cancelled}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_reactivate_cancelled_signup
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: signups
+    values: {status: active}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_move_signup_to_other_shift
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: signups
+    values: {shift_id: 1}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_delete_signup
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: signups
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: coordinator_creates_shift
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: shifts
+    values: {title: Evening sorting, starts_at: '2099-04-01T18:00:00Z', capacity: 3, created_by: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: volunteer_cannot_create_shift
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: shifts
+    values: {title: x, starts_at: '2099-04-01T18:00:00Z', capacity: 3, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: coordinator_cancels_shift
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: shifts
+    values: {status: cancelled}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: volunteer_cannot_edit_shift
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: shifts
+    values: {capacity: 10}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: volunteer_cannot_become_coordinator
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: coordinators
+    values: {user_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_nothing
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from shifts
+  expect: {denied: true}
+
+- name: service_role_sees_all_signups
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from signups
+  expect:
+    rows:
+    - [3]

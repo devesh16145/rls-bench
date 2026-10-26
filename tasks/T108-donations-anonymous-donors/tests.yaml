@@ -1,0 +1,189 @@
+- name: user_reads_campaigns
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from campaigns
+  expect:
+    rows:
+    - [3]
+
+- name: user_creates_campaign
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: campaigns
+    values: {title: Books for the library, owner_id: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_create_closed_campaign
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: campaigns
+    values: {title: x, owner_id: 00000000-0000-0000-0000-000000000003, status: closed}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_closes_campaign
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: campaigns
+    values: {status: closed}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: non_owner_cannot_close_campaign
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: campaigns
+    values: {status: closed}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: owner_cannot_rename_campaign
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: campaigns
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_donates
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: donations
+    values: {campaign_id: 1, donor_id: 00000000-0000-0000-0000-000000000002, amount_cents: 250, anonymous: true}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_donate_to_closed_campaign
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: donations
+    values: {campaign_id: 2, donor_id: 00000000-0000-0000-0000-000000000002, amount_cents: 250}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_donate_zero
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: donations
+    values: {campaign_id: 1, donor_id: 00000000-0000-0000-0000-000000000002, amount_cents: 0}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_donate_as_other
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: donations
+    values: {campaign_id: 1, donor_id: 00000000-0000-0000-0000-000000000003, amount_cents: 250}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_change_donation
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: donations
+    values: {amount_cents: 1}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_donation
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: delete
+    table: donations
+    match: {id: 2}
+  expect: {denied: true}
+
+- name: donor_reads_own_donations
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from donations order by id
+  expect:
+    rows:
+    - [2]
+    - [3]
+    - [4]
+
+- name: organiser_cannot_read_donations_table
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from donations
+  expect: {denied: true}
+
+- name: organiser_sees_donations_with_anonymous_donor_hidden
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id, donor_id is null from campaign_donations order by id
+  expect:
+    rows:
+    - [1, false]
+    - [2, true]
+    - [3, false]
+
+- name: donor_sees_own_donations_in_view_with_own_id
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id, donor_id is null from campaign_donations order by id
+  expect:
+    rows:
+    - [2, false]
+    - [3, false]
+    - [4, false]
+
+- name: organiser_who_also_donated_sees_both
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id, donor_id is null from campaign_donations order by id
+  expect:
+    rows:
+    - [1, false]
+    - [4, true]
+
+- name: anon_sees_nothing_in_view
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from campaign_donations
+  expect: {denied: true}
+
+- name: anon_cannot_donate
+  covers: [R5]
+  as: {role: anon}
+  client:
+    op: insert
+    table: donations
+    values: {campaign_id: 1, donor_id: 00000000-0000-0000-0000-000000000002, amount_cents: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_donations
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from donations
+  expect:
+    rows:
+    - [4]

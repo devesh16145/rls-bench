@@ -1,0 +1,21 @@
+id: T108
+title: Donation campaigns where anonymous donors stay hidden from the organiser
+tier: 2
+tags:
+- view
+- column-masking
+- owner-rights-view
+- reference-check
+- client-returning
+traps:
+- view-bypass
+- column-leak
+- reference-check
+extra_tables: []
+fixture_notes:
+- organiser o1 (…01) owns campaign 1 (active) and 2 (closed); donor d1 (…02) owns campaign 3 (active); donor d2 (…03)
+- 'donations: 1 d1→c1 public; 2 d2→c1 anonymous; 3 d2→c2 public; 4 d2→c3 anonymous'
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

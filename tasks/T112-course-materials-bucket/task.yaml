@@ -1,0 +1,23 @@
+id: T112
+title: 'Course materials bucket: instructors upload PDFs and videos, enrolled students read'
+tier: 3
+tags:
+- storage-paths
+- file-type
+- enrollment
+- bucket-scope
+- owner-column-trust
+traps:
+- file-type-check
+- bucket-scope
+- storage-path
+- owner-column-trust
+extra_tables:
+- storage.objects
+fixture_notes:
+- instructors ins1 (…01, course 1) and ins2 (…02, course 2); stu (…03) is enrolled in course 1; other (…04) is in no course
+- 'bucket materials (private): 1/intro.pdf, 1/lecture.mp4, 2/notes.pdf; bucket avatars (public): x.png'
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b

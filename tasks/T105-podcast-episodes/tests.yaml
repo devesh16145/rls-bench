@@ -1,0 +1,186 @@
+- name: anon_reads_published_episodes
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from episodes order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: anon_cannot_see_future_dated_episode
+  covers: [R1]
+  as: {role: anon}
+  sql: select id from episodes where id = 2
+  expect: {denied: true}
+
+- name: anon_reads_shows
+  covers: [R1]
+  as: {role: anon}
+  sql: select count(*) from shows
+  expect:
+    rows:
+    - [2]
+
+- name: listener_sees_only_published
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from episodes order by id
+  expect:
+    rows:
+    - [1]
+    - [4]
+
+- name: host_sees_all_own_show_episodes
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from episodes order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: host_cannot_see_other_show_draft
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from episodes where id = 5
+  expect: {denied: true}
+
+- name: host_creates_draft
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: episodes
+    values: {show_id: 1, title: Vacuum, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: true
+  expect: {affected: 1}
+
+- name: host_cannot_create_in_other_show
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: episodes
+    values: {show_id: 2, title: x, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: host_cannot_create_as_other
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: episodes
+    values: {show_id: 1, title: x, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: listener_cannot_create_episode
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: episodes
+    values: {show_id: 1, title: x, created_by: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: host_publishes_episode
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: episodes
+    values: {status: published, publish_at: '2020-06-01T00:00:00Z'}
+    match: {id: 3}
+    returning: true
+  expect: {affected: 1}
+
+- name: host_cannot_move_episode_to_other_show
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: episodes
+    values: {show_id: 2}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: host_cannot_edit_other_show_episode
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: episodes
+    values: {title: x}
+    match: {id: 5}
+    returning: false
+  expect: {denied: true}
+
+- name: listener_cannot_edit_published_episode
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: episodes
+    values: {title: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: host_deletes_draft
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: episodes
+    match: {id: 3}
+  expect: {affected: 1}
+
+- name: host_cannot_delete_published
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: episodes
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: host_sees_own_host_row
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select show_id from hosts
+  expect:
+    rows:
+    - [1]
+
+- name: listener_cannot_become_host
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: hosts
+    values: {show_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_cannot_insert_episode
+  covers: [R6]
+  as: {role: anon}
+  client:
+    op: insert
+    table: episodes
+    values: {show_id: 1, title: x, created_by: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: service_role_sees_all_episodes
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from episodes
+  expect:
+    rows:
+    - [5]

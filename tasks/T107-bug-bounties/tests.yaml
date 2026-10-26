@@ -1,0 +1,236 @@
+- name: user_reads_bounties
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from bounties
+  expect:
+    rows:
+    - [3]
+
+- name: user_posts_bounty
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bounties
+    values: {title: Leaky export, poster_id: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_post_awarded_bounty
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bounties
+    values: {title: x, poster_id: 00000000-0000-0000-0000-000000000002, status: awarded, awarded_submission_id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_post_as_other
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: bounties
+    values: {title: x, poster_id: 00000000-0000-0000-0000-000000000001}
+    returning: false
+  expect: {denied: true}
+
+- name: user_submits_to_open_bounty
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: submissions
+    values: {bounty_id: 1, submitter_id: 00000000-0000-0000-0000-000000000005, body: CSRF on export}
+    returning: true
+  expect: {affected: 1}
+
+- name: user_cannot_submit_to_own_bounty
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: submissions
+    values: {bounty_id: 3, submitter_id: 00000000-0000-0000-0000-000000000003, body: x}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_submit_twice
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: submissions
+    values: {bounty_id: 1, submitter_id: 00000000-0000-0000-0000-000000000002, body: x}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_submit_to_awarded_bounty
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: submissions
+    values: {bounty_id: 2, submitter_id: 00000000-0000-0000-0000-000000000005, body: x}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_submit_as_other
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000005}
+  client:
+    op: insert
+    table: submissions
+    values: {bounty_id: 1, submitter_id: 00000000-0000-0000-0000-000000000002, body: x}
+    returning: false
+  expect: {denied: true}
+
+- name: submitter_sees_own_submissions
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from submissions order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+    - [4]
+
+- name: poster_sees_submissions_to_own_bounties
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from submissions order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [5]
+
+- name: submitter_cannot_see_others_submission
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select id from submissions where id = 1
+  expect: {denied: true}
+
+- name: submitter_edits_pending_submission
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: submissions
+    values: {body: Token is reused after logout (repro attached)}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: submitter_cannot_edit_after_award
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: submissions
+    values: {body: x}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: submitter_cannot_edit_others_submission
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: submissions
+    values: {body: x}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: submitter_cannot_move_submission
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: submissions
+    values: {bounty_id: 3}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: submitter_cannot_delete_submission
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: submissions
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: poster_awards_submission
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bounties
+    values: {status: awarded, awarded_submission_id: 1}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: poster_cannot_award_submission_of_other_bounty
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bounties
+    values: {status: awarded, awarded_submission_id: 4}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: poster_cannot_change_award
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bounties
+    values: {awarded_submission_id: 5}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: poster_cannot_reopen_awarded_bounty
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: bounties
+    values: {status: open, awarded_submission_id: null}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: other_user_cannot_award
+  covers: [R6]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: bounties
+    values: {status: awarded, awarded_submission_id: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_nothing
+  covers: [R7]
+  as: {role: anon}
+  sql: select * from bounties
+  expect: {denied: true}
+
+- name: service_role_sees_all_submissions
+  covers: [R7]
+  as: {role: service_role}
+  sql: select count(*) from submissions
+  expect:
+    rows:
+    - [5]

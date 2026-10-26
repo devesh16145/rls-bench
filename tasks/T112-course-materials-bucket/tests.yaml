@@ -1,0 +1,147 @@
+- name: instructor_lists_own_course_files
+  covers: [R1, R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where bucket_id = 'materials' order by name
+  expect:
+    rows:
+    - [1/intro.pdf]
+    - [1/lecture.mp4]
+
+- name: student_reads_enrolled_course_files
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select name from storage.objects where bucket_id = 'materials' order by name
+  expect:
+    rows:
+    - [1/intro.pdf]
+    - [1/lecture.mp4]
+
+- name: other_user_reads_nothing
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select name from storage.objects where bucket_id = 'materials'
+  expect: {denied: true}
+
+- name: student_cannot_read_other_course_file
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select name from storage.objects where name = '2/notes.pdf'
+  expect: {denied: true}
+
+- name: instructor_uploads_pdf
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '1/week2.pdf', auth.uid()) returning name
+  expect: {affected: 1}
+
+- name: instructor_uploads_mp4
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '1/week2.mp4', auth.uid()) returning name
+  expect: {affected: 1}
+
+- name: instructor_cannot_upload_other_file_type
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '1/tool.exe', auth.uid()) returning name
+  expect: {denied: true}
+
+- name: instructor_cannot_upload_to_other_course
+  covers: [R1, R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '2/week2.pdf', auth.uid()) returning name
+  expect: {denied: true}
+
+- name: instructor_cannot_upload_at_bucket_root
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', 'week2.pdf', auth.uid()) returning name
+  expect: {denied: true}
+
+- name: instructor_cannot_upload_as_other_owner
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '1/week3.pdf', '00000000-0000-0000-0000-000000000002') returning name
+  expect: {denied: true}
+
+- name: instructor_cannot_upload_to_other_bucket
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('avatars', '1/week2.pdf', auth.uid())
+  expect: {denied: true}
+
+- name: student_cannot_upload
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: insert into storage.objects (bucket_id, name, owner) values ('materials', '1/mine.pdf', auth.uid()) returning name
+  expect: {denied: true}
+
+- name: instructor_renames_within_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update storage.objects set name = '1/intro-v2.pdf' where name = '1/intro.pdf' returning name
+  expect: {affected: 1}
+
+- name: instructor_cannot_move_file_to_other_course
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update storage.objects set name = '2/intro.pdf' where name = '1/intro.pdf' returning name
+  expect: {denied: true}
+
+- name: instructor_deletes_own_course_file
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: delete from storage.objects where name = '1/intro.pdf'
+  expect: {affected: 1}
+
+- name: student_cannot_delete_file
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: delete from storage.objects where name = '1/intro.pdf' returning name
+  expect: {denied: true}
+
+- name: nobody_reads_other_bucket_through_these_rules
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select name from storage.objects where bucket_id = 'avatars'
+  expect: {denied: true}
+
+- name: user_reads_courses
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select count(*) from courses
+  expect:
+    rows:
+    - [2]
+
+- name: student_sees_own_enrollment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select course_id from enrollments
+  expect:
+    rows:
+    - [1]
+
+- name: user_cannot_enroll_self
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: enrollments
+    values: {course_id: 1, student_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_reads_nothing
+  covers: [R5]
+  as: {role: anon}
+  sql: select name from storage.objects
+  expect: {denied: true}
+
+- name: service_role_sees_all_objects
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from storage.objects
+  expect:
+    rows:
+    - [4]

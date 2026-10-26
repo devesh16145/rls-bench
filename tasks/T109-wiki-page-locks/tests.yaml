@@ -1,0 +1,171 @@
+- name: member_reads_space_pages
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from pages order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+
+- name: member_reads_space_row
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from spaces order by id
+  expect:
+    rows:
+    - [1]
+
+- name: member_sees_own_memberships
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select space_id from members order by space_id
+  expect:
+    rows:
+    - [1]
+    - [2]
+
+- name: outsider_sees_no_pages
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select * from pages
+  expect: {denied: true}
+
+- name: member_takes_free_lock
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = auth.uid(), locked_until = now() + interval '20 minutes' where id = 1 returning id
+  expect: {affected: 1}
+
+- name: member_takes_lock_and_edits_in_one_step
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set body = 'Welcome aboard', locked_by = auth.uid(), locked_until = now() + interval '20 minutes' where id = 1 returning id
+  expect: {affected: 1}
+
+- name: member_cannot_take_live_lock_of_other
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = auth.uid(), locked_until = now() + interval '20 minutes' where id = 2 returning id
+  expect: {denied: true}
+
+- name: member_takes_expired_lock
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = auth.uid(), locked_until = now() + interval '20 minutes' where id = 3 returning id
+  expect: {affected: 1}
+
+- name: member_cannot_lock_beyond_30_minutes
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = auth.uid(), locked_until = now() + interval '2 hours' where id = 1 returning id
+  expect: {denied: true}
+
+- name: member_cannot_lock_in_the_past
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = auth.uid(), locked_until = now() - interval '1 minute' where id = 1 returning id
+  expect: {denied: true}
+
+- name: holder_edits_locked_page
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: 'update pages set body = ''Step 1: freeze'', locked_until = now() + interval ''10 minutes'' where id = 2 returning id'
+  expect: {affected: 1}
+
+- name: non_holder_cannot_edit_locked_page
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set body = 'x' where id = 2 returning id
+  expect: {denied: true}
+
+- name: member_cannot_edit_unlocked_page_without_taking_lock
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set body = 'x' where id = 1 returning id
+  expect: {denied: true}
+
+- name: member_cannot_lock_page_for_someone_else
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update pages set locked_by = '00000000-0000-0000-0000-000000000002', locked_until = now() + interval '20 minutes' where id = 1 returning id
+  expect: {denied: true}
+
+- name: member_creates_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pages
+    values: {space_id: 1, title: Glossary}
+    returning: true
+  expect: {affected: 1}
+
+- name: outsider_cannot_create_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: pages
+    values: {space_id: 1, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_create_page_in_other_space
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pages
+    values: {space_id: 2, title: x}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_create_locked_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: pages
+    values: {space_id: 1, title: x, locked_by: 00000000-0000-0000-0000-000000000001, locked_until: '2099-01-01T00:00:00Z'}
+    returning: false
+  expect: {denied: true}
+
+- name: member_cannot_move_page_to_other_space
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: update pages set space_id = 2, locked_by = auth.uid(), locked_until = now() + interval '5 minutes' where id = 2 returning id
+  expect: {denied: true}
+
+- name: member_cannot_delete_page
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: pages
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: member_cannot_add_member
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: members
+    values: {space_id: 1, user_id: 00000000-0000-0000-0000-000000000003}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_nothing
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from pages
+  expect: {denied: true}
+
+- name: service_role_sees_all_pages
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from pages
+  expect:
+    rows:
+    - [4]

@@ -1,0 +1,145 @@
+- name: user_reads_seat_map
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id, status from seat_map where event_id = 1 order by id
+  expect:
+    rows:
+    - [1, free]
+    - [2, held]
+    - [3, free]
+    - [4, booked]
+    - [5, free]
+    - [6, free]
+
+- name: user_reads_events
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select count(*) from events
+  expect:
+    rows:
+    - [1]
+
+- name: user_cannot_see_others_hold_in_seats
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from seats where id = 2
+  expect: {denied: true}
+
+- name: user_sees_own_hold_row
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from seats order by id
+  expect:
+    rows:
+    - [6]
+
+- name: user_holds_free_seat
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select hold_seat(1); select status, holder_id = auth.uid() from seats where id = 1
+  expect:
+    rows:
+    - [held, true]
+
+- name: user_holds_seat_with_expired_hold
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select hold_seat(3); select holder_id = auth.uid() from seats where id = 3
+  expect:
+    rows:
+    - [true]
+
+- name: user_cannot_hold_live_held_seat
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select hold_seat(2)
+  expect: {denied: true}
+
+- name: user_cannot_hold_booked_seat
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select hold_seat(4)
+  expect: {denied: true}
+
+- name: user_confirms_own_live_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select confirm_seat(2); select status, booked_by = auth.uid() from seats where id = 2
+  expect:
+    rows:
+    - [booked, true]
+
+- name: user_cannot_confirm_others_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select confirm_seat(2)
+  expect: {denied: true}
+
+- name: user_cannot_confirm_free_seat
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select confirm_seat(1)
+  expect: {denied: true}
+
+- name: user_cannot_confirm_expired_own_hold
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select confirm_seat(6)
+  expect: {denied: true}
+
+- name: user_cannot_confirm_booked_seat
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select confirm_seat(4)
+  expect: {denied: true}
+
+- name: user_cannot_update_seat_directly
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update seats set status = 'booked', booked_by = auth.uid() where id = 1 returning id
+  expect: {denied: true}
+
+- name: user_cannot_update_own_held_seat_directly
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: update seats set status = 'booked', booked_by = auth.uid() where id = 6 returning id
+  expect: {denied: true}
+
+- name: user_cannot_insert_seat
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: insert
+    table: seats
+    values: {event_id: 1, label: Z9}
+    returning: false
+  expect: {denied: true}
+
+- name: user_cannot_delete_seat
+  covers: [R5]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: delete
+    table: seats
+    match: {id: 6}
+  expect: {denied: true}
+
+- name: anon_cannot_read_seat_map
+  covers: [R6]
+  as: {role: anon}
+  sql: select * from seat_map
+  expect: {denied: true}
+
+- name: anon_cannot_hold_seat
+  covers: [R6]
+  as: {role: anon}
+  sql: select hold_seat(1)
+  expect: {denied: true}
+
+- name: service_role_sees_all_seats
+  covers: [R6]
+  as: {role: service_role}
+  sql: select count(*) from seats
+  expect:
+    rows:
+    - [6]

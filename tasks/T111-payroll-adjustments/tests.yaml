@@ -1,0 +1,235 @@
+- name: employee_sees_own_adjustments
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  sql: select id from adjustments order by id
+  expect:
+    rows:
+    - [1]
+    - [3]
+
+- name: manager_sees_direct_reports_adjustments
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select id from adjustments order by id
+  expect:
+    rows:
+    - [1]
+    - [2]
+    - [3]
+    - [4]
+
+- name: finance_sees_all_adjustments
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  sql: select count(*) from adjustments
+  expect:
+    rows:
+    - [5]
+
+- name: skip_level_manager_cannot_see_report_of_report
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  sql: select id from adjustments where id = 1
+  expect: {denied: true}
+
+- name: manager_sees_own_and_reports_employee_rows
+  covers: [R1]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  sql: select count(*) from employees
+  expect:
+    rows:
+    - [3]
+
+- name: manager_raises_adjustment_for_report
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: adjustments
+    values: {employee_id: 00000000-0000-0000-0000-000000000004, amount_cents: 1500, reason: Weekend support, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_cannot_raise_for_non_report
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: adjustments
+    values: {employee_id: 00000000-0000-0000-0000-000000000003, amount_cents: 1500, reason: x, created_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_cannot_raise_pre_approved
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: insert
+    table: adjustments
+    values: {employee_id: 00000000-0000-0000-0000-000000000004, amount_cents: 1500, reason: x, created_by: 00000000-0000-0000-0000-000000000002, status: approved, approved_by: 00000000-0000-0000-0000-000000000002}
+    returning: false
+  expect: {denied: true}
+
+- name: finance_raises_for_anyone
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: insert
+    table: adjustments
+    values: {employee_id: 00000000-0000-0000-0000-000000000002, amount_cents: 500, reason: Expense correction, created_by: 00000000-0000-0000-0000-000000000003}
+    returning: true
+  expect: {affected: 1}
+
+- name: employee_cannot_raise_own
+  covers: [R2]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: insert
+    table: adjustments
+    values: {employee_id: 00000000-0000-0000-0000-000000000004, amount_cents: 500, reason: x, created_by: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_approves_within_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_cannot_approve_above_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 2}
+    returning: false
+  expect: {denied: true}
+
+- name: finance_approves_above_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000003}
+    match: {id: 2}
+    returning: true
+  expect: {affected: 1}
+
+- name: manager_rejects_within_limit
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {status: rejected, approved_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 1}
+    returning: true
+  expect: {affected: 1}
+
+- name: decider_must_sign_as_self
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000003}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: finance_cannot_decide_own_adjustment
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000003}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000003}
+    match: {id: 5}
+    returning: false
+  expect: {denied: true}
+
+- name: skip_level_manager_cannot_approve
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000001}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000001}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: employee_cannot_approve_own
+  covers: [R3]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: adjustments
+    values: {status: approved, approved_by: 00000000-0000-0000-0000-000000000004}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: decided_adjustment_cannot_change
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {status: rejected, approved_by: 00000000-0000-0000-0000-000000000002}
+    match: {id: 3}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_cannot_change_amount
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: update
+    table: adjustments
+    values: {amount_cents: 1}
+    match: {id: 1}
+    returning: false
+  expect: {denied: true}
+
+- name: manager_cannot_delete_adjustment
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000002}
+  client:
+    op: delete
+    table: adjustments
+    match: {id: 1}
+  expect: {denied: true}
+
+- name: user_cannot_make_self_finance
+  covers: [R4]
+  as: {role: authenticated, sub: 00000000-0000-0000-0000-000000000004}
+  client:
+    op: update
+    table: employees
+    values: {is_finance: true}
+    match: {user_id: 00000000-0000-0000-0000-000000000004}
+    returning: false
+  expect: {denied: true}
+
+- name: anon_sees_nothing
+  covers: [R5]
+  as: {role: anon}
+  sql: select * from adjustments
+  expect: {denied: true}
+
+- name: service_role_sees_all
+  covers: [R5]
+  as: {role: service_role}
+  sql: select count(*) from employees
+  expect:
+    rows:
+    - [5]

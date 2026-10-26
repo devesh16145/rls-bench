@@ -1,0 +1,22 @@
+id: T113
+title: Home cameras shared with others, stream keys only in an MFA session
+tier: 3
+tags:
+- mfa
+- jwt-claims
+- sharing
+- expiry
+- delegation
+- client-returning
+traps:
+- mfa-not-enforced
+- time-window
+- transitive-delegation
+extra_tables: []
+fixture_notes:
+- own (…01) owns camera 1; g1 (…02) owns camera 2 and has a live share on camera 1 (until 2099); g2 (…03) has an expired share on camera 1 (2020); stranger (…04)
+- 'stream_keys: camera 1 ''k1'', camera 2 ''k2'''
+verified: false
+author: owner
+created: '2026-10-26'
+canary: RLSBENCH-CANARY-f9002c750838f00b
