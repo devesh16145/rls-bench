@@ -4,7 +4,7 @@ A verifiable benchmark for Supabase/Postgres **Row Level Security**. Each task g
 
 RLS is where a small mistake becomes a data breach. A policy that is slightly too broad still "works" in a demo, but it lets one user read or overwrite another user's rows. RLS-Bench measures that directly: besides pass/fail, every failure is classified as a **leak** (someone gets access they shouldn't) or a **block** (someone loses access they should have).
 
-- **103 verified tasks** in three tiers (31 / 46 / 26), covering 55 named failure patterns ("traps"): `null-owner`, `weak-with-check`, `claim-trust`, `recursive-policy`, `view-bypass`, `rpc-missing-auth-check`, and more (`docs/failure-taxonomy.md`).
+- **113 verified tasks** in three tiers (31 / 52 / 30): 103 in the frozen split, plus 10 appended to the train split on 2026-10-26 (every leaderboard and test number below is on the original 103), covering 61 named failure patterns ("traps"): `null-owner`, `weak-with-check`, `claim-trust`, `recursive-policy`, `view-bypass`, `rpc-missing-auth-check`, and more (`docs/failure-taxonomy.md`).
 - **Baselines** for frontier and open models through OpenRouter.
 - **Training**: LoRA SFT and then GRPO of Nemotron-3.5-Lightning on [Tinker](https://thinkingmachines.ai/tinker/), with the harness as the reward and a penalty for leaks.
 
@@ -114,7 +114,7 @@ Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both i
 | Path | What |
 |---|---|
 | `harness/` | Postgres harness, Supabase auth/storage shim, test runner, mutation checks, CLI |
-| `tasks/` | the 103 tasks and the frozen train/dev/test split (`tasks/split.json`) |
+| `tasks/` | the 113 tasks and the train/dev/test split (`tasks/split.json`, frozen for dev and test; train revisions recorded in the file) |
 | `eval/` | OpenRouter client with a disk cache, fixed prompt, metrics |
 | `train/` | SFT data builder, Tinker SFT and GRPO, dev and one-time test evals, reports |
 | `results/` | raw graded samples, summaries, training metrics and checkpoints |
