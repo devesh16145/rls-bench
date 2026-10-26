@@ -14,7 +14,7 @@ extra_tables: []
 fixture_notes:
 - 'space 1: members m1 (…01) and m2 (…02); space 2: member m2 only; outsider (…03) is in no space'
 - page 1 (space 1) unlocked; page 2 (space 1) locked by m2 until 2099; page 3 (space 1) locked by m2 until 2020 (expired); page 4 (space 2) unlocked
-verified: false
+verified: true
 author: owner
 created: '2026-10-26'
 canary: RLSBENCH-CANARY-f9002c750838f00b

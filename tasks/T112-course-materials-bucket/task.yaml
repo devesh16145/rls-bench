@@ -17,7 +17,7 @@ extra_tables:
 fixture_notes:
 - instructors ins1 (…01, course 1) and ins2 (…02, course 2); stu (…03) is enrolled in course 1; other (…04) is in no course
 - 'bucket materials (private): 1/intro.pdf, 1/lecture.mp4, 2/notes.pdf; bucket avatars (public): x.png'
-verified: false
+verified: true
 author: owner
 created: '2026-10-26'
 canary: RLSBENCH-CANARY-f9002c750838f00b

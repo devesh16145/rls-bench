@@ -16,7 +16,7 @@ fixture_notes:
 - volunteers vol1 (…01), vol2 (…02); coordinator coord (…03)
 - shift 1 open in 2099, capacity 2, one active sign-up (vol2); shift 2 open in 2099, capacity 1, full (vol1)
 - shift 3 cancelled; shift 4 open but in 2020; vol1 has a cancelled sign-up on shift 4
-verified: false
+verified: true
 author: owner
 created: '2026-10-26'
 canary: RLSBENCH-CANARY-f9002c750838f00b

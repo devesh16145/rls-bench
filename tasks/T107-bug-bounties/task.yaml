@@ -16,7 +16,7 @@ fixture_notes:
 - poster p1 (…01); submitters s1 (…02), s2 (…03), s3 (…04), s4 (…05, no submissions)
 - 'bounty 1 open (p1): submissions 1 (s1), 2 (s2); bounty 2 awarded (p1) to submission 3 (s1), also has submission 5 (s3)'
 - 'bounty 3 open, posted by s2: submission 4 (s1)'
-verified: false
+verified: true
 author: owner
 created: '2026-10-26'
 canary: RLSBENCH-CANARY-f9002c750838f00b
