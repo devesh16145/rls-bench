@@ -121,6 +121,7 @@ def train(
     max_spend: float = typer.Option(40.0, help="Hard stop (estimated USD) for the whole run."),
     dry_run: bool = typer.Option(False, "--dry-run"),
     yes: bool = typer.Option(False, "--yes"),
+    resume: bool = typer.Option(False, "--resume", help="Continue the run named by --name from its last saved checkpoint."),
 ) -> None:
     renderer_name = renderer_name or DEFAULT_RENDERERS.get(model)
     if renderer_name is None:
@@ -171,9 +172,18 @@ def train(
     slug = model.split("/")[-1]
     name = name or f"rl_{slug}_{run_id}"
     log_path = RESULTS_DIR / "runs" / name
-    log_path.mkdir(parents=True, exist_ok=False)
-    (log_path / "plan.json").write_text(json.dumps({**plan, "run_id": run_id, "seed": seed, "task_ids": task_ids,
-                                                     "max_spend": max_spend}, indent=2) + "\n")
+    if resume:
+        if not (log_path / "checkpoints.jsonl").exists():
+            raise typer.BadParameter(f"{log_path.relative_to(ROOT)} has no checkpoints to resume from")
+        run_id = json.loads((log_path / "plan.json").read_text())["run_id"]
+        (log_path / f"resume_{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json").write_text(
+            json.dumps({**plan, "max_spend": max_spend}, indent=2) + "\n")
+    else:
+        log_path.mkdir(parents=True, exist_ok=False)
+        (log_path / "plan.json").write_text(json.dumps({**plan, "run_id": run_id, "seed": seed, "task_ids": task_ids,
+                                                         "max_spend": max_spend}, indent=2) + "\n")
+    prior_evals = sum(1 for _ in (log_path / "dev_evals.jsonl").open()) if (log_path / "dev_evals.jsonl").exists() else 0
+    prior_spend = json.loads((log_path / "crash_before_resume.json").read_text())["est_spend_usd"] if (log_path / "crash_before_resume.json").exists() else 0.0
     guard = rl_env.spend_guard(name, max_spend=max_spend, **price(model))
     dataset_builder = rl_env.RlsDatasetBuilder(
         task_ids=task_ids, steps=steps, tasks_per_step=tasks_per_step, group_size=group_size, model_name=model,
@@ -188,6 +198,7 @@ def train(
     else:
         evaluator = rl_env.make_dev_evaluator(prefix=f"{slug}@{name}", model_name=model, renderer_name=renderer_name,
                                               log_path=log_path, max_spend=dev_est["worst_usd"] + 0.05)
+        evaluator().n = prior_evals  # continue numbering after a resume
     config = rl_train.Config(
         learning_rate=learning_rate, dataset_builder=dataset_builder, model_name=model, recipe_name="rls_bench_grpo",
         max_tokens=max_tokens, log_path=str(log_path), eval_every=eval_every, save_every=eval_every or steps,
@@ -206,7 +217,8 @@ def train(
         "parent_run_id": from_run, "load_checkpoint_path": load_path, "lora_rank": lora_rank, "learning_rate": learning_rate,
         "steps": steps, "tasks_per_step": tasks_per_step, "group_size": group_size, "max_tokens": max_tokens,
         "max_turns": max_turns, "leak_penalty": leak_penalty, "turn_penalty": turn_penalty, "seed": seed,
-        "tasks": task_ids, "est_spend_usd": round(guard.spent() + sum(e["dev/spend_usd"] for e in dev_evals), 4),
+        "tasks": task_ids, "est_spend_usd": round(guard.spent() + prior_spend + sum(e["dev/spend_usd"] for e in dev_evals[prior_evals:]), 4),
+        "resumed": resume,
         "log_path": str(log_path.relative_to(ROOT)), "metrics": str((log_path / "metrics.jsonl").relative_to(ROOT)),
         "checkpoints": checkpoints, "dev_evals": dev_evals, "best_dev_eval": best,
         "state_path": final.get("state_path"), "sampler_path": final.get("sampler_path"),
