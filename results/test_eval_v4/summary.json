@@ -1,0 +1,191 @@
+{
+  "git_commit": "f1ae829510592eeca37b9f39d7e52e3cc532f28e",
+  "version": 4,
+  "models": {
+    "sft-82": {
+      "label": "Qwen3.5-9B@sft-20261026T124124Z",
+      "samples": 120,
+      "pass_all_samples": {
+        "rate": 0.35,
+        "lo": 0.2705189959028541,
+        "hi": 0.438786754022757,
+        "n": 120
+      },
+      "leak_all_samples": {
+        "rate": 0.15,
+        "lo": 0.09703812292584739,
+        "hi": 0.22467529356724508,
+        "n": 120
+      },
+      "apply_error_all_samples": {
+        "rate": 0.2916666666666667,
+        "lo": 0.2178156362103854,
+        "hi": 0.3784423497974078,
+        "n": 120
+      },
+      "format_error_all_samples": {
+        "rate": 0.0,
+        "lo": 0.0,
+        "hi": 0.031019166418703486,
+        "n": 120
+      },
+      "pass_at_1": {
+        "rate": 0.35,
+        "lo": 0.18119182410108206,
+        "hi": 0.5671457233147638,
+        "n": 20
+      },
+      "leak_at_1": {
+        "rate": 0.15,
+        "lo": 0.052368745896216595,
+        "hi": 0.36041886474075696,
+        "n": 20
+      },
+      "mean_completion_tokens": 701.15,
+      "est_spend_usd": 0.0888
+    }
+  },
+  "per_task": {
+    "T001": {
+      "sft-82": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T002": {
+      "sft-82": {
+        "passed": 5,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T009": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 6,
+        "samples": 6
+      }
+    },
+    "T012": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T014": {
+      "sft-82": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T026": {
+      "sft-82": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T039": {
+      "sft-82": {
+        "passed": 5,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T043": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T051": {
+      "sft-82": {
+        "passed": 1,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T058": {
+      "sft-82": {
+        "passed": 1,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T060": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T061": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T065": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 6,
+        "samples": 6
+      }
+    },
+    "T077": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T082": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T084": {
+      "sft-82": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T090": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T095": {
+      "sft-82": {
+        "passed": 6,
+        "leaked": 0,
+        "samples": 6
+      }
+    },
+    "T097": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 4,
+        "samples": 6
+      }
+    },
+    "T099": {
+      "sft-82": {
+        "passed": 0,
+        "leaked": 2,
+        "samples": 6
+      }
+    }
+  },
+  "repair": {}
+}

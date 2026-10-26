@@ -36,6 +36,7 @@
     "leaderboard row Qwen3.5-9B@reasoning-off": 0.8929,
     "dev eval Qwen3.5-9B@sft-20261025T184758Z": 0.0397,
     "dev eval Qwen3.5-9B@sft-20261026T050548Z": 0.0569,
+    "dev eval Qwen3.5-9B@sft-20261026T124124Z": 0.0434,
     "leaderboard row gpt-oss-120b@reasoning-off": 1.1965,
     "one-time test eval v1 (3 models)": 0.1589,
     "test eval v2": 1.2894,
@@ -44,5 +45,5 @@
     "judge zeroshot_Kimi-K2.6": 1.0469,
     "judge zeroshot_gpt-oss-120b": 0.5266
   },
-  "total_usd": 135.4161
+  "total_usd": 135.4595
 }
