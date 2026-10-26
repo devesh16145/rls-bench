@@ -341,3 +341,8 @@
 
 - Failure: after 25 of 40 steps the Tinker client raised `APIConnectionError: No progress made in 7200s. Requests appear to be stuck` (a two-hour stall on a sampling or training request) and the run exited without its final record. Checkpoints at steps 10 and 20 (state and sampler) and three dev evals (27% / 24% / 45% pass at steps 10, 20, 30) are on disk; the crashed portion's cost is estimated from its logged tokens in `runs/rl_v3_Qwen3.5-9B_lr4e-5_s40/crash_before_resume.json`.
 - Fix: `rl_cookbook train --resume` reuses the run directory and lets the cookbook loop resume from the last saved checkpoint (step 20); the dev-eval counter continues from the existing evals so labels do not collide. The resumed run's record adds the pre-resume estimate to its spend.
+
+## 2026-10-26 — GRPO v3 seed 0 completed after the resume (rl_v3_Qwen3.5-9B_lr4e-5_s40)
+
+- Resumed from the step-20 checkpoint and ran to step 40 without incident; estimated $12.33 in all (including the $6.54 of the stalled portion). Dev: step 10 27% pass / 27% leak, step 20 24% / 26%, step 30 (post-resume weights) 47% / 26%, **step 40 61% / 11%**, greedy pass@1 6/11. Best checkpoint: step 40. The pre-resume step-30 eval (45% / 29%) is kept in `dev_evals_before_resume.jsonl` and excluded from selection because those weights were never saved.
+- Seed 1 started at 30 steps (not 40) with a $24 cap: about $27 of credit remained and a 40-step run's worst case ($30) would not fit. The deviation is recorded in the pre-registration.
