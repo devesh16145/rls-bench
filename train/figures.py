@@ -304,11 +304,15 @@ def fig_methods() -> Path | None:
     if not path.exists():
         return None
     s = json.loads(path.read_text())["models"]
-    order = [("base", "base"), ("sft", "SFT"), ("distil", "distillation"), ("sft+rl", "SFT + GRPO"), ("sft+rl-seed1", "SFT + GRPO, seed 1"), ("repair", "repair-trained")]
+    v3 = RESULTS / "test_eval_v3" / "summary.json"
+    if v3.exists():
+        s = {**s, **{k: v for k, v in json.loads(v3.read_text())["models"].items() if k != "base"}}
+    order = [("base", "base"), ("sft", "SFT"), ("distil", "distillation"), ("sft+rl", "SFT + GRPO"), ("sft+rl-seed1", "SFT + GRPO, seed 1"),
+             ("repair", "repair-trained"), ("sft-v3", "SFT, v3 data"), ("sft-v3+rl", "SFT v3 + GRPO"), ("sft-v3+rl-seed1", "SFT v3 + GRPO, seed 1")]
     rows = [(label, s[k]) for k, label in order if k in s]
     if not rows:
         return None
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(1.1 * len(rows) + 2, 4.2))
     xs = list(range(len(rows)))
     _ci_bar(ax, [x - 0.2 for x in xs], [r for _, r in rows], "pass_all_samples", BLUE, label="pass", width=0.38)
     _ci_bar(ax, [x + 0.2 for x in xs], [r for _, r in rows], "leak_all_samples", ORANGE, label="leak", width=0.38)
@@ -317,7 +321,7 @@ def fig_methods() -> Path | None:
     ax.set_ylim(0, 100)
     ax.set_ylabel("% of 120 test samples")
     ax.legend(fontsize=8, loc="upper left")
-    ax.set_title("Three ways to train the same 9B model, on the test split")
+    ax.set_title("Ways to train the same 9B model, on the test split (v3 = SFT data from two open models)")
     return _save(fig, "methods_test")
 
 

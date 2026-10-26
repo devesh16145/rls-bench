@@ -350,3 +350,9 @@
 ## 2026-10-26 — GRPO v3 seed 1 (rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1)
 
 - 30 steps, otherwise the seed-0 settings; estimated $9.71. Train: reward 0.24 → 0.46, pass 35% → 53%, leak 21% → 13%, entropy 0.097 → 0.022. Dev: step 10 21% / 29%, **step 20 35% / 36%**, step 30 27% / 44%. Best checkpoint: step 20. Far below seed 0 at the same steps (24% / 26% at 20, 47% / 26% at 30) and the opposite leak trend: the seed-to-seed spread seen in version 2 again. Tinker spend now $132.44.
+
+## 2026-10-26 — Version 3 test evaluation (once, commit 34bab1f)
+
+- Four rows, 120 samples each, estimated $0.42. Base (re-sampled) 8% pass [4, 14] / 17% leak; SFT v3 33% [26, 42] / 31%; SFT v3 + GRPO seed 0 (step 40) **45% [36, 54] / 25%**; seed 1 (step 20 of 30) 36% [28, 45] / 17%. Greedy pass@1: 10% / 35% / 45% / 40%. By tier (pass / leak): SFT v3 69% / 31%, 15% / 28%, 23% / 37%; GRPO seed 0 83% / 17%, 43% / 15%, 3% / 53%; seed 1 58% / 17%, 30% / 17%, 20% / 17%.
+- Paired by task against version 2 (`results/test_eval_v3/paired_and_tiers.json`): SFT v3 vs SFT v2 pass 2 / 2, leaks higher on 8 tasks / lower on 2 (p = 0.11); SFT v3 vs base pass 9 / 0 (p = 0.004); GRPO v3 seed 0 vs SFT v3 pass 4 / 3, leaks 6 / 4; vs GRPO v2 seed 0 pass 3 / 2, leaks 3 / 2; vs SFT v2 pass 3 / 3, leaks 4 / 6; seed 1 vs SFT v3 pass 4 / 4, leaks 6 / 2.
+- Reading: the data change did not raise the SFT pass rate (33% vs 38%, within noise) and raised its leak rate (31% vs 16%; higher on 8 of 10 tasks that differ). GRPO on top gave the highest pass rate of any row (45%) and pulled leaks back to 25% (seed 0) and 17% (seed 1), but not below the version-2 SFT's 16%; seed 0 again leaks heavily on tier 3 (53%). The pass gain over SFT v3 is within noise (4 / 3 tasks). Tinker spend $132.44.

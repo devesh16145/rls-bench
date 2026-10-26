@@ -1,0 +1,61 @@
+{
+  "models": [
+    {
+      "name": "base",
+      "label": "Qwen3.5-9B@base",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": null
+    },
+    {
+      "name": "sft-v3",
+      "label": "Qwen3.5-9B@sft-sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/sampler_weights/final"
+    },
+    {
+      "name": "sft-v3+rl",
+      "label": "Qwen3.5-9B@rl-rl_v3_Qwen3.5-9B_lr4e-5_s40-000040",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/sampler_weights/000040"
+    },
+    {
+      "name": "sft-v3+rl-seed1",
+      "label": "Qwen3.5-9B@rl-rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1-000020",
+      "model": "Qwen/Qwen3.5-9B",
+      "renderer": "qwen3_5_disable_thinking",
+      "model_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/000020"
+    }
+  ],
+  "tasks": [
+    "T001",
+    "T002",
+    "T009",
+    "T012",
+    "T014",
+    "T026",
+    "T039",
+    "T043",
+    "T051",
+    "T058",
+    "T060",
+    "T061",
+    "T065",
+    "T077",
+    "T082",
+    "T084",
+    "T090",
+    "T095",
+    "T097",
+    "T099"
+  ],
+  "k": 5,
+  "max_tokens": 4096,
+  "repair_models": [],
+  "repair_max_turns": 3,
+  "created": "2026-10-26T09:46:21+00:00",
+  "git_commit": "34bab1f55ffddf913de788ba7e859b5466543d48",
+  "version": 3
+}

@@ -222,7 +222,7 @@ Paired by task (pass count out of 6, leak count out of 6; two-sided sign test on
 
 ### 5.9 Cost
 
-Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$101.90** of a $150 credit:
+Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$132.44** of a $150 credit (version 3 added $30.54: Kimi sampling $3.46, the SFT sweep $8.58, the two GRPO seeds $22.05 including a stalled portion, and the test evaluation $0.42):
 
 | Stage | Spend |
 |---|---|
@@ -254,9 +254,21 @@ The one lever left untested in version 2 was the data itself. Version 3 re-ran t
 
 **GRPO, seed 0.** The run stalled at step 25 behind a two-hour connection outage to Tinker and was resumed from its step-20 checkpoint; its dev evals read 27% / 27% at step 10, 24% / 26% at step 20, 47% / 26% at step 30 and **61% pass / 11% leak at step 40**, the strongest dev checkpoint of any run (version 2's best was 52% / 6%). Estimated $12.33 including the stalled portion.
 
-**GRPO, seed 1.** _Pending: 30 steps rather than 40, because about $27 of credit remained; dev results go here._
+**GRPO, seed 1.** Run for 30 steps rather than 40 because about $27 of credit remained ($9.71). Dev: 21% / 29% at step 10, **35% / 36% at step 20**, 27% / 44% at step 30; the step-20 checkpoint was chosen. Ten steps short of seed 0, and far below it at the same steps (seed 0 read 24% / 26% at step 20 and 47% / 26% at step 30), with the leak rate moving the other way: the seed-to-seed spread of version 2, again.
 
-**Test.** _Pending: the version-3 test evaluation (`docs/preregistration.md`, version 3 section) and the paired comparison with the version-2 rows._
+**Test** (the third evaluation of the split; `results/test_eval_v3/`, commit 34bab1f):
+
+| Row | Pass, all samples | Leak, all samples | Greedy pass@1 | Pass by tier 1 / 2 / 3 |
+|---|---|---|---|---|
+| base (re-sampled) | 8% [4, 14] | 17% | 10% | 19% / 0% / 7% |
+| SFT, version 2 data | 38% [29, 46] | 16% | 45% | 83% / 13% / 27% |
+| SFT, version 3 data | 33% [26, 42] | **31%** | 35% | 69% / 15% / 23% |
+| SFT v3 + GRPO, seed 0 (step 40) | **45%** [36, 54] | 25% | 45% | 83% / 43% / 3% |
+| SFT v3 + GRPO, seed 1 (step 20 of 30) | 36% [28, 45] | 17% | 40% | 58% / 30% / 20% |
+
+Paired by task: SFT v3 vs SFT v2, pass better on 2 / worse on 2, leaks higher on 8 / lower on 2 (p = 0.11); GRPO v3 seed 0 vs SFT v3, pass 4 / 3 and leaks lower on 6 / higher on 4; GRPO v3 seed 0 vs GRPO v2 seed 0, 3 / 2 and 3 / 2; seed 1 vs SFT v3, 4 / 4 and leaks 6 / 2.
+
+**What the data change did.** Not what it was meant to. Mixing Kimi's passing answers into the SFT set left the pass rate where it was (33% vs 38%, within noise) and doubled the leak rate (31% vs 16%, higher on eight of the ten tasks that differ). Every answer in the set passes its own task's tests, so the leaks are not in the data; the *style* of a second model, one that leaks on 16% of the leaderboard tasks against DeepSeek's 1%, carried over to new tasks. GRPO then did its job in both seeds, cutting the leak rate from 31% to 25% and 17%, and seed 0 reached the highest pass rate of any row (45%, with a 43% tier-2 rate no other row touches), but the pass gain over its own SFT is within noise and its tier-3 leak rate (53%) repeats version 2's pattern. The version-2 pipeline, with the single cleaner data source, remains the better recipe on the leak rate; the version-3 seed-0 checkpoint is the best model by pass rate. Both claims carry 20-task intervals.
 
 *Sources: `results/train/checkpoints.json` (every run with its curves under `results/train/runs/`), `results/train/sft_sweep_*.json`, `results/tinker_eval/` (dev evals), `results/repair_eval/`, `results/test_eval_v2/` (the version-2 test eval, its lock, `summary.json` and `paired_and_tiers.json`), `results/test_eval/` (version 1), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json`. Figures: `results/figures/`, from `train/figures.py`.*
 
@@ -265,7 +277,7 @@ The one lever left untested in version 2 was the data itself. Version 3 re-ran t
 - **Synthetic schemas, one flavour of Postgres.** Every task was written for this benchmark, in the Supabase dialect (its `auth` and `storage` shims, its default privileges). Real schemas are larger, messier and come with history; a policy that passes here may still be wrong for an app with triggers, views and migrations the task never mentions.
 - **One author.** The tasks were written quickly and reviewed against a checklist; the traps and tests reflect one person's sense of what goes wrong. Several traps were only caught for the wrong reason the first time round, and were fixed; others may still be caught for the wrong reason.
 - **Small splits.** 11 dev and 20 test tasks. A single task is 9 points of greedy pass@1 on dev and 5 on test, which is why every rate here carries an interval and why differences between trained models are reported with paired tests rather than as point estimates.
-- **The test split was looked at twice.** Once for version 1 and once for version 2, with no training decision in between informed by it. Both evaluations are locked to a git commit and recorded.
+- **The test split was looked at three times.** Once per version of this write-up, with no training decision in between informed by it. Every evaluation is locked to a git commit and recorded (`results/test_eval*/LOCK.json`).
 - **Serving differences.** The leaderboard mixes three routes (OpenRouter, the Anthropic API, Tinker). The same model served two ways scored differently on the same dev tasks (Nemotron: 15% through OpenRouter, 9% through Tinker, both with reasoning off), so rows are comparable within a route more than across.
 - **Reasoning budgets confound the ranking.** DeepSeek V4.1 Flash's 16,000-token cap cut off 37% of its answers; a larger budget would raise its score and its cost. Opus ran at its default effort.
 - **Contamination.** The tasks are public with a canary string. Models released after October 2026 may have seen them.
