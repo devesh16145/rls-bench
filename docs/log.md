@@ -322,3 +322,8 @@
 
 - Kimi K2.6 (thinking off) sampled 8× at temperature 0.8 on the 72 train tasks on Tinker (`train/build_sft_tinker.py sample`): 576 samples, 265 passed (46%), estimated $3.46. Merged with the DeepSeek samples into `data/sft_v3.jsonl`: 460 examples (72 references, 246 DeepSeek, 142 Kimi), up to 6 distinct passing answers per task drawn round-robin from the two sources; 58 tasks at the cap, no task left with only its reference (`results/train/sft_v3_stats.json`). Dev loss set rebuilt with Kimi's passing dev samples too: 63 examples.
 - Rationale for open models only: Anthropic's terms restrict training on Claude outputs; the Opus answers stay evaluation and judge data.
+
+## 2026-10-26 — Batch 10: tasks T104–T113 drafted for review
+
+- Six tier-2 and four tier-3 tasks in new domains (volunteer shifts, podcast publishing, bike share, bug bounties, donation masking view, wiki page locks, seat-hold RPCs, payroll approval limits, course-materials bucket, camera shares with MFA), using the traps the set used least: lock-bypass, approval-limit, skip-level-access, sequence-bypass, file-type-check, owner-column-trust, mfa-not-enforced, transitive-delegation, duplicate-approval, column-leak. 221 tests in all.
+- Failure during drafting: T112's `bucket-scope` trap passed every test because the only test that exercised it used `returning`, and the select policy's bucket check made the returned row invisible, which masked the hole. Fix: that test inserts without `returning`, so the trap now fails it. All ten validate; review cards in `docs/review/phase7-cards.txt`. They are `verified: false` and outside the split until reviewed.
