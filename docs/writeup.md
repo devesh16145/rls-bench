@@ -114,7 +114,7 @@ The first attempt (Nemotron only) used a hand-written RL loop: 25 steps of 64 ro
 
 ### 5.2 Split and SFT data
 
-The 103 tasks were split once, stratified by tier with a fixed seed: 72 train, 11 dev, 20 test. SFT data was built by rejection sampling: DeepSeek V4.1 Flash answered each train task 16 times at temperature 0.8, the harness graded every answer, and up to 6 distinct passing answers per task were kept, plus the reference solution.
+The 103 tasks were split once, stratified by tier with a fixed seed: 72 train, 11 dev, 20 test. On 2026-10-26 ten newly verified tasks (T104–T113, six tier 2 and four tier 3) were appended to the train split only, recorded as a revision in `tasks/split.json`; dev and test are unchanged, and every number in this write-up is from the original 103 tasks unless it says otherwise. SFT data was built by rejection sampling: DeepSeek V4.1 Flash answered each train task 16 times at temperature 0.8, the harness graded every answer, and up to 6 distinct passing answers per task were kept, plus the reference solution.
 
 | Tier | Tasks | Samples | Passed | Cut off at 16k tokens | Training examples |
 |---|---|---|---|---|---|
