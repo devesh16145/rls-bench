@@ -332,3 +332,6 @@
 
 - Qwen3.5-9B on `data/sft_v3.jsonl` (460 examples, 84 steps per run), lr 2.4e-4 / 4.73e-4 / 9.5e-4; final dev NLL on the 63-example dev set **0.1546** / 0.1558 / 0.1601 (the dev set changed, so not comparable to version 2's 0.1413). SFT v3 model: run 20261026T050548Z (`sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024`). About $2.9 per run.
 - GRPO seed 0 started from it with the version-2 settings; the spend cap is $20 per run because about $36 of the Tinker credit remained before this step.
+- Failure: the GRPO seed-0 launch refused to start because its worst case ($37.6) exceeds the $20 cap I set to protect the remaining credit (about $36). No spend. Fix: 40 steps instead of 50 (worst $29, typical $13) with a $30 cap; the second seed is decided after the first run's actual spend.
+- SFT v3 dev reference (66 samples): see the next entry.
+- SFT v3 dev reference (66 samples): 23% pass / 23% leak / 26% apply errors, 854 tokens per answer, against version 2's SFT at 24% / 26% / 24% and 531 tokens. The data change did not move dev; the test split decides. GRPO seed 0 relaunched at 40 steps (`rl_v3_Qwen3.5-9B_lr4e-5_s40`).
