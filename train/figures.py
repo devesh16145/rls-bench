@@ -204,7 +204,10 @@ def _sft_dev_point(run: dict[str, Any]) -> tuple[float, float] | None:
     parent = run.get("parent_run_id")
     if not parent:
         return None
-    path = RESULTS / "tinker_eval" / f"{run['model'].split('/')[-1]}@sft-{parent}.jsonl"
+    records = json.loads((RESULTS / "train" / "checkpoints.json").read_text())
+    rec = next((r for r in records if r.get("name") == parent), None) or next((r for r in records if r["run_id"] == parent), None)
+    parent_id = rec["run_id"] if rec else parent  # --from-run may name the run rather than give its id
+    path = RESULTS / "tinker_eval" / f"{run['model'].split('/')[-1]}@sft-{parent_id}.jsonl"
     if not path.exists():
         return None
     latest: dict[tuple, dict] = {}
