@@ -55,3 +55,24 @@ trap. For the repair row and the sft+rl row: pass rate after 1, 2 and 3 tries wi
 
 The test split was evaluated once before, for version 1 (commit 1bc6904, 2026-10-25). No training decision
 in version 2 used test results; checkpoints are chosen on dev only.
+
+---
+
+# Pre-registration: version 3 test evaluation
+
+Written before the version 3 test evaluation runs; filled in as runs finish and not edited after the evaluation starts.
+
+**What changes in version 3:** the SFT data. Version 2 trained on 427 DeepSeek-sampled answers; version 3 trains on 460 answers drawn round-robin from DeepSeek and Kimi K2.6 (`data/sft_v3.jsonl`, 72 references, 246 DeepSeek, 142 Kimi, `results/train/sft_v3_stats.json`). Everything else (SFT recipe and sweep, GRPO recipe and learning rate 4e-5, 50 steps × 16 tasks × 8 rollouts, two seeds, dev selection by highest dev pass rate) is held fixed from version 2 so that the comparison isolates the data.
+
+| Row | Run | Checkpoint | Why |
+|---|---|---|---|
+| base | Qwen/Qwen3.5-9B | — | same as version 2 |
+| sft v3 | _pending_ | final | lowest final dev loss of the three sweep runs |
+| sft v3 + GRPO, seed 0 | _pending_ | | highest dev pass rate of the five evals |
+| sft v3 + GRPO, seed 1 | _pending_ | | highest dev pass rate of the five evals |
+
+**Measures:** as in version 2 (pass and leak over 120 test samples with Wilson intervals; paired sign tests by task against the version 2 rows `sft`, `sft+rl`, `sft+rl-seed1`, which are reused from `results/test_eval_v2/`, not re-run).
+
+**What would count as a result:** version 3 SFT above version 2 SFT on test pass with no higher leak rate; and the GRPO-over-SFT comparison repeated with the new data, again reported whichever way it goes.
+
+**Disclosure:** this is the third evaluation of the test split (version 1 at 1bc6904, version 2 at 54bb76a). No training decision used test results.
