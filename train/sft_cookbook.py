@@ -167,6 +167,7 @@ def sweep(
     renderer_name = renderer_name or DEFAULT_RENDERERS.get(model)
     if renderer_name is None:
         raise typer.BadParameter(f"no default renderer for {model}; pass --renderer")
+    train_path = train_path.resolve()
     if lrs:
         rates = [float(x) for x in lrs.split(",")]
     else:

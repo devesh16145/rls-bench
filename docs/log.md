@@ -335,3 +335,4 @@
 - Failure: the GRPO seed-0 launch refused to start because its worst case ($37.6) exceeds the $20 cap I set to protect the remaining credit (about $36). No spend. Fix: 40 steps instead of 50 (worst $29, typical $13) with a $30 cap; the second seed is decided after the first run's actual spend.
 - SFT v3 dev reference (66 samples): see the next entry.
 - SFT v3 dev reference (66 samples): 23% pass / 23% leak / 26% apply errors, 854 tokens per answer, against version 2's SFT at 24% / 26% / 24% and 531 tokens. The data change did not move dev; the test split decides. GRPO seed 0 relaunched at 40 steps (`rl_v3_Qwen3.5-9B_lr4e-5_s40`).
+- Failure: the 40-step relaunch was refused too: worst case $30.1 (training $29.0 plus five dev evals at $0.23) against a $30 cap. No spend. Fix: cap $32; about $39.6 of credit remains (`results/train/tinker_spend.json`, $110.39 spent).
