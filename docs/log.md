@@ -336,3 +336,8 @@
 - SFT v3 dev reference (66 samples): see the next entry.
 - SFT v3 dev reference (66 samples): 23% pass / 23% leak / 26% apply errors, 854 tokens per answer, against version 2's SFT at 24% / 26% / 24% and 531 tokens. The data change did not move dev; the test split decides. GRPO seed 0 relaunched at 40 steps (`rl_v3_Qwen3.5-9B_lr4e-5_s40`).
 - Failure: the 40-step relaunch was refused too: worst case $30.1 (training $29.0 plus five dev evals at $0.23) against a $30 cap. No spend. Fix: cap $32; about $39.6 of credit remains (`results/train/tinker_spend.json`, $110.39 spent).
+
+## 2026-10-26 — GRPO v3 seed 0 stalled at step 25
+
+- Failure: after 25 of 40 steps the Tinker client raised `APIConnectionError: No progress made in 7200s. Requests appear to be stuck` (a two-hour stall on a sampling or training request) and the run exited without its final record. Checkpoints at steps 10 and 20 (state and sampler) and three dev evals (27% / 24% / 45% pass at steps 10, 20, 30) are on disk; the crashed portion's cost is estimated from its logged tokens in `runs/rl_v3_Qwen3.5-9B_lr4e-5_s40/crash_before_resume.json`.
+- Fix: `rl_cookbook train --resume` reuses the run directory and lets the cookbook loop resume from the last saved checkpoint (step 20); the dev-eval counter continues from the existing evals so labels do not collide. The resumed run's record adds the pre-resume estimate to its spend.
