@@ -1,0 +1,18 @@
+{
+  "run_id": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024",
+  "checkpoint": "final",
+  "model": "Qwen/Qwen3.5-9B",
+  "renderer": "qwen3_5_disable_thinking",
+  "state_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/weights/final",
+  "external_path": "tinker://e3815a9e-6c12-5fc9-91bf-c828b248202e:train:0/external_weights/hf_export",
+  "files": {
+    "adapter_config.json": {
+      "bytes": 934,
+      "sha256": "7c4821f8f443de1d52d092093c5bdb57bafcfe431bd83b0c28b51852283a86bd"
+    },
+    "adapter_model.safetensors": {
+      "bytes": 378412080,
+      "sha256": "20785d060b7851943a69327d98fdede46b947e72ce56803da28bdfbaad9d6598"
+    }
+  }
+}
