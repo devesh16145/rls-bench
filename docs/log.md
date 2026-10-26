@@ -361,3 +361,7 @@
 
 - The ten batch-10 tasks were reviewed and set `verified: true`; `harness.split.extend_train` appended them to the train split (82 train, dev and test unchanged) and recorded the revision in `tasks/split.json`. The leaderboard, judge study and all test evaluations stay on the original 103 tasks. Kimi K2.6 is being sampled on the ten (8× each, about $0.50) so they can join the SFT data; with about $17 of Tinker credit left, the plan is one SFT run on the 82-task data at version 3's learning rate plus a dev eval, not another GRPO run.
 - Failure: `build_sft_tinker sample --max-spend 4` refused to start because its estimate covers every train task (worst case $15.5) even though 72 of the 82 are already sampled and are skipped. No spend. Fix: rerun with the cap at the full-plan worst case; only the ten new tasks are sampled (80 answers, about $0.50).
+
+## 2026-10-26 — SFT data with the ten new train tasks
+
+- Kimi K2.6 sampled 8× on T104–T113: 22 of 80 passed (27.5%; T104 7/8, T105 5/8, T106 3/8, T108 and T111 2/8, T110, T112, T113 1/8, T107 and T109 0/8), estimated $0.54. The new tasks are harder for it than the original train set (46%), as intended. `data/sft_v3.jsonl` rebuilt: 491 examples (82 references, 246 DeepSeek, 163 Kimi); T107 and T109 are reference-only. One SFT run on it at version 3's learning rate (2.4e-4, 87 steps, about $2.9) started as `sft_v3b_…`; its dev eval follows. No GRPO on it: about $16 of credit remains.

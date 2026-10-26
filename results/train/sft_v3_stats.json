@@ -1,22 +1,14 @@
 {
-  "examples": 470,
+  "examples": 491,
   "by_source": {
     "reference": 82,
     "deepseek/deepseek-v4.1-flash-1017": 246,
-    "moonshotai/Kimi-K2.6": 142
+    "moonshotai/Kimi-K2.6": 163
   },
-  "tasks_at_cap": 58,
+  "tasks_at_cap": 59,
   "reference_only": [
-    "T104",
-    "T105",
-    "T106",
     "T107",
-    "T108",
-    "T109",
-    "T110",
-    "T111",
-    "T112",
-    "T113"
+    "T109"
   ],
   "per_task": {
     "T003": {
@@ -287,15 +279,31 @@
     "T103": {
       "deepseek/deepseek-v4.1-flash-1017": 2
     },
-    "T104": {},
-    "T105": {},
-    "T106": {},
+    "T104": {
+      "moonshotai/Kimi-K2.6": 6
+    },
+    "T105": {
+      "moonshotai/Kimi-K2.6": 5
+    },
+    "T106": {
+      "moonshotai/Kimi-K2.6": 3
+    },
     "T107": {},
-    "T108": {},
+    "T108": {
+      "moonshotai/Kimi-K2.6": 2
+    },
     "T109": {},
-    "T110": {},
-    "T111": {},
-    "T112": {},
-    "T113": {}
+    "T110": {
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T111": {
+      "moonshotai/Kimi-K2.6": 2
+    },
+    "T112": {
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T113": {
+      "moonshotai/Kimi-K2.6": 1
+    }
   }
 }
