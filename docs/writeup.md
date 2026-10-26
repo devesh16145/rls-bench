@@ -32,7 +32,7 @@ The benchmark asks a direct question: given a schema and the access rules writte
 
 **Prompt and protocol.** Models see one fixed prompt: a short system instruction, the schema, the row counts of the fixture (never the rows), and the requirements verbatim. Zero-shot, no tools, no retries. Each model is sampled once greedily and five times at temperature 0.7 per task, which gives pass@1 and pass@5. Every rate is reported with a 95% Wilson interval. Models whose API ignores temperature are recorded as such.
 
-**Split.** The tasks were split once, stratified by tier with a fixed seed, into 72 train, 11 dev and 20 test. Training data comes from train tasks only; checkpoints are chosen on dev; the test split is evaluated once per version of this write-up and the evaluation is locked to a git commit.
+**Split.** The tasks were split once, stratified by tier with a fixed seed, into 72 train, 11 dev and 20 test (ten tasks verified later were appended to train only; see §5.2). Training data comes from train tasks only; checkpoints are chosen on dev; the test split is evaluated once per version of this write-up and the evaluation is locked to a git commit.
 
 ## 3. How models do on the benchmark
 
