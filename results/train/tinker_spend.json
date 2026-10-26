@@ -24,6 +24,8 @@
     "sft run sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024 (84 steps)": 2.7752,
     "sft run sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.000473 (84 steps)": 2.7752,
     "sft run sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00095 (84 steps)": 2.7752,
+    "rl run rl_v3_Qwen3.5-9B_lr4e-5_s40 (40 steps)": 12.3324,
+    "rl run rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1 (30 steps)": 9.7142,
     "GRPO filter pass rl_filter_20261025T125454Z": 0.2513,
     "leaderboard row Kimi-K2.6@reasoning-off": 3.7854,
     "dev eval NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@base": 0.0302,
@@ -41,5 +43,5 @@
     "judge zeroshot_Kimi-K2.6": 1.0469,
     "judge zeroshot_gpt-oss-120b": 0.5266
   },
-  "total_usd": 110.3884
+  "total_usd": 132.435
 }

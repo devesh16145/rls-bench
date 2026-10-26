@@ -69,7 +69,7 @@ Written before the version 3 test evaluation runs; filled in as runs finish and 
 | base | Qwen/Qwen3.5-9B | — | same as version 2 |
 | sft v3 | sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024 (lr 2.4e-4) | final | lowest final dev loss of the three sweep runs (0.1546) |
 | sft v3 + GRPO, seed 0 | rl_v3_Qwen3.5-9B_lr4e-5_s40 (40 steps; stalled at 25 and resumed from the step-20 checkpoint) | step 40 | highest dev pass rate of the four saved-checkpoint evals (61%) |
-| sft v3 + GRPO, seed 1 | rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1 (30 steps, not 40: remaining credit) | _pending_ | highest dev pass rate of the three evals |
+| sft v3 + GRPO, seed 1 | rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1 (30 steps, not 40: remaining credit) | step 20 | highest dev pass rate of the three evals (35%) |
 
 **Measures:** as in version 2 (pass and leak over 120 test samples with Wilson intervals; paired sign tests by task against the version 2 rows `sft`, `sft+rl`, `sft+rl-seed1`, which are reused from `results/test_eval_v2/`, not re-run).
 

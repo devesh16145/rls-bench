@@ -346,3 +346,7 @@
 
 - Resumed from the step-20 checkpoint and ran to step 40 without incident; estimated $12.33 in all (including the $6.54 of the stalled portion). Dev: step 10 27% pass / 27% leak, step 20 24% / 26%, step 30 (post-resume weights) 47% / 26%, **step 40 61% / 11%**, greedy pass@1 6/11. Best checkpoint: step 40. The pre-resume step-30 eval (45% / 29%) is kept in `dev_evals_before_resume.jsonl` and excluded from selection because those weights were never saved.
 - Seed 1 started at 30 steps (not 40) with a $24 cap: about $27 of credit remained and a 40-step run's worst case ($30) would not fit. The deviation is recorded in the pre-registration.
+
+## 2026-10-26 — GRPO v3 seed 1 (rl_v3_Qwen3.5-9B_lr4e-5_s30_seed1)
+
+- 30 steps, otherwise the seed-0 settings; estimated $9.71. Train: reward 0.24 → 0.46, pass 35% → 53%, leak 21% → 13%, entropy 0.097 → 0.022. Dev: step 10 21% / 29%, **step 20 35% / 36%**, step 30 27% / 44%. Best checkpoint: step 20. Far below seed 0 at the same steps (24% / 26% at 20, 47% / 26% at 30) and the opposite leak trend: the seed-to-seed spread seen in version 2 again. Tinker spend now $132.44.
