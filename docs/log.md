@@ -360,3 +360,4 @@
 ## 2026-10-26 — T104–T113 verified and appended to the train split
 
 - The ten batch-10 tasks were reviewed and set `verified: true`; `harness.split.extend_train` appended them to the train split (82 train, dev and test unchanged) and recorded the revision in `tasks/split.json`. The leaderboard, judge study and all test evaluations stay on the original 103 tasks. Kimi K2.6 is being sampled on the ten (8× each, about $0.50) so they can join the SFT data; with about $17 of Tinker credit left, the plan is one SFT run on the 82-task data at version 3's learning rate plus a dev eval, not another GRPO run.
+- Failure: `build_sft_tinker sample --max-spend 4` refused to start because its estimate covers every train task (worst case $15.5) even though 72 of the 82 are already sampled and are skipped. No spend. Fix: rerun with the cap at the full-plan worst case; only the ten new tasks are sampled (80 answers, about $0.50).

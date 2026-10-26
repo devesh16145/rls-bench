@@ -1,12 +1,23 @@
 {
-  "examples": 460,
+  "examples": 470,
   "by_source": {
-    "reference": 72,
+    "reference": 82,
     "deepseek/deepseek-v4.1-flash-1017": 246,
     "moonshotai/Kimi-K2.6": 142
   },
   "tasks_at_cap": 58,
-  "reference_only": [],
+  "reference_only": [
+    "T104",
+    "T105",
+    "T106",
+    "T107",
+    "T108",
+    "T109",
+    "T110",
+    "T111",
+    "T112",
+    "T113"
+  ],
   "per_task": {
     "T003": {
       "deepseek/deepseek-v4.1-flash-1017": 6
@@ -275,6 +286,16 @@
     },
     "T103": {
       "deepseek/deepseek-v4.1-flash-1017": 2
-    }
+    },
+    "T104": {},
+    "T105": {},
+    "T106": {},
+    "T107": {},
+    "T108": {},
+    "T109": {},
+    "T110": {},
+    "T111": {},
+    "T112": {},
+    "T113": {}
   }
 }
