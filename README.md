@@ -90,11 +90,12 @@ Checkpoints were chosen on the 11 dev tasks; the 20 test tasks were evaluated on
 | SFT on two-source data (v3) | 33% [26–42] | 31% |
 | + GRPO, seed 0 (v3) | **45%** [36–54] | 25% |
 | + GRPO, seed 1 (v3, 30 steps) | 36% [28–45] | 17% |
+| SFT on 82 train tasks (v4, ten new tasks) | 35% [27–44] | 15% |
 | Nemotron base | 12% [7–19] | 22% |
 | + SFT | 26% [19–34] | 31% |
 | + SFT + GRPO | 29% [22–38] | **10%** |
 
-What held up: a tuned SFT is most of the gain (9% → 38%); Nemotron's GRPO cut its leak rate on 13 of 20 test tasks (31% → 10%, the one significant paired result); and harness feedback is the most reliable lever of all, taking the GRPO model from 35% to 63% within three tries. What did not: GRPO's dev gain for Qwen (24% → 52%) did not transfer to test (38% → 38–41%), and the two seeds disagree on the leak rate by 15 points, so at this scale run-to-run variance is as large as the effect. A third version changed only the SFT data (answers from two open models instead of one): the pass rate stayed put and the leak rate doubled (16% → 31%), because the second model's leakier style carried over; GRPO on it produced the highest pass rate of any row (45%) while pulling leaks back to 25%. Every run's curves, dev evaluations and the training-health metrics are under `results/train/`; the full account, including the reward-hacking checks, is `docs/writeup.md` §5. The trained adapters are exported in Hugging Face format (`results/train/adapter_manifest_*.json`). Tinker spend for the whole project: $132.44 (`results/train/tinker_spend.json`).
+What held up: a tuned SFT is most of the gain (9% → 38%); Nemotron's GRPO cut its leak rate on 13 of 20 test tasks (31% → 10%, the one significant paired result); and harness feedback is the most reliable lever of all, taking the GRPO model from 35% to 63% within three tries. What did not: GRPO's dev gain for Qwen (24% → 52%) did not transfer to test (38% → 38–41%), and the two seeds disagree on the leak rate by 15 points, so at this scale run-to-run variance is as large as the effect. A third version changed only the SFT data (answers from two open models instead of one): the pass rate stayed put and the leak rate doubled (16% → 31%), because the second model's leakier style carried over; GRPO on it produced the highest pass rate of any row (45%) while pulling leaks back to 25%. Ten more train tasks then repaired the leak rate for SFT alone (31% → 15%, lower on 7 of 8 differing tasks) without moving the pass rate. Every run's curves, dev evaluations and the training-health metrics are under `results/train/`; the full account, including the reward-hacking checks, is `docs/writeup.md` §5. The trained adapters are exported in Hugging Face format (`results/train/adapter_manifest_*.json`). Tinker spend for the whole project: $135.46 (`results/train/tinker_spend.json`).
 
 ## Run it
 
@@ -125,7 +126,7 @@ Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both i
 - The schemas are synthetic and in a Supabase flavour.
 - All tasks were written and reviewed by a single author.
 - Leaderboard rows mix three serving routes; the same model served two ways scored differently on the same tasks.
-- The dev and test splits are small (11 and 20 tasks); the test split was evaluated three times (once per version of the write-up), with no training decision informed by it.
+- The dev and test splits are small (11 and 20 tasks); the test split was evaluated four times (once per version of the write-up, the last a single row), with no training decision informed by it.
 - The training results come from one or two runs per stage; two seeds of the same GRPO recipe differ by 15 points of leak rate on test.
 - The OpenRouter baselines saw all tasks, test included, before the split was frozen.
 

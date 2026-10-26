@@ -366,3 +366,8 @@
 
 - Kimi K2.6 sampled 8× on T104–T113: 22 of 80 passed (27.5%; T104 7/8, T105 5/8, T106 3/8, T108 and T111 2/8, T110, T112, T113 1/8, T107 and T109 0/8), estimated $0.54. The new tasks are harder for it than the original train set (46%), as intended. `data/sft_v3.jsonl` rebuilt: 491 examples (82 references, 246 DeepSeek, 163 Kimi); T107 and T109 are reference-only. One SFT run on it at version 3's learning rate (2.4e-4, 87 steps, about $2.9) started as `sft_v3b_…`; its dev eval follows. No GRPO on it: about $16 of credit remains.
 - SFT on the 82-task data (`sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024`, 90 steps, dev NLL 0.1533, about $2.9): dev 36% pass / 15% leak / 33% apply errors, greedy 4/11, 600 tokens per answer, against 23% / 23% for the same recipe on 72 tasks. Checked on test as a single pre-registered row (version 4).
+
+## 2026-10-26 — Version 4 test row: SFT on 82 train tasks (commit f1ae829)
+
+- One pre-registered row, 120 samples, estimated $0.09: pass 35% [27, 44], leak **15%**, apply errors 29%, greedy 35% / 15%; by tier 83% / 22% / 0% pass and 17% / 11% / 20% leak. Paired by task: vs SFT v3 (same data sources, 72 tasks) pass 3 / 3, **leaks lower on 7 / higher on 1 (p = 0.07)**; vs SFT v2 (DeepSeek only, 72 tasks) pass 2 / 3, leaks 7 / 3; vs base pass 9 / 1 (p = 0.02).
+- Reading: ten more train tasks, chosen for the trap patterns the set used least, did not raise the test pass rate but undid the leak-rate damage of the two-source data (31% → 15%, lower on 7 of the 8 tasks that differ). Tier 3 stays at 0% for SFT alone. Tinker spend $135.46; about $14.5 remains.
