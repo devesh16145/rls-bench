@@ -130,10 +130,11 @@ def run_one(model: str, renderer_name: str, learning_rate: float, *, epochs: int
     return record
 
 
-def plan(model: str, renderer_name: str, lrs: list[float], epochs: int, batch_size: int, max_length: int) -> dict[str, Any]:
+def plan(model: str, renderer_name: str, lrs: list[float], epochs: int, batch_size: int, max_length: int,
+         train_path: Path = SFT_PATH) -> dict[str, Any]:
     from train.sft_tinker import make_renderer
 
-    train_rows, dev_rows = load_sets()
+    train_rows, dev_rows = load_sets(train_path)
     renderer, _ = make_renderer(model, renderer_name)
     _, train_stats = build_datums(train_rows, renderer, max_length)
     _, dev_stats = build_datums(dev_rows, renderer, max_length)
@@ -142,7 +143,7 @@ def plan(model: str, renderer_name: str, lrs: list[float], epochs: int, batch_si
     evals = steps // 10 + 2
     p = price(model)
     per_run = (train_tokens * p["train"] + evals * dev_stats["tokens"] * p["prefill"]) / 1e6
-    return {"model": model, "renderer": renderer_name, "learning_rates": lrs, "epochs": epochs, "batch_size": batch_size,
+    return {"model": model, "renderer": renderer_name, "train_path": str(train_path.relative_to(ROOT)), "learning_rates": lrs, "epochs": epochs, "batch_size": batch_size,
             "steps_per_run": steps, "train": train_stats, "dev": dev_stats, "train_tokens_per_run": train_tokens,
             "usd_per_run": round(per_run, 3), "usd_total": round(per_run * len(lrs), 3)}
 
@@ -151,6 +152,8 @@ def plan(model: str, renderer_name: str, lrs: list[float], epochs: int, batch_si
 def sweep(
     model: str = typer.Option(DEFAULT_MODEL),
     renderer_name: str = typer.Option(None, "--renderer"),
+    train_path: Path = typer.Option(SFT_PATH, "--train-path", help="Training file (train tasks only)."),
+    tag: str = typer.Option("", help="Suffix for run names and the sweep file, e.g. v3."),
     lrs: str = typer.Option(None, "--lrs", help="Comma-separated; default: calibrated rate x (0.33, 1, 3)."),
     epochs: int = typer.Option(3),
     batch_size: int = typer.Option(16),
@@ -171,7 +174,7 @@ def sweep(
         if base is None:
             raise typer.BadParameter(f"no calibrated rate for {model}; pass --lrs")
         rates = [round(base / 3, 7), round(base, 7), round(base * 3, 7)]
-    p = plan(model, renderer_name, rates, epochs, batch_size, max_length)
+    p = plan(model, renderer_name, rates, epochs, batch_size, max_length, train_path)
     typer.echo(json.dumps(p, indent=2))
     if dry_run:
         return
@@ -185,11 +188,12 @@ def sweep(
     records = []
     for lr in rates:
         records.append(run_one(model, renderer_name, lr, epochs=epochs, batch_size=batch_size, max_length=max_length,
-                               lora_rank=lora_rank, eval_every=eval_every, name=f"sft_{slug}_{stamp}_lr{lr:g}", log=typer.echo))
+                               lora_rank=lora_rank, eval_every=eval_every, name=f"sft{tag and '_' + tag}_{slug}_{stamp}_lr{lr:g}",
+                               train_path=train_path, log=typer.echo))
     best = min(records, key=lambda r: r["final_dev_nll"])
-    out = {"model": model, "sweep_id": stamp, "runs": [{k: r[k] for k in ("run_id", "name", "learning_rate", "final_dev_nll", "min_dev_nll", "last_train_nll")} for r in records],
+    out = {"model": model, "sweep_id": stamp, "train_path": str(train_path.relative_to(ROOT)), "runs": [{k: r[k] for k in ("run_id", "name", "learning_rate", "final_dev_nll", "min_dev_nll", "last_train_nll")} for r in records],
            "best_run_id": best["run_id"], "best_learning_rate": best["learning_rate"], "best_final_dev_nll": best["final_dev_nll"]}
-    (RESULTS_DIR / f"sft_sweep_{slug}_{stamp}.json").write_text(json.dumps(out, indent=2) + "\n")
+    (RESULTS_DIR / f"sft_sweep{tag and '_' + tag}_{slug}_{stamp}.json").write_text(json.dumps(out, indent=2) + "\n")
     typer.echo(json.dumps(out, indent=2))
 
 

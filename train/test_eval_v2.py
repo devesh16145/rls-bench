@@ -31,6 +31,12 @@ from train.test_eval import K, MAX_TOKENS, check_lock, compare, git_state, lock_
 TEST_DIR = ROOT / "results" / "test_eval_v2"
 LOCK_PATH = TEST_DIR / "LOCK.json"
 
+
+def set_version(version: int) -> None:
+    global TEST_DIR, LOCK_PATH
+    TEST_DIR = ROOT / "results" / f"test_eval_v{version}"
+    LOCK_PATH = TEST_DIR / "LOCK.json"
+
 app = typer.Typer(add_completion=False)
 
 
@@ -71,7 +77,9 @@ def main(
     estimate_only: bool = typer.Option(False, "--estimate"),
     yes: bool = typer.Option(False, "--yes"),
     once: bool = typer.Option(False, "--once"),
+    version: int = typer.Option(2, help="Evaluation version: output directory results/test_eval_v<version>."),
 ) -> None:
+    set_version(version)
     models = parse_rows(rows)
     repair_models = parse_rows(repair_rows) if repair_rows else []
     test_ids = sorted(splitmod.load()["test"])
@@ -102,8 +110,8 @@ def main(
     if not resuming:
         TEST_DIR.mkdir(parents=True, exist_ok=True)
         LOCK_PATH.write_text(json.dumps({**content, "created": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-                                         "git_commit": commit, "version": 2}, indent=2) + "\n")
-    typer.echo(("resuming" if resuming else "starting") + f" the version 2 test eval at commit {commit[:7]}")
+                                         "git_commit": commit, "version": version}, indent=2) + "\n")
+    typer.echo(("resuming" if resuming else "starting") + f" the version {version} test eval at commit {commit[:7]}")
     load_tinker_key()
     import tinker
 
@@ -129,7 +137,7 @@ def main(
                                                   max_spend=3 * max_spend, out_dir=TEST_DIR, log=lambda s: None)
         repair_summaries[m["name"]] = {**repair_eval.summarize(label, tasks, out_dir=TEST_DIR), "est_spend_usd": round(out["spent_usd"], 4)}
         typer.echo(f"{m['name']} (3 tries): pass by try {[round(w['rate'], 3) for w in repair_summaries[m['name']]['pass_by_try']]}, est ${out['spent_usd']:.3f}")
-    summary = {"git_commit": commit, "version": 2, **compare(models, test_ids, TEST_DIR), "repair": repair_summaries}
+    summary = {"git_commit": commit, "version": version, **compare(models, test_ids, TEST_DIR), "repair": repair_summaries}
     (TEST_DIR / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     for name, row in summary["models"].items():
         typer.echo(f"{name:10} pass {row['pass_all_samples']['rate']:.0%} [{row['pass_all_samples']['lo']:.0%}, {row['pass_all_samples']['hi']:.0%}]  "
