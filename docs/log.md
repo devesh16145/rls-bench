@@ -371,3 +371,7 @@
 
 - One pre-registered row, 120 samples, estimated $0.09: pass 35% [27, 44], leak **15%**, apply errors 29%, greedy 35% / 15%; by tier 83% / 22% / 0% pass and 17% / 11% / 20% leak. Paired by task: vs SFT v3 (same data sources, 72 tasks) pass 3 / 3, **leaks lower on 7 / higher on 1 (p = 0.07)**; vs SFT v2 (DeepSeek only, 72 tasks) pass 2 / 3, leaks 7 / 3; vs base pass 9 / 1 (p = 0.02).
 - Reading: ten more train tasks, chosen for the trap patterns the set used least, did not raise the test pass rate but undid the leak-rate damage of the two-source data (31% → 15%, lower on 7 of the 8 tasks that differ). Tier 3 stays at 0% for SFT alone. Tinker spend $135.46; about $14.5 remains.
+
+## 2026-10-26 — Version 5: GRPO on the 82-task SFT at half batch
+
+- About $14.5 of credit remains (`results/train/tinker_spend.json`, $135.46 spent). The version-3 GRPO size (40 × 16 × 8, 2,048 tokens) has a worst case of $30 and is refused by the cap check, so the run is 40 steps × 8 tasks × 8 rollouts with `max_tokens` 1,536: worst case $12.70, typical $7.15 (dry run, 82 references score 1, no trap scores 1). Cap $13. Everything else as in version 3 (learning rate 4e-5, rank 32, seed 0, eval every 10 steps), starting from `sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024`. Pre-registered as version 5 before launch.

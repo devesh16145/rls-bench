@@ -92,3 +92,19 @@ Written before it runs. **What changes:** ten newly verified tasks (T104–T113)
 **What would count as a result:** a higher pass rate than `sft-v3` with no higher leak rate, which would attribute the dev gain to the extra train tasks rather than noise.
 
 **Disclosure:** the fourth evaluation of the test split (versions 1–3 at 1bc6904, 54bb76a, 34bab1f). No training decision used test results.
+
+---
+
+# Pre-registration: version 5 test evaluation (one row)
+
+Written before the training run starts. **What changes:** GRPO on top of the 82-task SFT (`sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024`, the version 4 row), with the version-3 recipe except for its size. About $14.5 of Tinker credit remains, so the run is 40 steps × **8** tasks × 8 rollouts (2,560 rollouts, 3.9 epochs over the 82 train tasks) with `max_tokens` 1,536, instead of 40 × 16 × 8 (5,120 rollouts, 8.9 epochs) with 2,048 in version 3. Learning rate 4e-5, LoRA rank 32, leak penalty 0.5, seed 0, dev evaluation and checkpoint every 10 steps, spend cap $13 (worst case $12.70, typical $7.15). One seed only; a second does not fit.
+
+| Row | Run | Checkpoint | Why |
+|---|---|---|---|
+| sft-82+rl | rl_v3b_Qwen3.5-9B_lr4e-5_s40_b8 | highest dev pass rate (filled in when the run finishes) | the only run |
+
+**Measures:** pass and leak over the 120 test samples with Wilson intervals; paired sign tests by task against `sft-82` (version 4), `sft-v3+rl` seed 0 (version 3) and `sft+rl` seed 0 (version 2), reused from their result files.
+
+**What would count as a result:** a higher pass rate than `sft-82` with no higher leak rate. A half-size run that still beats its SFT would say the GRPO gain of version 3 does not depend on the larger batch; one that does not would be read as either the batch or the seed, which this budget cannot separate.
+
+**Disclosure:** the fifth evaluation of the test split (versions 1–4 at 1bc6904, 54bb76a, 34bab1f, f1ae829). No training decision used test results.
