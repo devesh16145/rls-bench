@@ -1,0 +1,15 @@
+### repo: /Users/Devesh/Documents/VIBE/Handshake @ cb7dbba716404f8ca372a35bbb731b047d8deb61
+modules: tinker_cookbook
+-- repo-wide (vs HEAD, staged+unstaged) --
+diff --git a/train/sft_cookbook.py b/train/sft_cookbook.py
+index 8e2d74f..200cfd7 100644
+--- a/train/sft_cookbook.py
++++ b/train/sft_cookbook.py
+@@ -167,6 +167,7 @@ def sweep(
+     renderer_name = renderer_name or DEFAULT_RENDERERS.get(model)
+     if renderer_name is None:
+         raise typer.BadParameter(f"no default renderer for {model}; pass --renderer")
++    train_path = train_path.resolve()
+     if lrs:
+         rates = [float(x) for x in lrs.split(",")]
+     else:

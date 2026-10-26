@@ -327,3 +327,8 @@
 
 - Six tier-2 and four tier-3 tasks in new domains (volunteer shifts, podcast publishing, bike share, bug bounties, donation masking view, wiki page locks, seat-hold RPCs, payroll approval limits, course-materials bucket, camera shares with MFA), using the traps the set used least: lock-bypass, approval-limit, skip-level-access, sequence-bypass, file-type-check, owner-column-trust, mfa-not-enforced, transitive-delegation, duplicate-approval, column-leak. 221 tests in all.
 - Failure during drafting: T112's `bucket-scope` trap passed every test because the only test that exercised it used `returning`, and the select policy's bucket check made the returned row invisible, which masked the hole. Fix: that test inserts without `returning`, so the trap now fails it. All ten validate; review cards in `docs/review/phase7-cards.txt`. They are `verified: false` and outside the split until reviewed.
+
+## 2026-10-26 — Version 3 SFT sweep (DeepSeek + Kimi data)
+
+- Qwen3.5-9B on `data/sft_v3.jsonl` (460 examples, 84 steps per run), lr 2.4e-4 / 4.73e-4 / 9.5e-4; final dev NLL on the 63-example dev set **0.1546** / 0.1558 / 0.1601 (the dev set changed, so not comparable to version 2's 0.1413). SFT v3 model: run 20261026T050548Z (`sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024`). About $2.9 per run.
+- GRPO seed 0 started from it with the version-2 settings; the spend cap is $20 per run because about $36 of the Tinker credit remained before this step.

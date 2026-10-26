@@ -1,0 +1,34 @@
+{
+  "model": "Qwen/Qwen3.5-9B",
+  "sweep_id": "20261026T050548Z",
+  "train_path": "data/sft_v3.jsonl",
+  "runs": [
+    {
+      "run_id": "20261026T050548Z",
+      "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024",
+      "learning_rate": 0.00024,
+      "final_dev_nll": 0.15457840263843536,
+      "min_dev_nll": 0.15457840263843536,
+      "last_train_nll": 0.08057305216789246
+    },
+    {
+      "run_id": "20261026T051140Z",
+      "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.000473",
+      "learning_rate": 0.000473,
+      "final_dev_nll": 0.15584015846252441,
+      "min_dev_nll": 0.15337282419204712,
+      "last_train_nll": 0.06498648971319199
+    },
+    {
+      "run_id": "20261026T051736Z",
+      "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00095",
+      "learning_rate": 0.00095,
+      "final_dev_nll": 0.16007879376411438,
+      "min_dev_nll": 0.15680132806301117,
+      "last_train_nll": 0.05883647873997688
+    }
+  ],
+  "best_run_id": "20261026T050548Z",
+  "best_learning_rate": 0.00024,
+  "best_final_dev_nll": 0.15457840263843536
+}

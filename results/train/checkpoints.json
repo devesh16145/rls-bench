@@ -2535,5 +2535,197 @@
     },
     "state_path": "tinker://fc498f87-9683-55b5-80e9-e43b0220afb5:train:0/weights/final",
     "sampler_path": "tinker://fc498f87-9683-55b5-80e9-e43b0220afb5:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261026T050548Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.00024,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft_v3.jsonl",
+    "data_hash": "0dd01ed6410fee2c",
+    "dev_data_hash": "7ccf6fe5a14a9116",
+    "steps": 84,
+    "dev_nll": [
+      [
+        0,
+        0.33147162199020386
+      ],
+      [
+        10,
+        0.20019325613975525
+      ],
+      [
+        20,
+        0.17485742270946503
+      ],
+      [
+        30,
+        0.16407348215579987
+      ],
+      [
+        40,
+        0.15945963561534882
+      ],
+      [
+        50,
+        0.15461109578609467
+      ],
+      [
+        60,
+        0.1574356108903885
+      ],
+      [
+        70,
+        0.15708059072494507
+      ],
+      [
+        80,
+        0.15457840263843536
+      ]
+    ],
+    "final_dev_nll": 0.15457840263843536,
+    "min_dev_nll": 0.15457840263843536,
+    "first_train_nll": 0.3975089192390442,
+    "last_train_nll": 0.08057305216789246,
+    "log_path": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024",
+    "metrics": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024/metrics.jsonl",
+    "state_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/weights/final",
+    "sampler_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261026T051140Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.000473",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.000473,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft_v3.jsonl",
+    "data_hash": "0dd01ed6410fee2c",
+    "dev_data_hash": "7ccf6fe5a14a9116",
+    "steps": 84,
+    "dev_nll": [
+      [
+        0,
+        0.3315901756286621
+      ],
+      [
+        10,
+        0.1929939091205597
+      ],
+      [
+        20,
+        0.16975001990795135
+      ],
+      [
+        30,
+        0.15907669067382812
+      ],
+      [
+        40,
+        0.15921807289123535
+      ],
+      [
+        50,
+        0.15337282419204712
+      ],
+      [
+        60,
+        0.15497560799121857
+      ],
+      [
+        70,
+        0.1597578525543213
+      ],
+      [
+        80,
+        0.15584015846252441
+      ]
+    ],
+    "final_dev_nll": 0.15584015846252441,
+    "min_dev_nll": 0.15337282419204712,
+    "first_train_nll": 0.3975089192390442,
+    "last_train_nll": 0.06498648971319199,
+    "log_path": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.000473",
+    "metrics": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.000473/metrics.jsonl",
+    "state_path": "tinker://8f0bdcb0-471b-51c1-b2fc-94ea511d02d5:train:0/weights/final",
+    "sampler_path": "tinker://8f0bdcb0-471b-51c1-b2fc-94ea511d02d5:train:0/sampler_weights/final"
+  },
+  {
+    "run_id": "20261026T051736Z",
+    "kind": "sft",
+    "framework": "cookbook",
+    "name": "sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00095",
+    "model": "Qwen/Qwen3.5-9B",
+    "renderer": "qwen3_5_disable_thinking",
+    "lora_rank": 32,
+    "learning_rate": 0.00095,
+    "epochs": 3,
+    "batch_size": 16,
+    "max_length": 4096,
+    "recipe": "rls_bench_sft",
+    "train_path": "data/sft_v3.jsonl",
+    "data_hash": "0dd01ed6410fee2c",
+    "dev_data_hash": "7ccf6fe5a14a9116",
+    "steps": 84,
+    "dev_nll": [
+      [
+        0,
+        0.33149904012680054
+      ],
+      [
+        10,
+        0.21119539439678192
+      ],
+      [
+        20,
+        0.17664745450019836
+      ],
+      [
+        30,
+        0.16355068981647491
+      ],
+      [
+        40,
+        0.1660856157541275
+      ],
+      [
+        50,
+        0.15680132806301117
+      ],
+      [
+        60,
+        0.15831929445266724
+      ],
+      [
+        70,
+        0.16368336975574493
+      ],
+      [
+        80,
+        0.16007879376411438
+      ]
+    ],
+    "final_dev_nll": 0.16007879376411438,
+    "min_dev_nll": 0.15680132806301117,
+    "first_train_nll": 0.3975089192390442,
+    "last_train_nll": 0.05883647873997688,
+    "log_path": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00095",
+    "metrics": "results/train/runs/sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00095/metrics.jsonl",
+    "state_path": "tinker://a96a957c-7265-5125-b65b-babfb05d8e96:train:0/weights/final",
+    "sampler_path": "tinker://a96a957c-7265-5125-b65b-babfb05d8e96:train:0/sampler_weights/final"
   }
 ]

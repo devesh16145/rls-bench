@@ -67,7 +67,7 @@ Written before the version 3 test evaluation runs; filled in as runs finish and 
 | Row | Run | Checkpoint | Why |
 |---|---|---|---|
 | base | Qwen/Qwen3.5-9B | — | same as version 2 |
-| sft v3 | _pending_ | final | lowest final dev loss of the three sweep runs |
+| sft v3 | sft_v3_Qwen3.5-9B_20261026T050548Z_lr0.00024 (lr 2.4e-4) | final | lowest final dev loss of the three sweep runs (0.1546) |
 | sft v3 + GRPO, seed 0 | _pending_ | | highest dev pass rate of the five evals |
 | sft v3 + GRPO, seed 1 | _pending_ | | highest dev pass rate of the five evals |
 
