@@ -246,6 +246,18 @@ Of that, the three stages that produced the headline numbers (SFT sweeps, GRPO f
 - Answers got about 40% longer under GRPO. Longer is not better or worse in itself here (the cap was not reached), but it is the kind of drift a reward with no length term allows.
 - The leak penalty is not symmetric with the pass reward, and tasks that always fail still train the policy to fail closed; on dev this showed up as apply errors turning into leaks early in training before the leak rate fell.
 
+### 5.11 Version 3: changing only the SFT data
+
+The one lever left untested in version 2 was the data itself. Version 3 re-ran the Qwen3.5-9B pipeline with the SFT set rebuilt from two open models instead of one: DeepSeek V4.1 Flash's samples as before plus Kimi K2.6 (thinking off) sampled 8× per train task on Tinker (576 samples, 46% passing, $3.46). Up to six distinct passing answers per task were kept, drawn round-robin from the two sources: 460 examples (72 references, 246 DeepSeek, 142 Kimi), with no task left reference-only. Everything else was held fixed: the same SFT recipe and three-point sweep, the same GRPO recipe at lr 4e-5 with 16 tasks × 8 rollouts per step, dev selection by the same rule. The dev-loss set gained Kimi's passing dev answers (63 examples), so its values are not comparable to version 2's.
+
+**SFT.** The sweep chose lr 2.4e-4 (dev loss 0.1546 / 0.1558 / 0.1601 for 2.4e-4 / 4.7e-4 / 9.5e-4). On dev the new SFT model is indistinguishable from the old one: 23% pass / 23% leak against 24% / 26%, with longer answers (854 vs 531 tokens).
+
+**GRPO, seed 0.** The run stalled at step 25 behind a two-hour connection outage to Tinker and was resumed from its step-20 checkpoint; its dev evals read 27% / 27% at step 10, 24% / 26% at step 20, 47% / 26% at step 30 and **61% pass / 11% leak at step 40**, the strongest dev checkpoint of any run (version 2's best was 52% / 6%). Estimated $12.33 including the stalled portion.
+
+**GRPO, seed 1.** _Pending: 30 steps rather than 40, because about $27 of credit remained; dev results go here._
+
+**Test.** _Pending: the version-3 test evaluation (`docs/preregistration.md`, version 3 section) and the paired comparison with the version-2 rows._
+
 *Sources: `results/train/checkpoints.json` (every run with its curves under `results/train/runs/`), `results/train/sft_sweep_*.json`, `results/tinker_eval/` (dev evals), `results/repair_eval/`, `results/test_eval_v2/` (the version-2 test eval, its lock, `summary.json` and `paired_and_tiers.json`), `results/test_eval/` (version 1), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json`. Figures: `results/figures/`, from `train/figures.py`.*
 
 ## 6. Limitations
