@@ -1,0 +1,280 @@
+{
+  "examples": 460,
+  "by_source": {
+    "reference": 72,
+    "deepseek/deepseek-v4.1-flash-1017": 246,
+    "moonshotai/Kimi-K2.6": 142
+  },
+  "tasks_at_cap": 58,
+  "reference_only": [],
+  "per_task": {
+    "T003": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T004": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T005": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T006": {
+      "deepseek/deepseek-v4.1-flash-1017": 4,
+      "moonshotai/Kimi-K2.6": 2
+    },
+    "T007": {
+      "deepseek/deepseek-v4.1-flash-1017": 5,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T008": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T010": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T011": {
+      "deepseek/deepseek-v4.1-flash-1017": 3
+    },
+    "T013": {
+      "deepseek/deepseek-v4.1-flash-1017": 3
+    },
+    "T015": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T016": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T017": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T018": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T019": {
+      "deepseek/deepseek-v4.1-flash-1017": 3
+    },
+    "T020": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T021": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T022": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T023": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T024": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T025": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T027": {
+      "deepseek/deepseek-v4.1-flash-1017": 2
+    },
+    "T029": {
+      "deepseek/deepseek-v4.1-flash-1017": 3
+    },
+    "T030": {
+      "deepseek/deepseek-v4.1-flash-1017": 2,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T031": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T032": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T034": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T035": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T036": {
+      "deepseek/deepseek-v4.1-flash-1017": 5,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T037": {
+      "deepseek/deepseek-v4.1-flash-1017": 5,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T038": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T040": {
+      "deepseek/deepseek-v4.1-flash-1017": 5,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T041": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T044": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T045": {
+      "deepseek/deepseek-v4.1-flash-1017": 4,
+      "moonshotai/Kimi-K2.6": 2
+    },
+    "T046": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T047": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T048": {
+      "deepseek/deepseek-v4.1-flash-1017": 2,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T049": {
+      "deepseek/deepseek-v4.1-flash-1017": 2,
+      "moonshotai/Kimi-K2.6": 4
+    },
+    "T050": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T052": {
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T053": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T054": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T056": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T057": {
+      "deepseek/deepseek-v4.1-flash-1017": 5,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T059": {
+      "deepseek/deepseek-v4.1-flash-1017": 4,
+      "moonshotai/Kimi-K2.6": 2
+    },
+    "T063": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T066": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T068": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T069": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T070": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T071": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T072": {
+      "deepseek/deepseek-v4.1-flash-1017": 2,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T075": {
+      "deepseek/deepseek-v4.1-flash-1017": 1
+    },
+    "T076": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T078": {
+      "deepseek/deepseek-v4.1-flash-1017": 1,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T079": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T080": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 1
+    },
+    "T083": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T085": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T086": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T087": {
+      "deepseek/deepseek-v4.1-flash-1017": 4,
+      "moonshotai/Kimi-K2.6": 2
+    },
+    "T088": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T089": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T091": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T092": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T093": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T094": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T096": {
+      "deepseek/deepseek-v4.1-flash-1017": 6
+    },
+    "T100": {
+      "deepseek/deepseek-v4.1-flash-1017": 3,
+      "moonshotai/Kimi-K2.6": 3
+    },
+    "T101": {
+      "deepseek/deepseek-v4.1-flash-1017": 2,
+      "moonshotai/Kimi-K2.6": 4
+    },
+    "T102": {
+      "moonshotai/Kimi-K2.6": 5
+    },
+    "T103": {
+      "deepseek/deepseek-v4.1-flash-1017": 2
+    }
+  }
+}

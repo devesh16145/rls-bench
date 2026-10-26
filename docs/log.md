@@ -317,3 +317,8 @@
 
 - Failure: `tests/test_judge.py::test_judge_data_respects_split` read `data/judge_train.jsonl`, which is a local build artifact (`data/` is not tracked), so both CI jobs failed on the push of version 2 while every other test passed (82 of 83).
 - Fix: the test skips when the judge data has not been built locally; `python -m train.judge build` recreates it from `results/`.
+
+## 2026-10-26 — Version 3 SFT data (open models only)
+
+- Kimi K2.6 (thinking off) sampled 8× at temperature 0.8 on the 72 train tasks on Tinker (`train/build_sft_tinker.py sample`): 576 samples, 265 passed (46%), estimated $3.46. Merged with the DeepSeek samples into `data/sft_v3.jsonl`: 460 examples (72 references, 246 DeepSeek, 142 Kimi), up to 6 distinct passing answers per task drawn round-robin from the two sources; 58 tasks at the cap, no task left with only its reference (`results/train/sft_v3_stats.json`). Dev loss set rebuilt with Kimi's passing dev samples too: 63 examples.
+- Rationale for open models only: Anthropic's terms restrict training on Claude outputs; the Opus answers stay evaluation and judge data.
