@@ -36,6 +36,8 @@ def test_judge_data_respects_split(tmp_path):
 
     from harness import split as splitmod
 
+    if not (judge.DATA_DIR / "judge_train.jsonl").exists():
+        pytest.skip("judge data is built locally (data/ is not tracked); run `python -m train.judge build`")
     split = splitmod.load()
     for name in ("train", "dev", "test"):
         rows = [json.loads(line) for line in (judge.DATA_DIR / f"judge_{name}.jsonl").read_text().splitlines()]

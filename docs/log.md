@@ -312,3 +312,8 @@
 - Paired by task (pass count out of 6 / leak count out of 6, two-sided sign test): SFT vs base pass better on 7 / worse on 1 (p = 0.07), leaks 5 / 4; GRPO seed 0 vs SFT pass 2 / 3 (p = 1.0), leaks lower on 2 / higher on 6 (p = 0.29); seed 1 vs SFT pass 6 / 4 (p = 0.75), leaks 5 / 4; repair vs GRPO 4 / 1; distillation vs SFT pass 2 / 4, vs base 7 / 2 (p = 0.18); Nemotron SFT vs base pass 6 / 2; **Nemotron GRPO vs SFT leaks lower on 13 tasks / higher on 1 (p = 0.002)**, pass 5 / 3.
 - By tier (pass / leak): SFT 83% / 3%, 13% / 28%, 27% / 10%; GRPO seed 0 83% / 17%, 20% / 22%, 17% / 57%; seed 1 69% / 0%, 43% / 7%, 3% / 43%; Nemotron GRPO 64% / 8%, 15% / 15%, 13% / 3%. `results/test_eval_v2/`.
 - Reading: with a tuned learning rate, SFT does most of the work on test (9% → 38%); GRPO's test effect on Qwen is within noise for pass and goes both ways for leaks across the two seeds (29% vs 14%), with seed 0 leaking heavily on tier 3; the dev gain (24% → 52%) did not transfer at that size. Nemotron's GRPO is the clean result: the leak rate fell on 13 of 20 tasks. Feedback is the most reliable lever: +28 points after three tries for the GRPO model, and repair training did not add to it.
+
+## 2026-10-26 — CI failed on the judge data test
+
+- Failure: `tests/test_judge.py::test_judge_data_respects_split` read `data/judge_train.jsonl`, which is a local build artifact (`data/` is not tracked), so both CI jobs failed on the push of version 2 while every other test passed (82 of 83).
+- Fix: the test skips when the judge data has not been built locally; `python -m train.judge build` recreates it from `results/`.
