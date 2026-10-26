@@ -304,13 +304,13 @@ def fig_methods() -> Path | None:
     if not path.exists():
         return None
     s = json.loads(path.read_text())["models"]
-    for extra in ("test_eval_v3", "test_eval_v4"):
+    for extra in ("test_eval_v3", "test_eval_v4", "test_eval_v5"):
         more = RESULTS / extra / "summary.json"
         if more.exists():
             s = {**s, **{k: v for k, v in json.loads(more.read_text())["models"].items() if k != "base"}}
     order = [("base", "base"), ("sft", "SFT"), ("distil", "distillation"), ("sft+rl", "SFT + GRPO"), ("sft+rl-seed1", "SFT + GRPO, seed 1"),
              ("repair", "repair-trained"), ("sft-v3", "SFT, v3 data"), ("sft-v3+rl", "SFT v3 + GRPO"), ("sft-v3+rl-seed1", "SFT v3 + GRPO, seed 1"),
-             ("sft-82", "SFT, 82 tasks")]
+             ("sft-82", "SFT, 82 tasks"), ("sft-82+rl", "SFT 82 + GRPO, half batch")]
     rows = [(label, s[k]) for k, label in order if k in s]
     if not rows:
         return None

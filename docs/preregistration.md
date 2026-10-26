@@ -101,7 +101,7 @@ Written before the training run starts. **What changes:** GRPO on top of the 82-
 
 | Row | Run | Checkpoint | Why |
 |---|---|---|---|
-| sft-82+rl | rl_v3b_Qwen3.5-9B_lr4e-5_s40_b8 | highest dev pass rate (filled in when the run finishes) | the only run |
+| sft-82+rl | rl_v3b_Qwen3.5-9B_lr4e-5_s40_b8 | 000010 (step 10: dev pass 35%, leak 12%; steps 20, 30, 40 gave 20%, 27%, 18% pass) | highest dev pass rate, as pre-registered |
 
 **Measures:** pass and leak over the 120 test samples with Wilson intervals; paired sign tests by task against `sft-82` (version 4), `sft-v3+rl` seed 0 (version 3) and `sft+rl` seed 0 (version 2), reused from their result files.
 

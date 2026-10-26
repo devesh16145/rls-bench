@@ -375,3 +375,7 @@
 ## 2026-10-26 — Version 5: GRPO on the 82-task SFT at half batch
 
 - About $14.5 of credit remains (`results/train/tinker_spend.json`, $135.46 spent). The version-3 GRPO size (40 × 16 × 8, 2,048 tokens) has a worst case of $30 and is refused by the cap check, so the run is 40 steps × 8 tasks × 8 rollouts with `max_tokens` 1,536: worst case $12.70, typical $7.15 (dry run, 82 references score 1, no trap scores 1). Cap $13. Everything else as in version 3 (learning rate 4e-5, rank 32, seed 0, eval every 10 steps), starting from `sft_v3b_Qwen3.5-9B_20261026T124124Z_lr0.00024`. Pre-registered as version 5 before launch.
+
+## 2026-10-26 — GRPO at half batch on the 82-task SFT (rl_v3b_Qwen3.5-9B_lr4e-5_s40_b8)
+
+- 40 steps, estimated $5.90 (typical estimate was $7.15). Train: pass 33% → 46%, leak 19% → 16%, reward 0.20 → 0.38, entropy 0.12 → 0.03, answer length oscillating between 400 and 800 tokens. Dev went the other way: step 10 **35% pass / 12% leak**, step 20 20% / 20%, step 30 27% / 18%, step 40 18% / 29%, greedy 3/11 throughout. Best checkpoint by the pre-registered rule: step 10, which is no better than the SFT it started from (36% / 15% on dev). Read as the half-size batch (64 rollouts per step) and the 1,536-token limit not reproducing the version-3 gain, or the seed; this run cannot separate the two. Tinker spend $141.36; about $8.6 remains.
