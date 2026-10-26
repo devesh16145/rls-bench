@@ -1,0 +1,248 @@
+{
+  "paired_by_task": {
+    "sft-82+rl vs sft-82": {
+      "pass_better": 1,
+      "pass_worse": 5,
+      "pass_p": 0.22,
+      "leak_lower": 2,
+      "leak_higher": 5,
+      "leak_p": 0.45
+    },
+    "sft-82+rl vs sft-v3+rl": {
+      "pass_better": 1,
+      "pass_worse": 5,
+      "pass_p": 0.22,
+      "leak_lower": 4,
+      "leak_higher": 5,
+      "leak_p": 1.0
+    },
+    "sft-82+rl vs sft+rl": {
+      "pass_better": 1,
+      "pass_worse": 4,
+      "pass_p": 0.38,
+      "leak_lower": 4,
+      "leak_higher": 5,
+      "leak_p": 1.0
+    },
+    "sft-82+rl vs sft-v3": {
+      "pass_better": 1,
+      "pass_worse": 4,
+      "pass_p": 0.38,
+      "leak_lower": 6,
+      "leak_higher": 3,
+      "leak_p": 0.51
+    }
+  },
+  "by_tier": {
+    "sft-82+rl": {
+      "1": {
+        "pass": {
+          "rate": 0.75,
+          "lo": 0.5892954623327166,
+          "hi": 0.8624952233700517,
+          "n": 36
+        },
+        "leak": {
+          "rate": 0.25,
+          "lo": 0.13750477662994837,
+          "hi": 0.4107045376672835,
+          "n": 36
+        }
+      },
+      "2": {
+        "pass": {
+          "rate": 0.037037037037037035,
+          "lo": 0.01021636794844559,
+          "hi": 0.12535176917275476,
+          "n": 54
+        },
+        "leak": {
+          "rate": 0.24074074074074073,
+          "lo": 0.14644291495284428,
+          "hi": 0.36947524183502795,
+          "n": 54
+        }
+      },
+      "3": {
+        "pass": {
+          "rate": 0.1,
+          "lo": 0.03459988874733419,
+          "hi": 0.25621082579184085,
+          "n": 30
+        },
+        "leak": {
+          "rate": 0.23333333333333334,
+          "lo": 0.11792388144489496,
+          "hi": 0.40928326158122164,
+          "n": 30
+        }
+      }
+    }
+  },
+  "per_task": {
+    "sft-82+rl": {
+      "T001": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T002": {
+        "passed": 1,
+        "leaked": 0
+      },
+      "T009": {
+        "passed": 0,
+        "leaked": 6
+      },
+      "T012": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T014": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T026": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T039": {
+        "passed": 1,
+        "leaked": 5
+      },
+      "T043": {
+        "passed": 0,
+        "leaked": 1
+      },
+      "T051": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T058": {
+        "passed": 0,
+        "leaked": 1
+      },
+      "T060": {
+        "passed": 0,
+        "leaked": 6
+      },
+      "T061": {
+        "passed": 3,
+        "leaked": 0
+      },
+      "T065": {
+        "passed": 0,
+        "leaked": 6
+      },
+      "T077": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T082": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T084": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T090": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T095": {
+        "passed": 3,
+        "leaked": 3
+      },
+      "T097": {
+        "passed": 0,
+        "leaked": 1
+      },
+      "T099": {
+        "passed": 0,
+        "leaked": 0
+      }
+    },
+    "sft-82": {
+      "T001": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T002": {
+        "passed": 5,
+        "leaked": 0
+      },
+      "T009": {
+        "passed": 0,
+        "leaked": 6
+      },
+      "T012": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T014": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T026": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T039": {
+        "passed": 5,
+        "leaked": 0
+      },
+      "T043": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T051": {
+        "passed": 1,
+        "leaked": 0
+      },
+      "T058": {
+        "passed": 1,
+        "leaked": 0
+      },
+      "T060": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T061": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T065": {
+        "passed": 0,
+        "leaked": 6
+      },
+      "T077": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T082": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T084": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T090": {
+        "passed": 0,
+        "leaked": 0
+      },
+      "T095": {
+        "passed": 6,
+        "leaked": 0
+      },
+      "T097": {
+        "passed": 0,
+        "leaked": 4
+      },
+      "T099": {
+        "passed": 0,
+        "leaked": 2
+      }
+    }
+  }
+}

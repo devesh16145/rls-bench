@@ -71,9 +71,19 @@ def main() -> None:
             continue
         kind = "leaderboard row" if "@reasoning-off" in p.name else "dev eval"
         items[f"{kind} {p.stem}"] = _eval_cost([p])
-    for name, d in (("one-time test eval v1 (3 models)", ROOT / "results" / "test_eval"), ("test eval v2", ROOT / "results" / "test_eval_v2")):
-        if d.exists():
-            items[name] = _eval_cost(sorted(d.glob("*.jsonl")))
+    if (ROOT / "results" / "test_eval").exists():
+        items["one-time test eval v1 (3 models)"] = _eval_cost(sorted((ROOT / "results" / "test_eval").glob("*.jsonl")))
+    for d in sorted((ROOT / "results").glob("test_eval_v*")):
+        items[f"test eval {d.name.removeprefix('test_eval_')}"] = _eval_cost(sorted(d.glob("*.jsonl")))
+    # SFT sampling on Tinker (train/build_sft_tinker.py sample): per-row costs in the raw file, which is local (data/ is not tracked)
+    raw = ROOT / "data" / "sft_raw_tinker.jsonl"
+    if raw.exists():
+        by_model: dict[str, float] = {}
+        for line in raw.read_text().splitlines():
+            r = json.loads(line)
+            by_model[r["model"]] = by_model.get(r["model"], 0.0) + r["cost_usd"]
+        for model, usd in sorted(by_model.items()):
+            items[f"SFT sampling {model.split('/')[-1]}"] = usd
     for p in sorted((ROOT / "results" / "judge").glob("*.cost.json")):
         if "opus" not in p.name:  # Opus judgements are on the Anthropic credit, not Tinker
             items[f"judge {p.name.replace('.cost.json', '')}"] = json.loads(p.read_text())["est_spend_usd"]

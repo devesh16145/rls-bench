@@ -222,21 +222,25 @@ Paired by task (pass count out of 6, leak count out of 6; two-sided sign test on
 
 ### 5.9 Cost
 
-Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$135.46** of a $150 credit (version 3 added $30.54 and the 82-task SFT $3.02; version 3's share: Kimi sampling $3.46, the SFT sweep $8.58, the two GRPO seeds $22.05 including a stalled portion, and the test evaluation $0.42):
+Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$145.94** of a $150 credit. Version 3 added $30.85 (the SFT sweep $8.33 and its dev evaluation $0.06, the two GRPO seeds $22.05 including a stalled portion, the test evaluation $0.42) plus $4.00 of Kimi K2.6 sampling for the SFT data shared with version 4; version 4 added $3.11 (the 82-task SFT, its dev evaluation and test row) and version 5 $5.97 (the half-batch GRPO and its test row). Earlier drafts of this section under-counted by up to $4.5: the spend script did not read the Kimi sampling costs or the version 3 and 4 test evaluations until version 5.
 
 | Stage | Spend |
 |---|---|
 | Leaderboard rows (Qwen3.5-9B, gpt-oss-120b, Kimi K2.6, Qwen3.5-397B) | $10.22 |
-| SFT sweeps (Qwen 3 runs, Nemotron 3 runs) and the judge | $13.39 |
+| SFT sweeps (Qwen 3 runs, Nemotron 3 runs) and the judge | $12.84 |
 | GRPO sweeps (5 short runs) | $11.46 |
 | GRPO full runs (Qwen seeds 0 and 1, Nemotron) | $37.40 |
 | Repair RL | $8.07 |
 | Distillation (incl. teacher scoring) | $12.11 |
 | Zero-shot judges on Tinker | $5.82 |
-| Dev, repair and test evaluations | $1.66 |
+| Dev, repair and test evaluations (versions 1 and 2) | $1.47 |
 | Version 1 (SFT, hand-rolled GRPO, filter, evals) | $2.62 |
+| Kimi K2.6 sampling for the SFT data (versions 3 and 4) | $4.00 |
+| Version 3 (SFT sweep, two GRPO seeds, test row) | $30.85 |
+| Version 4 (82-task SFT, test row) | $3.11 |
+| Version 5 (half-batch GRPO, test row) | $5.97 |
 
-Of that, the three stages that produced the headline numbers (SFT sweeps, GRPO full runs, test evaluation) cost about $52. The Anthropic API credit paid for the Opus baseline ($27.96) and the Opus judge ($7.34); OpenRouter paid for the SFT sampling and the version-1 baselines ($21.49 in all).
+Of that, the three stages that produced the version-2 headline numbers (SFT sweeps, GRPO full runs, test evaluation) cost about $52. The Anthropic API credit paid for the Opus baseline ($27.96) and the Opus judge ($7.34); OpenRouter paid for the SFT sampling and the version-1 baselines ($21.49 in all).
 
 ### 5.10 Caveats specific to training
 
@@ -270,16 +274,18 @@ Paired by task: SFT v3 vs SFT v2, pass better on 2 / worse on 2, leaks higher on
 
 **What the data change did.** Not what it was meant to. Mixing Kimi's passing answers into the SFT set left the pass rate where it was (33% vs 38%, within noise) and doubled the leak rate (31% vs 16%, higher on eight of the ten tasks that differ). Every answer in the set passes its own task's tests, so the leaks are not in the data; the *style* of a second model, one that leaks on 16% of the leaderboard tasks against DeepSeek's 1%, carried over to new tasks. GRPO then did its job in both seeds, cutting the leak rate from 31% to 25% and 17%, and seed 0 reached the highest pass rate of any row (45%, with a 43% tier-2 rate no other row touches), but the pass gain over its own SFT is within noise and its tier-3 leak rate (53%) repeats version 2's pattern. The version-2 pipeline, with the single cleaner data source, remains the better recipe on the leak rate; the version-3 seed-0 checkpoint is the best model by pass rate. Both claims carry 20-task intervals.
 
-**More train tasks (version 4, one row).** After version 3, ten new tasks (T104–T113, six tier 2 and four tier 3, built around the trap patterns the set used least) were verified and appended to the train split; Kimi K2.6 answered them 8× (22 of 80 passed) and the version-3 SFT recipe was re-run unchanged on the enlarged data (491 examples, 82 tasks). On dev it jumped to 36% pass / 15% leak from 23% / 23%. On test, pre-registered as a single row and the fourth look at the split: **35% pass [27, 44], 15% leak**. Against the same recipe on 72 tasks, the pass rate is unchanged (3 tasks better, 3 worse) and the leak rate is halved (lower on 7 tasks, higher on 1, p = 0.07): the extra tasks repaired what the second data source had broken, and the model again leaks no more than the version-2 SFT. Tier 3 stays at 0% for SFT alone. There was no credit left for GRPO on this data; that is the first thing to run when there is.
+**More train tasks (version 4, one row).** After version 3, ten new tasks (T104–T113, six tier 2 and four tier 3, built around the trap patterns the set used least) were verified and appended to the train split; Kimi K2.6 answered them 8× (22 of 80 passed) and the version-3 SFT recipe was re-run unchanged on the enlarged data (491 examples, 82 tasks). On dev it jumped to 36% pass / 15% leak from 23% / 23%. On test, pre-registered as a single row and the fourth look at the split: **35% pass [27, 44], 15% leak**. Against the same recipe on 72 tasks, the pass rate is unchanged (3 tasks better, 3 worse) and the leak rate is halved (lower on 7 tasks, higher on 1, p = 0.07): the extra tasks repaired what the second data source had broken, and the model again leaks no more than the version-2 SFT. Tier 3 stays at 0% for SFT alone. GRPO on this data followed as version 5.
 
-*Sources: `results/train/checkpoints.json` (every run with its curves under `results/train/runs/`), `results/train/sft_sweep_*.json`, `results/tinker_eval/` (dev evals), `results/repair_eval/`, `results/test_eval_v2/` (the version-2 test eval, its lock, `summary.json` and `paired_and_tiers.json`), `results/test_eval/` (version 1), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json`. Figures: `results/figures/`, from `train/figures.py`.*
+**GRPO on the 82-task SFT (version 5, one row).** With about $14.5 of credit left, GRPO was run on the 82-task SFT at half the batch of version 3: 40 steps × 8 tasks × 8 rollouts (64 a step instead of 128) with 1,536-token answers, the rest of the recipe unchanged; estimated $5.90. It did not reproduce version 3's gain. On train the pass rate rose from 33% to 46% while the entropy fell from 0.12 to 0.03; on dev every checkpoint was at or below the SFT it started from (35% pass / 12% leak at step 10, then 20%, 27% and 18% pass, with the leak rate climbing to 29% by step 40). The pre-registered rule chose step 10. On test, the fifth look at the split (`results/test_eval_v5/`, commit c251f5f): **27% pass [20, 35], 24% leak**, greedy 30%, against the SFT's 35% / 15%. Paired by task it is worse on 5 and better on 1 for pass (p = 0.22) and leaks higher on 5, lower on 2; against the version-3 GRPO seed 0 it is worse on 5 / better on 1. By tier, 75% / 4% / 10% pass: tier 2 fell from 22% to 4%. Whether the half-size batch or the seed is to blame this budget cannot say. What the run adds to the record is that the recipe's gain is not robust to being run at half size, and that the training curves (rising train reward, collapsing entropy, falling dev) showed the problem before the test split did.
+
+*Sources: `results/train/checkpoints.json` (every run with its curves under `results/train/runs/`), `results/train/sft_sweep_*.json`, `results/tinker_eval/` (dev evals), `results/repair_eval/`, `results/test_eval_v2/` … `results/test_eval_v5/` (one directory per test evaluation, each with its lock, `summary.json` and `paired_and_tiers.json`), `results/test_eval/` (version 1), `results/train/tinker_spend.json` (from `train/spend.py`), `results/train/sft_data_stats.json`. Figures: `results/figures/`, from `train/figures.py`.*
 
 ## 6. Limitations
 
 - **Synthetic schemas, one flavour of Postgres.** Every task was written for this benchmark, in the Supabase dialect (its `auth` and `storage` shims, its default privileges). Real schemas are larger, messier and come with history; a policy that passes here may still be wrong for an app with triggers, views and migrations the task never mentions.
 - **One author.** The tasks were written quickly and reviewed against a checklist; the traps and tests reflect one person's sense of what goes wrong. Several traps were only caught for the wrong reason the first time round, and were fixed; others may still be caught for the wrong reason.
 - **Small splits.** 11 dev and 20 test tasks. A single task is 9 points of greedy pass@1 on dev and 5 on test, which is why every rate here carries an interval and why differences between trained models are reported with paired tests rather than as point estimates.
-- **The test split was looked at four times.** Once per version of this write-up (the fourth a single row), with no training decision in between informed by it. Every evaluation is locked to a git commit and recorded (`results/test_eval*/LOCK.json`).
+- **The test split was looked at five times.** Once per version of this write-up (the fourth and fifth single rows), with no training decision in between informed by it. Every evaluation is locked to a git commit and recorded (`results/test_eval*/LOCK.json`).
 - **Serving differences.** The leaderboard mixes three routes (OpenRouter, the Anthropic API, Tinker). The same model served two ways scored differently on the same dev tasks (Nemotron: 15% through OpenRouter, 9% through Tinker, both with reasoning off), so rows are comparable within a route more than across.
 - **Reasoning budgets confound the ranking.** DeepSeek V4.1 Flash's 16,000-token cap cut off 37% of its answers; a larger budget would raise its score and its cost. Opus ran at its default effort.
 - **Contamination.** The tasks are public with a canary string. Models released after October 2026 may have seen them.
