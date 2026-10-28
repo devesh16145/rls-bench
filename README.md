@@ -7,6 +7,7 @@ RLS is where a small mistake becomes a data breach. A policy that is slightly to
 - **113 verified tasks** in three tiers (31 / 52 / 30): 103 in the frozen split, plus 10 appended to the train split on 2026-10-26 (every leaderboard and test number below is on the original 103), covering 61 named failure patterns ("traps"): `null-owner`, `weak-with-check`, `claim-trust`, `recursive-policy`, `view-bypass`, `rpc-missing-auth-check`, and more (`docs/failure-taxonomy.md`).
 - **Baselines** for frontier and open models through OpenRouter.
 - **Training**: LoRA SFT and then GRPO of Nemotron-3.5-Lightning on [Tinker](https://thinkingmachines.ai/tinker/), with the harness as the reward and a penalty for leaks.
+- **On Hugging Face**: the task set as a dataset, [9eve5h/rls-bench](https://huggingface.co/datasets/9eve5h/rls-bench), and the twelve trained LoRA adapters, [9eve5h/rls-bench-adapters](https://huggingface.co/9eve5h/rls-bench-adapters).
 
 Every number below is produced by code in this repo and stored under `results/`.
 
@@ -96,7 +97,7 @@ Checkpoints were chosen on the 11 dev tasks; the 20 test tasks were evaluated on
 | + SFT | 26% [19–34] | 31% |
 | + SFT + GRPO | 29% [22–38] | **10%** |
 
-What held up: a tuned SFT is most of the gain (9% → 38%); Nemotron's GRPO cut its leak rate on 13 of 20 test tasks (31% → 10%, the one significant paired result); and harness feedback is the most reliable lever of all, taking the GRPO model from 35% to 63% within three tries. What did not: GRPO's dev gain for Qwen (24% → 52%) did not transfer to test (38% → 38–41%), and the two seeds disagree on the leak rate by 15 points, so at this scale run-to-run variance is as large as the effect. A third version changed only the SFT data (answers from two open models instead of one): the pass rate stayed put and the leak rate doubled (16% → 31%), because the second model's leakier style carried over; GRPO on it produced the highest pass rate of any row (45%) while pulling leaks back to 25%. Ten more train tasks then repaired the leak rate for SFT alone (31% → 15%, lower on 7 of 8 differing tasks) without moving the pass rate. GRPO on that model at half the batch size, the last of the credit, made it worse (35% → 27% pass, 15% → 24% leak, worse on 5 of the 6 tasks that differ), with the dev curve falling from step 10 on: the version-3 GRPO gain did not survive a smaller run. Every run's curves, dev evaluations and the training-health metrics are under `results/train/`; the full account, including the reward-hacking checks, is `docs/writeup.md` §5. The trained adapters are exported in Hugging Face format (`results/train/adapter_manifest_*.json`). Tinker spend for the whole project: $145.94 (`results/train/tinker_spend.json`).
+What held up: a tuned SFT is most of the gain (9% → 38%); Nemotron's GRPO cut its leak rate on 13 of 20 test tasks (31% → 10%, the one significant paired result); and harness feedback is the most reliable lever of all, taking the GRPO model from 35% to 63% within three tries. What did not: GRPO's dev gain for Qwen (24% → 52%) did not transfer to test (38% → 38–41%), and the two seeds disagree on the leak rate by 15 points, so at this scale run-to-run variance is as large as the effect. A third version changed only the SFT data (answers from two open models instead of one): the pass rate stayed put and the leak rate doubled (16% → 31%), because the second model's leakier style carried over; GRPO on it produced the highest pass rate of any row (45%) while pulling leaks back to 25%. Ten more train tasks then repaired the leak rate for SFT alone (31% → 15%, lower on 7 of 8 differing tasks) without moving the pass rate. GRPO on that model at half the batch size, the last of the credit, made it worse (35% → 27% pass, 15% → 24% leak, worse on 5 of the 6 tasks that differ), with the dev curve falling from step 10 on: the version-3 GRPO gain did not survive a smaller run. Every run's curves, dev evaluations and the training-health metrics are under `results/train/`; the full account, including the reward-hacking checks, is `docs/writeup.md` §5. The trained adapters are exported in Hugging Face format and published at [9eve5h/rls-bench-adapters](https://huggingface.co/9eve5h/rls-bench-adapters), with a manifest and SHA-256 hashes for each under `results/train/adapter_manifest_*.json`. Tinker spend for the whole project: $145.94 (`results/train/tinker_spend.json`).
 
 ## Run it
 
@@ -109,14 +110,14 @@ uv run rls card tasks/T001-*              # review card for one task
 uv run pytest
 ```
 
-Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both in `.env`. See `uv run rls estimate --help` and the scripts in `train/`. Every paid command prints a cost estimate first and has a spend cap.
+Baselines need `OPENROUTER_API_KEY`, and training needs `TINKER_API_KEY`, both in `.env`. See `uv run rls estimate --help` and the scripts in `train/`. Every paid command prints a cost estimate first and has a spend cap. `uv run python -m train.hf_upload build` stages the Hugging Face dataset and renders both repo cards from `docs/hf/` and `results/`; `upload` pushes them and needs a write token as `HF_TOKEN`.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `harness/` | Postgres harness, Supabase auth/storage shim, test runner, mutation checks, CLI |
-| `tasks/` | the 113 tasks and the train/dev/test split (`tasks/split.json`, frozen for dev and test; train revisions recorded in the file) |
+| `tasks/` | the 113 tasks and the train/dev/test split (`tasks/split.json`, frozen for dev and test; train revisions recorded in the file); mirrored as a Hugging Face dataset |
 | `eval/` | OpenRouter client with a disk cache, fixed prompt, metrics |
 | `train/` | SFT data builder, Tinker SFT and GRPO, dev and one-time test evals, reports |
 | `results/` | raw graded samples, summaries, training metrics and checkpoints |
