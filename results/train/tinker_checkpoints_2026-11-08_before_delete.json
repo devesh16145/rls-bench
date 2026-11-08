@@ -1,0 +1,1500 @@
+{
+ "fetched": "2026-11-08T06:50:08.005667+00:00",
+ "usage": {
+  "effective_rate_usd_per_gigabyte_month": 0.1,
+  "data": [
+   {
+    "project_id": null,
+    "org_user_urn": null,
+    "user_email": null,
+    "user_name": null,
+    "checkpoint_count": 148,
+    "size_bytes": 207690997374,
+    "size_gigabytes": 193.42731439881027,
+    "estimated_monthly_cost_usd": 19.342731439881028
+   }
+  ]
+ },
+ "checkpoints": [
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-27T12:43:23.831934Z",
+   "tinker_path": "tinker://f23b1484-0e41-5163-a4b5-fd4e3cbf8a71:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T16:05:46.770220Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T16:05:45.146669Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000040",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T16:05:39.280273Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/weights/000040",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000040",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T16:05:38.471694Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/sampler_weights/000040",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T16:02:06.993856Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/sampler_weights/000030",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T16:02:05.142839Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/weights/000030",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T15:58:36.997256Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T15:58:36.182546Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/sampler_weights/000020",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T15:55:06.709459Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T15:55:05.094088Z",
+   "tinker_path": "tinker://62672840-5406-579f-b02f-eaa3857264c6:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-26T12:49:39.447902Z",
+   "tinker_path": "tinker://50d845c3-d264-56e4-8f8f-d0e2b6d0128a:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T12:47:51.099784Z",
+   "tinker_path": "tinker://c50d2a3d-57e5-5d81-926c-f786c42f0beb:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T12:47:50.261759Z",
+   "tinker_path": "tinker://c50d2a3d-57e5-5d81-926c-f786c42f0beb:train:0/sampler_weights/final",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:44:44.473262Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:44:42.937985Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:44:37.994192Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/000030",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:44:36.588630Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/weights/000030",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:40:13.264290Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/000020",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:40:10.902467Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:35:54.480804Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/sampler_weights/000010",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:35:49.338860Z",
+   "tinker_path": "tinker://acc3df02-34f8-5393-9ee5-2a0b658a29f5:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-26T09:32:44.295812Z",
+   "tinker_path": "tinker://e3815a9e-6c12-5fc9-91bf-c828b248202e:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-26T09:30:53.294280Z",
+   "tinker_path": "tinker://1ebb2e30-daef-5e20-9bae-e1865dbb2d29:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:28:46.217223Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:28:44.607345Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000040",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:28:35.932976Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/sampler_weights/000040",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000040",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:28:30.920896Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/weights/000040",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T09:24:09.217896Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/weights/000030",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T09:24:08.095552Z",
+   "tinker_path": "tinker://8ad508e6-c748-5faa-96e1-259f87763073:train:0/sampler_weights/000030",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T05:36:29.191545Z",
+   "tinker_path": "tinker://9a563325-297f-52f7-bb9e-fed8cc8d9143:train:0/sampler_weights/000020",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T05:36:21.668465Z",
+   "tinker_path": "tinker://9a563325-297f-52f7-bb9e-fed8cc8d9143:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T05:32:12.740674Z",
+   "tinker_path": "tinker://9a563325-297f-52f7-bb9e-fed8cc8d9143:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T05:32:11.392941Z",
+   "tinker_path": "tinker://9a563325-297f-52f7-bb9e-fed8cc8d9143:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T05:23:37.630563Z",
+   "tinker_path": "tinker://a96a957c-7265-5125-b65b-babfb05d8e96:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T05:23:32.322939Z",
+   "tinker_path": "tinker://a96a957c-7265-5125-b65b-babfb05d8e96:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T05:17:36.292998Z",
+   "tinker_path": "tinker://8f0bdcb0-471b-51c1-b2fc-94ea511d02d5:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T05:17:34.902659Z",
+   "tinker_path": "tinker://8f0bdcb0-471b-51c1-b2fc-94ea511d02d5:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-26T05:11:39.717735Z",
+   "tinker_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/sampler_weights/final",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-26T05:11:38.305671Z",
+   "tinker_path": "tinker://1fbadbd1-cd05-5079-bc58-e740473deef7:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T20:32:59.956687Z",
+   "tinker_path": "tinker://cf6f65cd-2fdc-532f-a0c8-eed07520cff4:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:22:21.438798Z",
+   "tinker_path": "tinker://fc498f87-9683-55b5-80e9-e43b0220afb5:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:22:19.630138Z",
+   "tinker_path": "tinker://fc498f87-9683-55b5-80e9-e43b0220afb5:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T20:15:42.565137Z",
+   "tinker_path": "tinker://77c6d2c1-a7e2-5171-a88a-01947733cd27:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:13:23.817831Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:13:22.410458Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000050",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:13:17.536055Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/000050",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000050",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:13:16.620802Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000050",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T20:11:56.323964Z",
+   "tinker_path": "tinker://72af2701-0d96-5099-9a13-9ca85da7e1ef:train:0/external_weights/hf_export",
+   "size_bytes": 1544353053,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T20:10:37.064749Z",
+   "tinker_path": "tinker://9b525484-709f-5138-835d-7959c97898ab:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T20:09:02.502233Z",
+   "tinker_path": "tinker://fe68c07c-3f81-5b1e-baf5-5810ebf047a1:train:0/external_weights/hf_export",
+   "size_bytes": 1544353053,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:08:29.012276Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/final",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:08:27.612900Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000040",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:08:27.263810Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/000040",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000040",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:08:26.403760Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000040",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000025",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:08:19.952498Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000025",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000025",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:08:17.397151Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000025",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:07:22.161060Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:07:20.316427Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/final",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000050",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:07:14.319266Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/000050",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000050",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:07:08.057159Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/000050",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:04:10.920023Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000020",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:04:09.404734Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T20:03:27.561825Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000030",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:03:25.882446Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/000030",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000040",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T20:00:02.851507Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/000040",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000040",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:59:59.676614Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/000040",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000015",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:59:59.668043Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000015",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000015",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:59:52.920976Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000015",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:57:43.280643Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:57:42.643107Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000020",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:55:29.091210Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000010",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:55:24.020272Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T19:54:50.710441Z",
+   "tinker_path": "tinker://e6cb9c03-f5e7-5933-bcbe-b0575240fa57:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:53:51.927142Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/000030",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:53:49.449373Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/000030",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T19:53:44.562674Z",
+   "tinker_path": "tinker://f90f7ecd-4d29-5bcc-b9bf-8fb2c52ef1d4:train:0/external_weights/hf_export",
+   "size_bytes": 378413014,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:52:46.967211Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:52:45.464396Z",
+   "tinker_path": "tinker://793cd928-3a1f-54f3-94f9-1a7607ffb13d:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "external_weights/hf_export",
+   "checkpoint_type": "external",
+   "time": "2026-10-25T19:52:21.663750Z",
+   "tinker_path": "tinker://91ecc1c7-f7dd-5c03-b936-ab79e65929de:train:0/external_weights/hf_export",
+   "size_bytes": 369221544,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000005",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:51:21.746429Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/weights/000005",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000005",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:51:21.141250Z",
+   "tinker_path": "tinker://667b95ec-9d9c-5958-9cb8-b01e85625b13:train:0/sampler_weights/000005",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:47:30.521932Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/000020",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:47:29.704334Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/000020",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:44:15.663122Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:44:14.267867Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000050",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:44:09.294772Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000050",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000050",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:44:07.585343Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/000050",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:41:35.008625Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/sampler_weights/000010",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:41:27.834905Z",
+   "tinker_path": "tinker://7911e25c-5aa5-5ba3-ac3a-a14ef9669427:train:0/weights/000010",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000040",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:39:21.757669Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000040",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000040",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:39:20.300275Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/000040",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000030",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:34:38.732784Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000030",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000030",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:34:37.311903Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/000030",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:33:11.058835Z",
+   "tinker_path": "tinker://868a431e-6415-50bf-92b5-8eef50c03f1b:train:0/sampler_weights/final",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:33:04.080753Z",
+   "tinker_path": "tinker://868a431e-6415-50bf-92b5-8eef50c03f1b:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:32:54.692765Z",
+   "tinker_path": "tinker://868a431e-6415-50bf-92b5-8eef50c03f1b:train:0/weights/000010",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:32:53.883024Z",
+   "tinker_path": "tinker://868a431e-6415-50bf-92b5-8eef50c03f1b:train:0/sampler_weights/000010",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000020",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:29:34.920428Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/000020",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:29:34.494328Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000020",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:24:49.893139Z",
+   "tinker_path": "tinker://ae97cab0-a439-57e5-a1cd-d1f00d72a870:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:24:48.276109Z",
+   "tinker_path": "tinker://ae97cab0-a439-57e5-a1cd-d1f00d72a870:train:0/sampler_weights/final",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:24:42.261206Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:24:40.982538Z",
+   "tinker_path": "tinker://ae97cab0-a439-57e5-a1cd-d1f00d72a870:train:0/weights/000010",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:24:40.843741Z",
+   "tinker_path": "tinker://ae97cab0-a439-57e5-a1cd-d1f00d72a870:train:0/sampler_weights/000010",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:24:40.491883Z",
+   "tinker_path": "tinker://58645213-0790-5e9b-992e-b748b1c5928a:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:16:45.899281Z",
+   "tinker_path": "tinker://6e7e6bf7-4dd0-519c-a670-edc2763d6a2a:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:16:43.740355Z",
+   "tinker_path": "tinker://6e7e6bf7-4dd0-519c-a670-edc2763d6a2a:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:16:38.399391Z",
+   "tinker_path": "tinker://6e7e6bf7-4dd0-519c-a670-edc2763d6a2a:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:16:36.274404Z",
+   "tinker_path": "tinker://6e7e6bf7-4dd0-519c-a670-edc2763d6a2a:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:14:21.194845Z",
+   "tinker_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/sampler_weights/final",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:14:15.894980Z",
+   "tinker_path": "tinker://e8ad39e7-dc8a-5cd2-aa60-1f32a51b89b5:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:10:57.073902Z",
+   "tinker_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/final",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:10:55.678078Z",
+   "tinker_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:10:53.020082Z",
+   "tinker_path": "tinker://96b234b9-9dbe-5363-afb0-13faa5fead81:train:0/sampler_weights/final",
+   "size_bytes": 369266765,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:10:51.595160Z",
+   "tinker_path": "tinker://96b234b9-9dbe-5363-afb0-13faa5fead81:train:0/weights/final",
+   "size_bytes": 1107556469,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:10:49.782502Z",
+   "tinker_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/sampler_weights/000010",
+   "size_bytes": 378458059,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:10:48.304419Z",
+   "tinker_path": "tinker://b6f39f78-7563-5c6b-a529-db8502e812aa:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:07:49.030120Z",
+   "tinker_path": "tinker://52f4e7a8-5258-5667-9f92-955d291be0ec:train:0/sampler_weights/final",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:07:43.517906Z",
+   "tinker_path": "tinker://52f4e7a8-5258-5667-9f92-955d291be0ec:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:05:25.502962Z",
+   "tinker_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:05:24.009835Z",
+   "tinker_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/000010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:05:19.306257Z",
+   "tinker_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/sampler_weights/000010",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/000010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:05:16.890368Z",
+   "tinker_path": "tinker://d93ffdb8-facd-5ea3-842b-28911ea4c686:train:0/weights/000010",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T19:00:29.230709Z",
+   "tinker_path": "tinker://354939aa-3065-5c11-96ee-c8eb90c69427:train:0/sampler_weights/final",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T19:00:27.066630Z",
+   "tinker_path": "tinker://354939aa-3065-5c11-96ee-c8eb90c69427:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T18:57:02.214509Z",
+   "tinker_path": "tinker://7ae0dfe5-1097-52c5-a259-153b06e75dba:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T18:57:00.773934Z",
+   "tinker_path": "tinker://7ae0dfe5-1097-52c5-a259-153b06e75dba:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T18:52:23.862848Z",
+   "tinker_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T18:52:22.257844Z",
+   "tinker_path": "tinker://b16c22fc-1292-5c08-8050-92d532116228:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T18:47:57.639516Z",
+   "tinker_path": "tinker://98b591aa-ccdb-5b72-b0be-e0d59a8ec041:train:0/sampler_weights/final",
+   "size_bytes": 378458073,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T18:47:56.175458Z",
+   "tinker_path": "tinker://98b591aa-ccdb-5b72-b0be-e0d59a8ec041:train:0/weights/final",
+   "size_bytes": 1135130229,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:49:32.744643Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/final",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:49:30.631413Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/step_0025",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:49:11.157201Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0025",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/step_0025",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:49:08.822241Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0025",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/step_0020",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:47:04.525684Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0020",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/step_0020",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:47:02.315227Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0020",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/step_0015",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:44:32.069103Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0015",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/step_0015",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:44:29.744895Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0015",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/step_0010",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:41:47.687139Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0010",
+   "size_bytes": 1544387376,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/step_0010",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:41:45.572009Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0010",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/step_0005",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:39:12.758750Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/sampler_weights/step_0005",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/step_0005",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:39:10.414293Z",
+   "tinker_path": "tinker://8704dea4-bfb5-57d5-ab88-ce5565522410:train:0/weights/step_0005",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T13:34:29.761386Z",
+   "tinker_path": "tinker://04c2106c-99ce-50ff-9d63-b2359fb5dc4f:train:0/sampler_weights/final",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T13:34:25.739514Z",
+   "tinker_path": "tinker://04c2106c-99ce-50ff-9d63-b2359fb5dc4f:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "weights/final",
+   "checkpoint_type": "training",
+   "time": "2026-10-25T12:59:43.233813Z",
+   "tinker_path": "tinker://cab47254-fcd2-5b45-a166-1dee078ad2ea:train:0/weights/final",
+   "size_bytes": 4633015842,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  },
+  {
+   "checkpoint_id": "sampler_weights/final",
+   "checkpoint_type": "sampler",
+   "time": "2026-10-25T12:59:42.537413Z",
+   "tinker_path": "tinker://cab47254-fcd2-5b45-a166-1dee078ad2ea:train:0/sampler_weights/final",
+   "size_bytes": 1544387392,
+   "public": false,
+   "user_metadata": null,
+   "expires_at": null
+  }
+ ]
+}

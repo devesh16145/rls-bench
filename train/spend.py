@@ -41,6 +41,29 @@ def _eval_cost(paths: list[Path]) -> float:
     return total
 
 
+def _billed() -> dict | None:
+    """What Tinker actually charged: hourly buckets from its billing API, saved as results/train/tinker_billing_*.json."""
+    files = sorted(RESULTS_DIR.glob("tinker_billing_*.json"))
+    if not files:
+        return None
+    by_type: dict[str, float] = {}
+    first = last = None
+    for f in files:
+        for r in json.loads(f.read_text())["rows"]:
+            usd = r.get("estimated_cost_usd")
+            if usd is None:  # buckets still being computed
+                continue
+            kind = r["event_info"]["type"]
+            by_type[kind] = by_type.get(kind, 0.0) + usd
+            first = min(first or r["bucket_start"], r["bucket_start"])
+            last = max(last or r["bucket_end"], r["bucket_end"])
+    storage = by_type.get("storage", 0.0)
+    total = sum(by_type.values())
+    return {"note": "Tinker's own billing API; storage buckets lag a day or two", "from": first, "to": last,
+            "by_type": {k: round(v, 4) for k, v in sorted(by_type.items())}, "storage_usd": round(storage, 4),
+            "compute_usd": round(total - storage, 4), "total_usd": round(total, 4), "files": [f.name for f in files]}
+
+
 @app.command()
 def main() -> None:
     checkpoints = json.loads(CHECKPOINTS_PATH.read_text())
@@ -89,6 +112,9 @@ def main() -> None:
             items[f"judge {p.name.replace('.cost.json', '')}"] = json.loads(p.read_text())["est_spend_usd"]
     out = {"note": "estimates at list prices from token counts", "items": {k: round(v, 4) for k, v in items.items()},
            "total_usd": round(sum(items.values()), 4)}
+    billed = _billed()
+    if billed:
+        out["billed"] = billed
     path = RESULTS_DIR / "tinker_spend.json"
     path.write_text(json.dumps(out, indent=2) + "\n")
     typer.echo(path.read_text())

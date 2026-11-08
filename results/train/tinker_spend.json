@@ -50,5 +50,22 @@
     "judge zeroshot_Kimi-K2.6": 1.0469,
     "judge zeroshot_gpt-oss-120b": 0.5266
   },
-  "total_usd": 145.9377
+  "total_usd": 145.9377,
+  "billed": {
+    "note": "Tinker's own billing API; storage buckets lag a day or two",
+    "from": "2026-10-25T12:00:00Z",
+    "to": "2026-11-08T03:00:00Z",
+    "by_type": {
+      "sampling_prefill": 11.5853,
+      "sampling_sample": 39.9584,
+      "storage": 8.049,
+      "training": 72.2692
+    },
+    "storage_usd": 8.049,
+    "compute_usd": 123.8128,
+    "total_usd": 131.8618,
+    "files": [
+      "tinker_billing_2026-10-20_2026-11-08.json"
+    ]
+  }
 }

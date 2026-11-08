@@ -1,0 +1,21 @@
+{
+ "deleted_at": "2026-11-08T07:14:14.428787+00:00",
+ "deleted": 148,
+ "failed": [],
+ "remaining_checkpoints": [],
+ "usage_after": {
+  "effective_rate_usd_per_gigabyte_month": 0.1,
+  "data": [
+   {
+    "project_id": null,
+    "org_user_urn": null,
+    "user_email": null,
+    "user_name": null,
+    "checkpoint_count": 148,
+    "size_bytes": 207690997374,
+    "size_gigabytes": 193.42731439881027,
+    "estimated_monthly_cost_usd": 19.342731439881028
+   }
+  ]
+ }
+}

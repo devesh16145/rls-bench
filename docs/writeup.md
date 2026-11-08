@@ -224,6 +224,8 @@ Paired by task (pass count out of 6, leak count out of 6; two-sided sign test on
 
 Tinker spend for the whole project, estimated at list prices from recorded token counts (`results/train/tinker_spend.json`), came to **$145.94** of a $150 credit. Version 3 added $30.85 (the SFT sweep $8.33 and its dev evaluation $0.06, the two GRPO seeds $22.05 including a stalled portion, the test evaluation $0.42) plus $4.00 of Kimi K2.6 sampling for the SFT data shared with version 4; version 4 added $3.11 (the 82-task SFT, its dev evaluation and test row) and version 5 $5.97 (the half-batch GRPO and its test row). Earlier drafts of this section under-counted by up to $4.5: the spend script did not read the Kimi sampling costs or the version 3 and 4 test evaluations until version 5.
 
+Tinker's own billing, pulled from its billing API on 2026-11-08 and saved as `results/train/tinker_billing_2026-10-20_2026-11-08.json`, puts the charges at **$131.86**: training $72.27, sampling $51.55 (generation $39.96, prefill $11.59) and checkpoint storage $8.05. The list-price reconstruction above runs about $22 over the billed compute. Storage was never in the estimates: every run left its training states and sampler weights on Tinker, 148 checkpoints and 208 GB in all at $0.10 per GB-month (about $0.64 a day), billed hourly from the first run. They were deleted on 2026-11-08, once the twelve pre-registered adapters had been exported and published (inventory before and after in `results/train/tinker_checkpoints_2026-11-08_*.json`), so the project's Tinker cost stops there. `train/spend.py` now records the billed figures next to the estimates.
+
 | Stage | Spend |
 |---|---|
 | Leaderboard rows (Qwen3.5-9B, gpt-oss-120b, Kimi K2.6, Qwen3.5-397B) | $10.22 |
