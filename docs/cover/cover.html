@@ -28,9 +28,15 @@
   h1 span { color: var(--red); }
   .lede { position: absolute; left: 100px; top: 346px; width: 680px; font-size: 40px; line-height: 1.16; font-weight: 500; letter-spacing: -0.02em; }
   .lede em { font-style: normal; color: var(--red); }
-  .stats { position: absolute; left: 100px; top: 616px; display: flex; gap: 46px; }
+  .stats { position: absolute; left: 100px; top: 586px; display: flex; gap: 46px; }
   .stats b { display: block; font-size: 58px; line-height: 1; }
   .stats span { display: block; margin-top: 8px; font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .tuned { position: absolute; left: 100px; top: 706px; }
+  .tuned .lab { font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .tuned .models { display: flex; gap: 10px; margin-top: 12px; }
+  .tuned .models span { background: var(--bg); border: 1.5px solid var(--cream); border-radius: 3px; padding: 7px 11px 6px; font-size: 14px; white-space: nowrap; }
+  .tuned .models b { font-weight: bold; margin-right: 8px; }
+  .tuned .models em { font-style: normal; color: var(--red); font-weight: bold; }
   .url { position: absolute; left: 100px; bottom: 72px; font-size: 16px; color: var(--cream); letter-spacing: 0.02em; }
 
   .chip { position: absolute; transform: translate(-50%, -50%); background: var(--lens); color: var(--lens-ink); box-shadow: 0 0 0 1.5px var(--cream);
@@ -51,6 +57,14 @@
     <div><b class="display">2,162</b><span class="mono">executable tests</span></div>
     <div><b class="display">319</b><span class="mono">planted traps</span></div>
     <div><b class="display">9</b><span class="mono">models ranked</span></div>
+  </div>
+  <div class="tuned mono">
+    <div class="lab">Fine-tuned on the harness · LoRA SFT + GRPO on Tinker</div>
+    <div class="models">
+      <span><b>Qwen3.5-9B</b>pass 9% → <em>45%</em></span>
+      <span><b>Nemotron-3.5 30B</b>leaks 31% → <em>10%</em></span>
+      <span><b>Qwen3-8B</b>judge</span>
+    </div>
   </div>
   <div class="url mono">github.com/devesh16145/rls-bench</div>
 
