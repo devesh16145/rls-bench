@@ -1,5 +1,7 @@
 # RLS-Bench
 
+![RLS-Bench: one table seen by one user through a lens; a red row she should never see leaks out of it](docs/cover/cover.png)
+
 A verifiable benchmark for Supabase/Postgres **Row Level Security**. Each task gives a database schema and access rules written like a product spec. A model writes the policies, then executable tests run real queries as simulated users (`anon`, `authenticated`, `service_role`) and check exactly what each one can see and change.
 
 RLS is where a small mistake becomes a data breach. A policy that is slightly too broad still "works" in a demo, but it lets one user read or overwrite another user's rows. RLS-Bench measures that directly: besides pass/fail, every failure is classified as a **leak** (someone gets access they shouldn't) or a **block** (someone loses access they should have).

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RLS-Bench cover</title>
+<!-- 1600 x 900. A field of table rows; the lens is one user's view; the red row is a leak escaping it.
+     Counts come from the repo: task directories, `- name:` entries in tests.yaml, files under traps/, rows in results/leaderboard.json.
+     Render (macOS, from docs/cover/):
+       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+         --force-device-scale-factor=2 --window-size=1600,900 --virtual-time-budget=2000 \
+         --screenshot="$PWD/cover@2x.png" "file://$PWD/cover.html"
+       sips -z 900 1600 cover@2x.png --out cover.png -->
+<style>
+  @font-face {
+    font-family: "Cover Display";
+    src: local("HelveticaNeue-CondensedBlack"), local("Helvetica Neue Condensed Black"), local("DINCondensed-Bold");
+  }
+  :root { --bg: #efe9dc; --cream: #15130f; --muted: #6f685b; --red: #e0311f; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 900px; overflow: hidden; background: var(--bg); }
+  body { position: relative; color: var(--cream); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  canvas { position: absolute; inset: 0; width: 1600px; height: 900px; }
+  .mono { font-family: Menlo, Monaco, monospace; }
+  .display { font-family: "Cover Display", "Helvetica Neue", sans-serif; font-weight: normal; }
+
+  .overline { position: absolute; left: 100px; top: 118px; font-size: 15px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  h1 { position: absolute; left: 95px; top: 146px; font-size: 156px; line-height: 1; white-space: nowrap; }
+  h1 span { color: var(--red); }
+  .lede { position: absolute; left: 100px; top: 346px; width: 680px; font-size: 40px; line-height: 1.16; font-weight: 500; letter-spacing: -0.02em; }
+  .lede em { font-style: normal; color: var(--red); }
+  .stats { position: absolute; left: 100px; top: 616px; display: flex; gap: 46px; }
+  .stats b { display: block; font-size: 58px; line-height: 1; }
+  .stats span { display: block; margin-top: 8px; font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .url { position: absolute; left: 100px; bottom: 72px; font-size: 16px; color: var(--cream); letter-spacing: 0.02em; }
+
+  .chip { position: absolute; transform: translate(-50%, -50%); background: var(--lens); color: var(--lens-ink); box-shadow: 0 0 0 1.5px var(--cream);
+          font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; padding: 7px 13px 6px; border-radius: 3px; }
+  .leak { position: absolute; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--red); white-space: nowrap; }
+  .key { position: absolute; right: 64px; bottom: 34px; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); text-align: right; line-height: 1.9; }
+  .key i { display: inline-block; width: 22px; height: 6px; vertical-align: 2px; margin-left: 10px; border-radius: 1px; }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="overline mono">Postgres · Supabase · Row Level Security</div>
+  <h1 class="display">RLS<span>-</span>Bench</h1>
+  <p class="lede">One table, many readers.<br>Does each see <em>exactly</em> their rows?</p>
+  <div class="stats">
+    <div><b class="display">113</b><span class="mono">tasks</span></div>
+    <div><b class="display">2,162</b><span class="mono">executable tests</span></div>
+    <div><b class="display">319</b><span class="mono">planted traps</span></div>
+    <div><b class="display">9</b><span class="mono">models ranked</span></div>
+  </div>
+  <div class="url mono">github.com/devesh16145/rls-bench</div>
+
+  <div class="chip mono" id="chip">select * from notes · as ana</div>
+  <div class="leak mono" id="leak">Leak · ben's private row</div>
+  <div class="key mono">Rows ana may read<i style="background: var(--lens-ink); box-shadow: 0 0 0 3px var(--lens)"></i><br>A row she must never see<i style="background: var(--red)"></i></div>
+
+<script>
+  const PALETTES = {
+    ink:      { bg: "#0d0c0b", text: "#f2ede2", muted: "#8d8678", field: "242,237,226", lens: "#f2ede2", lensInk: "#15130f", accent: "#ec3b2c", accentRgb: "236,59,44", ring: "#f2ede2", glow: "242,237,226" },
+    midnight: { bg: "#080d1c", text: "#edf1ff", muted: "#7e89a8", field: "170,190,255", lens: "#e8eeff", lensInk: "#0b1230", accent: "#ff5a36", accentRgb: "255,90,54", ring: "#9fb4ff", glow: "120,150,255" },
+    supabase: { bg: "#0b120e", text: "#ecf6f0", muted: "#7c9387", field: "62,207,142", lens: "#eaf7f0", lensInk: "#0b120e", accent: "#ff4f45", accentRgb: "255,79,69", ring: "#3ecf8e", glow: "62,207,142" },
+    paper:    { bg: "#efe9dc", text: "#15130f", muted: "#6f685b", field: "21,19,15", lens: "#15130f", lensInk: "#efe9dc", accent: "#e0311f", accentRgb: "224,49,31", ring: "#15130f", glow: "21,19,15" },
+  };
+  const P = PALETTES[location.hash.slice(1)] || PALETTES.paper;
+  for (const [k, v] of Object.entries({ "--bg": P.bg, "--cream": P.text, "--muted": P.muted, "--red": P.accent, "--lens": P.lens, "--lens-ink": P.lensInk }))
+    document.documentElement.style.setProperty(k, v);
+  const W = 1600, H = 900, DPR = window.devicePixelRatio || 1;
+  const cv = document.getElementById("c");
+  cv.width = W * DPR; cv.height = H * DPR;
+  const g = cv.getContext("2d");
+  g.scale(DPR, DPR);
+
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const r = rng(20261025);
+
+  const CX = 1214, CY = 450, R = 300, STEP = 21, BAR = 8;
+  const LEAK_Y = 529;
+
+  // rows of "cells": each row is a run of bars of varied length, like a table with values of different widths
+  const rows = [];
+  for (let y = 12; y < H; y += STEP) {
+    const segs = []; let x = 20 + r() * 30;
+    while (x < W) { const len = 26 + Math.pow(r(), 1.6) * 230; segs.push([x, len]); x += len + 12 + r() * 26; }
+    rows.push({ y, segs, mine: r() < 0.46, leak: false });
+  }
+  const leakRow = rows.reduce((a, b) => Math.abs(b.y - LEAK_Y) < Math.abs(a.y - LEAK_Y) ? b : a);
+  leakRow.leak = true; leakRow.mine = false;
+
+  const bar = (x, y, w) => { g.beginPath(); g.roundRect(x, y - BAR / 2, w, BAR, 2); g.fill(); };
+
+  // 1. the field outside the lens: everyone's rows, unreadable
+  for (const row of rows) {
+    if (row.leak) continue;
+    for (const [x, w] of row.segs) {
+      const dx = (x + w / 2 - CX) / 900;
+      g.fillStyle = `rgba(${P.field}, ${(P === PALETTES.paper ? 0.06 : 0.05) + 0.05 * Math.max(0, 1 - Math.abs(dx))})`;
+      bar(x, row.y, w);
+    }
+  }
+
+  // darken behind the text column
+  const bgRgb = [1, 3, 5].map(i => parseInt(P.bg.slice(i, i + 2), 16)).join(",");
+  const shade = g.createLinearGradient(0, 0, 900, 0);
+  shade.addColorStop(0, `rgba(${bgRgb},0.97)`); shade.addColorStop(0.62, `rgba(${bgRgb},0.85)`); shade.addColorStop(1, `rgba(${bgRgb},0)`);
+  g.fillStyle = shade; g.fillRect(0, 0, 900, H);
+
+  // 2. the leak escaping the lens: a red streak across the whole field
+  g.save();
+  const streak = g.createLinearGradient(80, 0, CX - R, 0);
+  streak.addColorStop(0, `rgba(${P.accentRgb},0)`); streak.addColorStop(1, `rgba(${P.accentRgb},1)`);
+  g.shadowColor = `rgba(${P.accentRgb},0.85)`; g.shadowBlur = 22;
+  for (const [x, w] of leakRow.segs) {
+    g.fillStyle = x + w < CX ? streak : P.accent;
+    bar(x, leakRow.y, w);
+  }
+  g.restore();
+
+  // 3. the lens: one user's view, on paper
+  g.save();
+  g.shadowColor = `rgba(${P.glow},0.3)`; g.shadowBlur = 80;
+  g.fillStyle = P.lens; g.beginPath(); g.arc(CX, CY, R, 0, Math.PI * 2); g.fill();
+  g.restore();
+  g.save();
+  g.beginPath(); g.arc(CX, CY, R, 0, Math.PI * 2); g.clip();
+  for (const row of rows) {
+    for (const [x, w] of row.segs) {
+      if (row.leak) { g.fillStyle = P.accent; bar(x, row.y, w); }
+      else if (row.mine) { g.fillStyle = P.lensInk; bar(x, row.y, w); }
+      else { g.strokeStyle = P === PALETTES.paper ? "rgba(239,233,220,0.22)" : "rgba(0,0,0,0.16)"; g.lineWidth = 1; g.setLineDash([3, 3]);
+             g.beginPath(); g.roundRect(x + 0.5, row.y - BAR / 2 + 0.5, w - 1, BAR - 1, 2); g.stroke(); g.setLineDash([]); }
+    }
+  }
+  // the leak row inside the lens gets a soft red band
+  g.fillStyle = `rgba(${P.accentRgb},0.14)`; g.fillRect(CX - R, leakRow.y - STEP / 2, 2 * R, STEP);
+  g.restore();
+
+  // 4. the lens ring and dial ticks
+  g.strokeStyle = P.ring; g.lineWidth = 2;
+  g.beginPath(); g.arc(CX, CY, R + 14, 0, Math.PI * 2); g.stroke();
+  for (let i = 0; i < 120; i++) {
+    const a = i / 120 * Math.PI * 2, long = i % 10 === 0, r1 = R + 22, r2 = R + (long ? 40 : 30);
+    const ringRgb = [1, 3, 5].map(i => parseInt(P.ring.slice(i, i + 2), 16)).join(",");
+    g.strokeStyle = long ? `rgba(${ringRgb},0.8)` : `rgba(${ringRgb},0.3)`; g.lineWidth = long ? 2 : 1;
+    g.beginPath(); g.moveTo(CX + Math.cos(a) * r1, CY + Math.sin(a) * r1); g.lineTo(CX + Math.cos(a) * r2, CY + Math.sin(a) * r2); g.stroke();
+  }
+
+  // labels placed from the geometry
+  const chip = document.getElementById("chip");
+  chip.style.left = CX + "px"; chip.style.top = (CY - R - 14) + "px";
+  const leak = document.getElementById("leak");
+  leak.style.left = (CX - R - 320) + "px"; leak.style.top = (leakRow.y - 32) + "px";
+</script>
+</body>
+</html>
